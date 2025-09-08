@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "request": "launch",
+            "name": "Launch Program",
+            "type": "node",
+            /* "program": "${workspaceFolder}/generator.ts", */
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "runtimeExecutable": "C:\\Users\\lorenzo.corbella\\.deno\\bin\\deno.EXE",
+            "runtimeArgs": [
+                "run",
+                "--unstable",
+                "--inspect-wait",
+                "--allow-all",
+                "generator.ts",
+                "--file",
+                "./test/test_http.gen"
+            ],
+            "attachSimplePort": 9229
+        }
+    ]
+}

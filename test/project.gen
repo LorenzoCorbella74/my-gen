@@ -1,0 +1,29 @@
+# Example .gen file
+log Starting the process...
+
+set project_name = MyAwesomeApp
+log Project name is {project_name}
+
+> echo "Hello from shell!"
+
+write "Hello, {project_name}" to output.txt
+
+# Test filesystem commands
+set file_content = load output.txt
+log Loaded content: {file_content}
+
+set file_list = files in .
+log Files in current dir: {file_list}
+
+# Test control flow
+if not_exists temp_dir
+    > mkdir temp_dir
+    log Created temp_dir
+endif
+
+foreach file in file_list
+    log Found file: {file}
+endforeach
+
+
+

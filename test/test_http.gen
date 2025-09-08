@@ -1,0 +1,10 @@
+# Test load and http
+
+set file_content = load generator.md
+log Loaded generator.md content (first 50 chars)
+
+set google_page = http https://www.google.com
+log Google response (first 100 chars)
+
+write google_page to google.html
+log Saved google response to google.html

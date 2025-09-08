@@ -1,0 +1,27 @@
+# Deno project .gitignore
+
+# Deno cache
+/deno_dir/
+
+# VSCode settings
+# .vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env files
+.env
+
+# Compiled output (if any)
+bin/
+dist/
+
+# Test output
+coverage/
+
+# Ignore lock file if not needed
+# deno.lock
