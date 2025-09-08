@@ -2,7 +2,9 @@
   "tasks": {
     "dev": "deno run --allow-read --allow-write --allow-run --allow-env generator.ts",
     "dev2": "deno run --allow-read --allow-write --allow-run --allow-env generator.ts  --file ./test/project.gen",
-    "dev3": "deno run --allow-read --allow-write --allow-run --allow-env generator.ts  --file ./test/test_http.gen"
+    "dev3": "deno run --allow-read --allow-write --allow-run --allow-env --allow-net generator.ts --file ./test/test_http.gen",
+    "build":"deno compile --allow-read --allow-write --unstable --allow-run --allow-env --allow-net generator.ts --output gen",
+    "compile":"deno run --allow-read --allow-write --allow-run --allow-env generator.ts --file test/compile_test.gen --config test/config.json "
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",

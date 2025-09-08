@@ -1,0 +1,18 @@
+# Test for the COMPILE command
+
+log --- Starting COMPILE Test ---
+
+set component_name = input:Come vuoi chiamare il componente?
+
+# Ensure the output directory for the test exists
+if not_exists test/output
+    > mkdir test\output
+endif
+
+log Compiling {component_name}...
+
+compile test/output/{component_name}.tsx with template component and { "name": "{component_name}", "author": "{author}" }
+
+log {component_name} compiled successfully in test/output.
+
+log --- COMPILE Test Finished ---

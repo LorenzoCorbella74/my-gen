@@ -1,0 +1,57 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GEN",
+  "scopeName": "source.gen",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#strings" },
+    { "include": "#placeholders" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.gen",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.gen",
+          "match": "\\b(LOG|SET|IF|ENDIF|FOREACH|ENDFOREACH|WRITE|SAVE|COMPILE|>)\\b"
+        },
+        {
+          "name": "keyword.operator.gen",
+          "match": "\\b(to|with|template|and|in|exists|not_exists|contains|not_contains)\\b"
+        },
+        {
+          "name": "entity.name.function.gen",
+          "match": "\\b(input:|load|http|files in|folders in)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.gen",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "include": "#placeholders" }
+          ]
+        }
+      ]
+    },
+    "placeholders": {
+      "patterns": [
+        {
+          "name": "variable.parameter.gen",
+          "match": "\\{[^}]+\\""
+        }
+      ]
+    }
+  }
+}

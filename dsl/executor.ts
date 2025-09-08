@@ -24,6 +24,7 @@ export class Executor {
     this.commands.set("SAVE", this.handleWrite.bind(this)); // Alias
     this.commands.set("IF", this.handleIf.bind(this));
     this.commands.set("FOREACH", this.handleForeach.bind(this));
+    this.commands.set("COMPILE", this.handleCompile.bind(this));
   }
 
   private async handleLog(node: AstNode): Promise<void> {
@@ -101,7 +102,7 @@ export class Executor {
     const match = payload.match(/^(?:("(.+?)")|(\w+))\s+to\s+(.+)$/);
 
     if (!match) {
-        console.error(red(`[WRITE-ERROR] Invalid syntax. Use: WRITE "<content>" to <path> OR WRITE <variable> to <path>`));
+        console.error(red(`[WRITE-ERROR] Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`));
         return;
     }
 
@@ -117,8 +118,56 @@ export class Executor {
         return;
     }
 
-    await Deno.writeTextFile(filePath, contentToWrite);
-    console.log(green(`[WRITE] Content written to ${filePath}`));
+    await Deno.writeTextFile(this.context.interpolate(filePath), contentToWrite);
+    console.log(green(`[WRITE] Content written to ${this.context.interpolate(filePath)}`));
+  }
+
+  private async applyTemplate(templateContent: string, data: Record<string, any>): Promise<string> {
+    let content = templateContent;
+    for (const key in data) {
+        const regex = new RegExp(`\\{${key}\\}`, 'g');
+        content = content.replace(regex, String(data[key]));
+    }
+    return content;
+  }
+
+  private async handleCompile(node: AstNode): Promise<void> {
+    const payload = node.payload;
+    const match = payload.match(/^(?<filePath>.+?)\s+with\s+template\s+(?<templateName>.+?)\s+and\s+(?<json>\{.*\})$/);
+
+    if (!match) {
+        throw new Error(`Invalid COMPILE syntax. Use: compile <path> with template <template_name> and { ... }`);
+    }
+
+    const { filePath, templateName, json } = match.groups!;
+
+    const finalFilePath = this.context.interpolate(filePath);
+    const finalTemplateName = this.context.interpolate(templateName);
+
+    // 1. Get the template content from the context (loaded from config.json)
+    const templateContent = this.context.get(`templates.${finalTemplateName}`);
+    if (typeof templateContent !== 'string') {
+        throw new Error(`Template "${finalTemplateName}" not found or not a string in config.json templates.`);
+    }
+
+    // 2. Interpolate the JSON state string itself
+    const interpolatedJsonString = this.context.interpolate(json);
+    
+    // 3. Parse the JSON data
+    let templateData: Record<string, any> = {};
+    try {
+        templateData = JSON.parse(interpolatedJsonString);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Invalid JSON provided for template state: ${message}`);
+    }
+
+    // 4. Apply template
+    const finalContent = await this.applyTemplate(templateContent, templateData);
+
+    // 5. Write final file
+    await Deno.writeTextFile(finalFilePath, finalContent);
+    console.log(green(`[COMPILE] Created ${finalFilePath} from template ${finalTemplateName}`));
   }
 
   private async evaluateCondition(condition: string): Promise<boolean> {

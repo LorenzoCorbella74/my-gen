@@ -20,6 +20,7 @@ A simple, extensible command-line generator framework written in Deno. It interp
 | WRITE/SAVE | `WRITE "content" to path`<br>`WRITE var to path` | Write literal or variable content to a file                                                 |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
+| COMPILE    | `COMPILE path with template tpl and { ... }`   | Generate a file from an inline template defined in `config.json`                            |
 
 
 ## Example Usage

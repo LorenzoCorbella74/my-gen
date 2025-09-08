@@ -17,10 +17,22 @@ export class Context {
   }
 
   get(key: string): any {
-    if (!this.variables.has(key)) {
-      throw new Error(`Variable "${key}" not found.`);
+    const parts = key.split('.');
+    if (!this.variables.has(parts[0])) {
+        return undefined;
     }
-    return this.variables.get(key);
+
+    let value = this.variables.get(parts[0]);
+
+    for (let i = 1; i < parts.length; i++) {
+        if (value && typeof value === 'object') {
+            value = (value as Record<string, any>)[parts[i]];
+        } else {
+            return undefined;
+        }
+    }
+
+    return value;
   }
 
   interpolate(text: string): string {
