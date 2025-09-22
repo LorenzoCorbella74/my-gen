@@ -2,6 +2,16 @@
 
 A simple, extensible command-line generator framework. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks.
 
+## Usage
+
+```bash
+gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
+```
+
+- `--file`: Path to the `.gen` script to execute. (Default: `./test/project.gen`)
+- `--config`: Optional path to a JSON file to pre-populate the context.
+- `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
+
 ## Scope
 - Parse and execute a custom DSL for project generation and scripting
 - Support for variables, user input, file and folder operations, HTTP requests, and shell commands
@@ -12,10 +22,10 @@ A simple, extensible command-line generator framework. It interprets a custom DS
 
 | Command    | Syntax Example                                 | Description                                                                                 |
 |------------|------------------------------------------------|---------------------------------------------------------------------------------------------|
-| LOG        | `LOG Hello, world!`                            | Print a message to the console (supports variable interpolation)                            |
-| SET        | `SET name = value`<br>`SET x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
-| load       | `SET var = load ./file.txt`                    | Load the contents of a file into a variable                                                 |
-| http       | `SET var = http https://example.com`           | Fetch the contents of a URL (HTTP GET) into a variable                                      |
+| @log       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
+| @set       | `@set name = value`<br>`@set x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
+| load       | `@set var = load ./file.txt`                   | Load the contents of a file into a variable                                                 |
+| http       | `@set var = http https://example.com`          | Fetch the contents of a URL (HTTP GET) into a variable                                      |
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |
 | WRITE/SAVE | `WRITE "content" to path`<br>`WRITE var to path` | Write literal or variable content to a file                                                 |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
@@ -27,20 +37,20 @@ A simple, extensible command-line generator framework. It interprets a custom DS
 
 ```plaintext
 # Print a log message
-LOG Starting project generation
+@log Starting project generation
 
 # Set a variable from user input
-SET projectName = input:Enter project name
+@set projectName = input:Enter project name
 
 # Set a variable from a file
-SET readmeContent = load ./README.md
+@set readmeContent = load ./README.md
 
 # Set a variable from an HTTP request
-SET apiData = http https://api.example.com/data
+@set apiData = http https://api.example.com/data
 
 # List files and folders
-SET files = files in ./src
-SET folders = folders in ./src
+@set files = files in ./src
+@set folders = folders in ./src
 
 # Run a shell command
 > echo Project: ${projectName}
@@ -51,15 +61,15 @@ WRITE readmeContent to copy_of_readme.txt
 
 # Conditional execution
 IF exists hello.txt
-  LOG hello.txt exists!
+  @log hello.txt exists!
 END
 IF not_exists missing.txt
-  LOG missing.txt does not exist.
+  @log missing.txt does not exist.
 END
 
 # Loop over a list
 FOREACH file in files
-  LOG Found file: ${file}
+  @log Found file: ${file}
 END
 ```
 

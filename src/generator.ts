@@ -3,6 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs/promises';
+import * as path from 'path';
 
 import { Context } from "./dsl/context.js";
 import { parseContent } from "./dsl/parser.js";
@@ -20,19 +21,33 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Path to the JSON config file',
   })
+  .option('output', {
+    type: 'string',
+    description: 'The output directory to execute the script in',
+    default: '.',
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
 
 const genFile = argv.file;
 const configFile = argv.config;
+const outputDir = argv.output ? path.resolve(argv.output) : process.cwd();
 
 console.log(`Using .gen file: ${genFile}`);
 if (configFile) {
   console.log(`Using config file: ${configFile}`);
 }
+console.log(`Output directory: ${outputDir}`);
 
 async function main() {
+  try {
+    await fs.mkdir(outputDir, { recursive: true });
+  } catch (error) {
+    console.error(`Error: Could not create output directory "${outputDir}".`);
+    process.exit(1);
+  }
+
   let initialContext = {};
   if (configFile) {
     try {
@@ -63,7 +78,7 @@ async function main() {
   }
 
   const ast = parseContent(genContent);
-  const executor = new Executor(context);
+  const executor = new Executor(context, outputDir);
   await executor.execute(ast);
 
   console.log("\nExecution finished.");

@@ -6,23 +6,17 @@
     "configurations": [
 
         {
+            "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "type": "node",
-            /* "program": "${workspaceFolder}/generator.ts", */
-            "cwd": "${workspaceFolder}",
-            "env": {},
-            "runtimeExecutable": "C:\\Users\\lorenzo.corbella\\.deno\\bin\\deno.EXE",
-            "runtimeArgs": [
-                "run",
-                "--unstable",
-                "--inspect-wait",
-                "--allow-all",
-                "generator.ts",
-                "--file",
-                "./test/test_http.gen"
+            "skipFiles": [
+                "<node_internals>/**"
             ],
-            "attachSimplePort": 9229
+            "program": "${workspaceFolder}\\src\\dsl\\executor.ts --file ./test/simple.gen  --output c:/DEV/test-gen",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
         }
     ]
 }
+
