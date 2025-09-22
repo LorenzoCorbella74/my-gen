@@ -9,6 +9,7 @@ import chalk from "chalk";
 import * as path from "path";
 import { AstNode } from "./parser.js";
 import { Context } from "./context.js";
+import { input, select, checkbox } from '@inquirer/prompts';
 
 const execAsync = promisify(exec);
 
@@ -56,10 +57,35 @@ export class Executor {
     let finalValue: any;
 
     if (valueExpression.startsWith('input:')) {
-      const promptText = valueExpression.substring(6).trim();
-
-      console.log(chalk.yellow(`[INFO] Prompt required: ${this.context.interpolate(promptText)}`));
-      finalValue = `PROMPT_INPUT_FOR_${varName}`;
+      const promptText = this.context.interpolate(valueExpression.substring(6).trim());
+      const answer = await input({ message: promptText });
+      finalValue = answer
+    } else if (valueExpression.startsWith('select:')) {
+      const match = valueExpression.match(/^select:(.*?):\[(.*?)\]$/);
+      if (match) {
+        const promptText = this.context.interpolate(match[1].trim());
+        const options = match[2].split(',').map((opt: string) => opt.trim());
+        const answer = await select({
+          message: promptText,
+          choices: options
+        });
+        finalValue = answer;
+      } else {
+        throw new Error('Invalid select syntax. Use: select:<prompt>:[v1,v2]');
+      }
+    } else if (valueExpression.startsWith('multiselect:')) {
+      const match = valueExpression.match(/^multiselect:(.*?):\[(.*?)\]$/);
+      if (match) {
+        const promptText = this.context.interpolate(match[1].trim());
+        const options = match[2].split(',').map((opt: string) => opt.trim());
+        const answer = await checkbox({
+          message: promptText,
+          choices: options
+        });
+        finalValue = answer;
+      } else {
+        throw new Error('Invalid multiselect syntax. Use: multiselect:<prompt>:[v1,v2,v3]');
+      }
     } else if (valueExpression.startsWith('load ')) {
       const filePath = this.resolvePath(this.context.interpolate(valueExpression.substring(5).trim()));
       finalValue = await fs.readFile(filePath, "utf-8");
@@ -136,7 +162,7 @@ export class Executor {
     }
 
     const finalPath = this.resolvePath(this.context.interpolate(filePath));
-    console.log('Saving to :', finalPath );
+    console.log('Saving to :', finalPath);
     await fs.writeFile(finalPath, String(contentToWrite));
     console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
   }

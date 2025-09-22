@@ -1,18 +1,24 @@
-# Inizializzazione di progetti con AI SDK
+# Inizializzazione di progetti con AI SDK con WIN
 @log Progetti con AI SDK
+@set nomeProgetto=input: Nome del progetto?
+
 > npm init -y
 
+@log Istallazione dipendenze
 > npm install ai @ai-sdk/google zod dotenv
 > npm install --save-dev @types/node tsx typescript
 
-> npm pkg set name="mia-app"
+> npm pkg set name="{nomeProgetto}"
 > npm pkg set type="module"
 > npm pkg set version="0.0.1"
 > npm pkg set license="MIT"
 > npm pkg set author="Lorenzo Corbella"
 > npm pkg set scripts.start="tsx src/index.ts"
 
+@log Scaffolding files...
 > echo GOOGLE_GENERATIVE_AI_API_KEY=your_api_key > .env
 
 > md src
 > echo console.log("hello world") > src/index.ts
+> md .vscode
+> echo {} > .vscode/launch.ts

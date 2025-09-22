@@ -28,9 +28,7 @@ project/
 
 ## Gestione variabili
 
-set <var> = <value> → assegna valore. set <var> = input:<prompt> → chiede input
-interattivo. set <var> = select:<prompt>:[v1,v2] → chiede input interattivo. set
-<var> = multiselect:<prompt>:[v1,v2,v3] → input multiplo.
+@set <var> = <value> → assegna valore. @set <var> = input:<prompt> → chiede input interattivo. @set <var> = select:<prompt>:[v1,v2] → chiede input interattivo. @set <var> = multiselect:<prompt>:[v1,v2,v3] → input multiplo.
 
 ## Log
 
