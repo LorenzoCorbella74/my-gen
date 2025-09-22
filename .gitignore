@@ -1,5 +1,8 @@
 # Deno project .gitignore
 
+# Dependencies
+node_modules/
+
 # Deno cache
 /deno_dir/
 

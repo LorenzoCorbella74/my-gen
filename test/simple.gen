@@ -1,0 +1,9 @@
+# Example .gen file
+log Starting the process...
+
+set project_name = MyAwesomeApp
+log Project name is {project_name}
+
+> echo "Hello from shell!"
+
+write "Hello, {project_name}" to output.txt

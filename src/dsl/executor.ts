@@ -1,9 +1,15 @@
 // Command Executor
 // This file will contain the logic to execute the AST nodes.
 
-import { AstNode } from "./parser.ts";
-import { Context } from "./context.ts";
-import { blue, gray, green, red } from "@std/fmt/colors";
+import * as fs from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
+import process from "node:process";
+import chalk from "chalk";
+import { AstNode } from "./parser.js";
+import { Context } from "./context.js";
+
+const execAsync = promisify(exec);
 
 type CommandFunction = (node: AstNode) => Promise<void>;
 
@@ -29,7 +35,7 @@ export class Executor {
 
   private async handleLog(node: AstNode): Promise<void> {
     const message = this.context.interpolate(node.payload);
-    console.log(blue(`[LOG] ${message}`));
+    console.log(chalk.blue(`[LOG] ${message}`));
   }
 
   private async handleSet(node: AstNode): Promise<void> {
@@ -41,10 +47,14 @@ export class Executor {
 
     if (valueExpression.startsWith('input:')) {
       const promptText = valueExpression.substring(6).trim();
-      finalValue = await prompt(this.context.interpolate(promptText));
+      // Node doesn't have a built-in prompt like Deno.
+      // This would require an external library like 'inquirer'.
+      // For now, we'll log a message.
+      console.log(chalk.yellow(`[INFO] Prompt required: ${this.context.interpolate(promptText)}`));
+      finalValue = `PROMPT_INPUT_FOR_${varName}`;
     } else if (valueExpression.startsWith('load ')) {
         const filePath = valueExpression.substring(5).trim();
-        finalValue = await Deno.readTextFile(this.context.interpolate(filePath));
+        finalValue = await fs.readFile(this.context.interpolate(filePath), "utf-8");
     } else if (valueExpression.startsWith('http ')) {
         const url = valueExpression.substring(5).trim();
         const response = await fetch(this.context.interpolate(url));
@@ -54,46 +64,39 @@ export class Executor {
         finalValue = await response.text();
     } else if (valueExpression.startsWith('files in ')) {
         const dirPath = valueExpression.substring(9).trim();
-        finalValue = [];
-        for await (const dirEntry of Deno.readDir(this.context.interpolate(dirPath))) {
-            if (dirEntry.isFile) {
-                finalValue.push(dirEntry.name);
-            }
-        }
+        const entries = await fs.readdir(this.context.interpolate(dirPath), { withFileTypes: true });
+        finalValue = entries.filter(e => e.isFile()).map(e => e.name);
     } else if (valueExpression.startsWith('folders in ')) {
         const dirPath = valueExpression.substring(11).trim();
-        finalValue = [];
-        for await (const dirEntry of Deno.readDir(this.context.interpolate(dirPath))) {
-            if (dirEntry.isDirectory) {
-                finalValue.push(dirEntry.name);
-            }
-        }
+        const entries = await fs.readdir(this.context.interpolate(dirPath), { withFileTypes: true });
+        finalValue = entries.filter(e => e.isDirectory()).map(e => e.name);
     } else {
       finalValue = this.context.interpolate(valueExpression);
     }
 
     this.context.set(varName, finalValue);
     const valueForLog = typeof finalValue === 'string' && finalValue.length > 100 ? finalValue.substring(0, 100) + '...' : Array.isArray(finalValue) ? `[${finalValue.join(', ')}]` : finalValue;
-    console.log(gray(`[SET] ${varName} = ${valueForLog}`));
+    console.log(chalk.gray(`[SET] ${varName} = ${valueForLog}`));
   }
 
   private async handleShell(node: AstNode): Promise<void> {
     const command = this.context.interpolate(node.payload);
-    console.log(gray(`[CMD] > ${command}`));
+    console.log(chalk.gray(`[CMD] > ${command}`));
 
-    const shell = Deno.build.os === "windows" ? "cmd" : "sh";
-    const shellArgs = Deno.build.os === "windows" ? ["/c"] : ["-c"];
-
-    const cmd = new Deno.Command(shell, { args: [...shellArgs, command], stdout: "piped", stderr: "piped" });
-    const { code, stdout, stderr } = await cmd.output();
-
-    if (code !== 0) {
-        const errorText = new TextDecoder().decode(stderr);
-        console.error(red(`[CMD-ERROR] ${errorText}`));
-    }
-    const outputText = new TextDecoder().decode(stdout);
-    if(outputText) {
-        console.log(outputText);
+    try {
+        const { stdout, stderr } = await execAsync(command);
+        if (stderr) {
+            console.error(chalk.red(`[CMD-ERROR] ${stderr}`));
+        }
+        if (stdout) {
+            console.log(stdout);
+        }
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error(chalk.red(`[CMD-EXEC-ERROR] ${error.message}`));
+        } else {
+            console.error(chalk.red(`[CMD-EXEC-ERROR] ${String(error)}`));
+        }
     }
   }
 
@@ -102,7 +105,7 @@ export class Executor {
     const match = payload.match(/^(?:("(.+?)")|(\w+))\s+to\s+(.+)$/);
 
     if (!match) {
-        console.error(red(`[WRITE-ERROR] Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`));
+        console.error(chalk.red(`[WRITE-ERROR] Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`));
         return;
     }
 
@@ -113,13 +116,17 @@ export class Executor {
         contentToWrite = this.context.interpolate(literalContent);
     } else if (variableName) {
         contentToWrite = this.context.get(variableName);
+        if (contentToWrite === undefined) {
+            console.error(chalk.red(`[WRITE-ERROR] Variable "${variableName}" is not defined.`));
+            return;
+        }
     } else {
-        console.error(red(`[WRITE-ERROR] Invalid content specified.`));
+        console.error(chalk.red(`[WRITE-ERROR] Invalid content specified.`));
         return;
     }
 
-    await Deno.writeTextFile(this.context.interpolate(filePath), contentToWrite);
-    console.log(green(`[WRITE] Content written to ${this.context.interpolate(filePath)}`));
+    await fs.writeFile(this.context.interpolate(filePath), String(contentToWrite));
+    console.log(chalk.green(`[WRITE] Content written to ${this.context.interpolate(filePath)}`));
   }
 
   private async applyTemplate(templateContent: string, data: Record<string, any>): Promise<string> {
@@ -135,11 +142,11 @@ export class Executor {
     const payload = node.payload;
     const match = payload.match(/^(?<filePath>.+?)\s+with\s+template\s+(?<templateName>.+?)\s+and\s+(?<json>\{.*\})$/);
 
-    if (!match) {
+    if (!match || !match.groups) {
         throw new Error(`Invalid COMPILE syntax. Use: compile <path> with template <template_name> and { ... }`);
     }
 
-    const { filePath, templateName, json } = match.groups!;
+    const { filePath, templateName, json } = match.groups;
 
     const finalFilePath = this.context.interpolate(filePath);
     const finalTemplateName = this.context.interpolate(templateName);
@@ -166,27 +173,32 @@ export class Executor {
     const finalContent = await this.applyTemplate(templateContent, templateData);
 
     // 5. Write final file
-    await Deno.writeTextFile(finalFilePath, finalContent);
-    console.log(green(`[COMPILE] Created ${finalFilePath} from template ${finalTemplateName}`));
+    await fs.writeFile(finalFilePath, finalContent);
+    console.log(chalk.green(`[COMPILE] Created ${finalFilePath} from template ${finalTemplateName}`));
+  }
+
+  private async fileExists(path: string): Promise<boolean> {
+      try {
+          await fs.stat(path);
+          return true;
+      } catch (error: any) {
+          if (error.code === 'ENOENT') {
+              return false;
+          }
+          throw error;
+      }
   }
 
   private async evaluateCondition(condition: string): Promise<boolean> {
     const [type, ...args] = condition.split(/\s+/);
     const path = this.context.interpolate(args.join(' '));
-    try {
-        if (type === 'exists') {
-            await Deno.stat(path);
-            return true;
-        } else if (type === 'not_exists') {
-            await Deno.stat(path);
-            return false;
-        }
-    } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
-            return type === 'not_exists';
-        }
-        throw error;
+    
+    if (type === 'exists') {
+        return await this.fileExists(path);
+    } else if (type === 'not_exists') {
+        return !(await this.fileExists(path));
     }
+    
     return false;
   }
 
@@ -201,7 +213,7 @@ export class Executor {
     const list = this.context.get(listVar);
 
     if (!Array.isArray(list)) {
-        console.error(red(`[FOREACH-ERROR] Variable "${listVar}" is not an array.`));
+        console.error(chalk.red(`[FOREACH-ERROR] Variable "${listVar}" is not an array.`));
         return;
     }
 
@@ -219,15 +231,15 @@ export class Executor {
             await commandFn(node);
         } catch (error) {
             if (error && typeof error === "object" && "message" in error) {
-                console.error(red(`Error executing command at line ${node.line}: ${(error as { message: string }).message}`));
+                console.error(chalk.red(`Error executing command at line ${node.line}: ${(error as { message: string }).message}`));
             } else {
-                console.error(red(`Error executing command at line ${node.line}: ${String(error)}`));
+                console.error(chalk.red(`Error executing command at line ${node.line}: ${String(error)}`));
             }
-            Deno.exit(1);
+            process.exit(1);
         }
       } else {
-        console.error(red(`Unknown command "${node.type}" at line ${node.line}`));
-        Deno.exit(1);
+        console.error(chalk.red(`Unknown command "${node.type}" at line ${node.line}`));
+        process.exit(1);
       }
     }
   }

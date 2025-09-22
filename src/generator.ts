@@ -1,21 +1,31 @@
+#!/usr/bin/env node
 // Entrypoint for the CLI
-import { parseArgs } from "@std/cli/parse-args";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import * as fs from 'node:fs/promises';
 
-import { Context } from "./dsl/context.ts";
-import { parseContent } from "./dsl/parser.ts";
-import { Executor } from "./dsl/executor.ts";
+import { Context } from "./dsl/context.js";
+import { parseContent } from "./dsl/parser.js";
+import { Executor } from "./dsl/executor.js";
 
 console.log("Generator CLI");
 
-// https://docs.deno.com/examples/command_line_arguments/
-const flags = parseArgs(Deno.args,{
-  string: ["file","config"],
-  default: { file: "./test/project.gen" },
-  negatable: ["color"],
-})
+const argv = yargs(hideBin(process.argv))
+  .option('file', {
+    type: 'string',
+    description: 'Path to the .gen file',
+    default: './test/project.gen',
+  })
+  .option('config', {
+    type: 'string',
+    description: 'Path to the JSON config file',
+  })
+  .help()
+  .alias('help', 'h')
+  .parseSync();
 
-const genFile = flags.file;
-const configFile = flags.config;
+const genFile = argv.file;
+const configFile = argv.config;
 
 console.log(`Using .gen file: ${genFile}`);
 if (configFile) {
@@ -26,7 +36,7 @@ async function main() {
   let initialContext = {};
   if (configFile) {
     try {
-      const configContent = await Deno.readTextFile(configFile);
+      const configContent = await fs.readFile(configFile, 'utf-8');
       initialContext = JSON.parse(configContent);
     } catch (error) {
       if (error instanceof Error) {
@@ -34,7 +44,7 @@ async function main() {
       } else {
         console.error(`Error reading or parsing config file: ${String(error)}`);
       }
-      Deno.exit(1);
+      process.exit(1);
     }
   }
 
@@ -42,14 +52,14 @@ async function main() {
 
   let genContent = "";
   try {
-    genContent = await Deno.readTextFile(genFile);
+    genContent = await fs.readFile(genFile, 'utf-8');
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error reading .gen file: ${error.message}`);
     } else {
       console.error(`Error reading .gen file: ${String(error)}`);
     }
-    Deno.exit(1);
+    process.exit(1);
   }
 
   const ast = parseContent(genContent);

@@ -1,6 +1,6 @@
 # My CLI Generator
 
-A simple, extensible command-line generator framework written in Deno. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks.
+A simple, extensible command-line generator framework. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks.
 
 ## Scope
 - Parse and execute a custom DSL for project generation and scripting
@@ -65,5 +65,4 @@ END
 
 ---
 
-- Requires [Deno](https://deno.com/)
 - See `generator.md` for DSL details and examples.

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "declaration": true,             // 💎 Generate .d.ts files
+    "declarationMap": true,          // 🗺️ Source maps for types
+    "outDir": "./dist",              // 📤 Output directory
+    "rootDir": "./src",              // 📥 Source directory
+    "strict": true,                  // 🛡️ Maximum type safety
+    "esModuleInterop": true,         // 🤝 ES module interop
+    "skipLibCheck": true,            // ⚡ Faster compilation
+    "forceConsistentCasingInFileNames": true  // 📝 Consistent naming
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
