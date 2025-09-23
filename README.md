@@ -1,6 +1,6 @@
-# My CLI Generator
+# @gen
 
-A simple, extensible command-line generator framework. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks.
+@gen is a simple, extensible command-line generator framework. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not using bash or python or make or just..., because it was fun create a new language and a new tool :)!
 
 ## Usage
 
@@ -12,35 +12,7 @@ gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 
-## Scope
-- Parse and execute a custom DSL for project generation and scripting
-- Support for variables, user input, file and folder operations, HTTP requests, and shell commands
-- Extensible with new commands
-- Designed for automation, scaffolding, and scripting in Deno environments
-
-## Supported Commands
-
-| Command    | Syntax Example                                 | Description                                                                                 |
-|------------|------------------------------------------------|---------------------------------------------------------------------------------------------|
-| @log       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
-| @set       | `@set name = value`<br>`@set x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
-| load       | `@set var = load ./file.txt`                   | Load the contents of a file into a variable                                                 |
-| http       | `@set var = http https://example.com`          | Fetch the contents of a URL (HTTP GET) into a variable                                      |
-| >          | `> echo Hello`                                 | Run a shell command                                                                         |
-| write/save | `write "content" to path`<br>`write var to path` | Write literal or variable content to a file                                                 |
-| IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
-| FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
-| @compile    | `COMPILE ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object        |
-
-
-## Help functions
-It is possibile **to transforma a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
-```bash
-gen --parse C:/DEV/template_vanilla_ts/vite-project
-```
-
-
-## Example Usage
+## .gen file SYNTAX & DSL Example
 ```plaintext
 
 # Print a log message
@@ -49,22 +21,22 @@ gen --parse C:/DEV/template_vanilla_ts/vite-project
 # Set a variable from user input
 @set projectName = input:Enter project name
 
-# Set a variable from a file
-@set readmeContent = load ./README.md
+# Set a variable from a file content
+@set readmeContent = @load ./README.md
 
-# Set a variable from an HTTP request
-@set apiData = http https://api.example.com/data
+# Set a variable from the content of a webpage (HTTP GET)
+@set apiData = @http https://api.example.com/data
 
 # List files and folders
 @set files = files in ./src
 @set folders = folders in ./src
 
 # Run a shell command
-> echo Project: ${projectName}
+> echo Project: {projectName}
 
 # Write content to a file
-WRITE "Hello, ${projectName}!" to hello.txt
-WRITE readmeContent to copy_of_readme.txt
+@write "Hello, {projectName}!" to hello.txt
+@write readmeContent to copy_of_readme.txt
 
 # Conditional execution
 IF exists hello.txt
@@ -83,6 +55,36 @@ END
 COMPILE ./templates/my-template.json
 ```
 
+## Scope
+- Parse and execute a custom DSL for project generation and scripting
+- Support for variables, user input, file and folder operations, HTTP requests, and shell commands
+- Extensible with new commands
+- Designed for automation, scaffolding, and scripting in Deno environments
+
+## Supported Commands
+
+| Command    | Syntax Example                                 | Description                                                                                 |
+|------------|------------------------------------------------|---------------------------------------------------------------------------------------------|
+| @log       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
+| @set       | `@set name = value`<br>`@set x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
+| @load      | `@set var = @load ./file.txt`                  | Load the contents of a file into a variable                                                 |
+| @http      | `@set var = @http https://example.com`         | Fetch the contents of a URL (HTTP GET) into a variable                                      |
+| >          | `> echo Hello`                                 | Run a shell command                                                                         |
+| @write/@save | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file                                                 |
+| IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
+| FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
+| COMPILE    | `COMPILE ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object        |
+
+
+## Parse Folder to produce Template!
+It is possibile **to transforma a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
+```bash
+gen --parse C:/DEV/template_vanilla_ts/vite-project
+```
+the content of a `template.json` can be then used with the `@compile` command to generate files and folders based on that template.
+
 ---
 
-- See `generator.md` for DSL details and examples.
+
+## License
+MIT License

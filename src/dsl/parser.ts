@@ -1,9 +1,68 @@
-export type AstNode = {
-  type: string;
-  payload: any;
+// Base type for all AST nodes
+export interface BaseAstNode {
   line: number;
   children?: AstNode[];
-};
+}
+
+// Specific node types for each command
+export interface LogNode extends BaseAstNode {
+  type: '@LOG';
+  payload: string; // The message to log
+}
+
+export interface SetNode extends BaseAstNode {
+  type: '@SET';
+  payload: string; // The assignment expression (e.g., "name = value")
+}
+
+export interface ShellNode extends BaseAstNode {
+  type: '>';
+  payload: string; // The shell command to execute
+}
+
+export interface WriteNode extends BaseAstNode {
+  type: '@WRITE' | '@SAVE';
+  payload: string; // The write expression (e.g., '"content" to path' or 'variable to path')
+}
+
+export interface IfNode extends BaseAstNode {
+  type: 'IF';
+  payload: string; // The condition (e.g., "exists path" or "not_exists path")
+  children: AstNode[]; // Always has children for IF blocks
+}
+
+export interface ForeachNode extends BaseAstNode {
+  type: 'FOREACH';
+  payload: string; // The iteration expression (e.g., "item in listVar")
+  children: AstNode[]; // Always has children for FOREACH blocks
+}
+
+export interface CompileNode extends BaseAstNode {
+  type: 'COMPILE';
+  payload: string; // The path to the template JSON file
+}
+
+// Union type for all possible AST nodes
+export type AstNode = 
+  | LogNode 
+  | SetNode 
+  | ShellNode 
+  | WriteNode 
+  | IfNode 
+  | ForeachNode 
+  | CompileNode;
+
+// Type guards for runtime type checking
+export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
+export const isSetNode = (node: AstNode): node is SetNode => node.type === '@SET';
+export const isShellNode = (node: AstNode): node is ShellNode => node.type === '>';
+export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
+export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
+export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
+export const isCompileNode = (node: AstNode): node is CompileNode => node.type === 'COMPILE';
+
+// Helper type for block commands that have children
+export type BlockNode = IfNode | ForeachNode;
 
 /**
  * Parses the content of a DSL (.gen) file into an Abstract Syntax Tree (AST).
@@ -35,37 +94,87 @@ export function parseContent(content: string): AstNode[] {
     const upperCommand = command.toUpperCase();
 
     if (upperCommand === 'IF') {
-      const newNode: AstNode = { type: 'IF', payload: payload, line: lineNumber, children: [] };
+      const newNode: IfNode = { type: 'IF', payload: payload, line: lineNumber, children: [] };
       currentAst.push(newNode);
-      stack.push(newNode.children!);
-      currentAst = newNode.children!;
+      stack.push(newNode.children);
+      currentAst = newNode.children;
     } else if (upperCommand === 'FOREACH') {
-        const newNode: AstNode = { type: 'FOREACH', payload: payload, line: lineNumber, children: [] };
+        const newNode: ForeachNode = { type: 'FOREACH', payload: payload, line: lineNumber, children: [] };
         currentAst.push(newNode);
-        stack.push(newNode.children!);
-        currentAst = newNode.children!;
+        stack.push(newNode.children);
+        currentAst = newNode.children;
     } else if (upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH') {
         stack.pop();
         currentAst = stack[stack.length - 1];
     } else {
-        let nodeType = upperCommand;
-        let nodePayload = payload;
+        // Handle different command types
         if (line.startsWith('>')) {
-            nodeType = '>';
-            nodePayload = line.substring(1).trim();
+            const shellNode: ShellNode = {
+                type: '>',
+                payload: line.substring(1).trim(),
+                line: lineNumber
+            };
+            currentAst.push(shellNode);
         } else {
-            const parts = line.split(/\s+/);
-            nodeType = parts[0].toUpperCase();
-            nodePayload = parts.slice(1).join(' ');
+            // Map command strings to specific node types
+            const nodeType = mapCommandToType(upperCommand);
+            if (nodeType) {
+                const node = createNodeByType(nodeType, payload, lineNumber);
+                currentAst.push(node);
+            } else {
+                // Handle unknown commands - could throw error or create generic node
+                console.warn(`Unknown command "${upperCommand}" at line ${lineNumber}`);
+            }
         }
-
-        currentAst.push({
-            type: nodeType,
-            payload: nodePayload,
-            line: lineNumber
-        });
     }
   }
 
   return mainAst;
+}
+
+/**
+ * Maps command strings to their corresponding node types
+ */
+function mapCommandToType(command: string): AstNode['type'] | null {
+  switch (command) {
+    case '@LOG':
+    case 'LOG':
+      return '@LOG';
+    case '@SET':
+    case 'SET':
+      return '@SET';
+    case '@WRITE':
+    case 'WRITE':
+      return '@WRITE';
+    case '@SAVE':
+    case 'SAVE':
+      return '@SAVE';
+    case 'COMPILE':
+      return 'COMPILE';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Creates a node of the specified type with proper typing
+ */
+function createNodeByType(type: AstNode['type'], payload: string, line: number): AstNode {
+  switch (type) {
+    case '@LOG':
+      return { type: '@LOG', payload, line };
+    case '@SET':
+      return { type: '@SET', payload, line };
+    case '@WRITE':
+      return { type: '@WRITE', payload, line };
+    case '@SAVE':
+      return { type: '@SAVE', payload, line };
+    case 'COMPILE':
+      return { type: 'COMPILE', payload, line };
+    case '>':
+      return { type: '>', payload, line };
+    default:
+      // This should never happen due to mapCommandToType check
+      throw new Error(`Unsupported node type: ${type}`);
+  }
 }

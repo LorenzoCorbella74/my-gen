@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Entrypoint for the CLI
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -39,6 +40,7 @@ const genFile = argv.file;
 const configFile = argv.config;
 const parsedFolder = argv.parse;
 
+// If --parse is provided, parse the folder and output to template.json
 if (parsedFolder) {
  const folderContent = await loadFolderAsObject(parsedFolder, ['node_modules', 'dist', '.txt', '.git']);
   await fs.writeFile(path.join(process.cwd(), 'template.json'), JSON.stringify(folderContent, null, 2), 'utf-8');
@@ -46,6 +48,7 @@ if (parsedFolder) {
   process.exit(0);
 }
 
+// overwise, run the generator
 const outputDir = argv.output ? path.resolve(argv.output) : process.cwd();
 
 console.log(`Using .gen file: ${genFile}`);
@@ -95,7 +98,7 @@ async function main() {
   const executor = new Executor(context, outputDir);
   await executor.execute(ast);
 
-  console.log("\nExecution finished.");
+  console.log("\nExecution completed.");
 }
 
 main();

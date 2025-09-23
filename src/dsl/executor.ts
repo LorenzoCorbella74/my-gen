@@ -37,11 +37,11 @@ export class Executor {
     this.commands.set("@LOG", this.handleLog.bind(this));
     this.commands.set("@SET", this.handleSet.bind(this));
     this.commands.set(">", this.handleShell.bind(this));
-    this.commands.set("WRITE", this.handleWrite.bind(this));
-    this.commands.set("SAVE", this.handleWrite.bind(this)); // Alias
+    this.commands.set("@WRITE", this.handleWrite.bind(this));
+    this.commands.set("@SAVE", this.handleWrite.bind(this)); // Alias
     this.commands.set("IF", this.handleIf.bind(this));
     this.commands.set("FOREACH", this.handleForeach.bind(this));
-    this.commands.set("@COMPILE", this.handleCompile.bind(this));
+    this.commands.set("COMPILE", this.handleCompile.bind(this));
   }
 
   private async handleLog(node: AstNode): Promise<void> {
@@ -86,11 +86,13 @@ export class Executor {
       } else {
         throw new Error('Invalid multiselect syntax. Use: multiselect:<prompt>:[v1,v2,v3]');
       }
-    } else if (valueExpression.startsWith('load ')) {
-      const filePath = this.resolvePath(this.context.interpolate(valueExpression.substring(5).trim()));
+    } else if (valueExpression.startsWith('@load ') || valueExpression.startsWith('load ')) {
+      const prefixLength = valueExpression.startsWith('@load ') ? 6 : 5;
+      const filePath = this.resolvePath(this.context.interpolate(valueExpression.substring(prefixLength).trim()));
       finalValue = await fs.readFile(filePath, "utf-8");
-    } else if (valueExpression.startsWith('http ')) {
-      const url = valueExpression.substring(5).trim();
+    } else if (valueExpression.startsWith('@http ') || valueExpression.startsWith('http ')) {
+      const prefixLength = valueExpression.startsWith('@http ') ? 6 : 5;
+      const url = valueExpression.substring(prefixLength).trim();
       const response = await fetch(this.context.interpolate(url));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
