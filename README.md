@@ -1,6 +1,6 @@
 # @gen
 
-@gen is a simple, extensible command-line generator framework. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not using bash or python or make or just..., because it was fun create a new language and a new tool :)!
+**@gen** is a simple, extensible command-line generator framework for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use bash, Python, Make, or Just...? Because it was fun to create a new language and a new tool! 😄
 
 ## Usage
 
@@ -13,6 +13,7 @@ gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 
 ## .gen file SYNTAX & DSL Example
+**.gen** file contains commands line by line based on a simple custom Domain Specific Language. Here is an example:
 ```plaintext
 
 # Print a log message
@@ -59,7 +60,7 @@ COMPILE ./templates/my-template.json
 - Parse and execute a custom DSL for project generation and scripting
 - Support for variables, user input, file and folder operations, HTTP requests, and shell commands
 - Extensible with new commands
-- Designed for automation, scaffolding, and scripting in Deno environments
+- Designed for automation, scaffolding, and scripting in Node environments
 
 ## Supported Commands
 
@@ -77,7 +78,7 @@ COMPILE ./templates/my-template.json
 
 
 ## Parse Folder to produce Template!
-It is possibile **to transforma a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
+It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
 ```bash
 gen --parse C:/DEV/template_vanilla_ts/vite-project
 ```
