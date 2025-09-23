@@ -1,5 +1,8 @@
 # My preferences for new commands!!
-
+- [x] `@input` in place fo input: to prompt user input and set a variable.
+  + Example: `@set projectName = @input Enter project name`
+- [x] @select uno, due, tre in place of select:[uno, due, tre].
+    - Example: `@set framework = @select Select a framework options: React,Vue,Angular`
 - [x] `@global` similar to @set but sets a global variable that persists across
   multiple `@gen` executions.
   - Example: `@global apiKey = input:Enter your API key`
@@ -21,7 +24,10 @@
   - Example:
     `@md content to path/to/file.md frontmatter:{"title":"My Document","date":"2024-10-01"}`
 - --chat to transform @gen into a chat interface (with ChatGPT ???) o come una repl... .
-- --workflow to define and run multiple .gen files in sequence with dependencies.
+- --workflow to define and run multiple .gen files in sequence with dependencies ??.
+- [x] @task to fragment sequence of commands after a .gen file has been loaded but not yet executed. Fragments can be executed upon request
+  - Example:
+    `@task "npm install" in ./my-new-project`
 - [x] @import to import and reuse variables and functions from other .gen files.
   - Example: `@import ./common.gen`
 
@@ -31,8 +37,8 @@
 files.
 
 # Future Plans
-- reorganize the STDOUT and STDERR with ink.js
-- Improve error handling and reporting
-- global spinner for long operations
-- make it work globally (WINDOWS, LINUX, MAC)
-- understand  how to extend with new commands "from outside"
+- [ ] reorganize the STDOUT and STDERR with ink.js
+- [ ] Improve error handling and reporting
+- [x] global spinner for long operations
+- [x] make it work globally (WINDOWS, LINUX, MAC)
+- [x] understand  how to extend with new commands "from outside"
