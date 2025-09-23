@@ -47,4 +47,15 @@ export class Context {
       return String(value);
     });
   }
+
+  /**
+   * Get all variables as a plain object
+   */
+  getAllVariables(): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const [key, value] of this.variables) {
+      result[key] = value;
+    }
+    return result;
+  }
 }

@@ -1,5 +1,5 @@
 # Inizializzazione di progetti con AI SDK con WIN
-@log Progetti con AI SDK
+@log Progett0 con AI SDK
 @set nomeProgetto=input: Nome del progetto?
 
 > npm init -y

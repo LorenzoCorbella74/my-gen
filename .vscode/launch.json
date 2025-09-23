@@ -7,12 +7,39 @@
       "name": "Debug CLI (tsx)",
       "program": "${workspaceFolder}/src/generator.ts",
       "args": [
-        "--file", ".\\test\\ai.gen", 
-        "--output", "c:\\DEV\\test1"
+        "--file",
+        ".\\test\\ai.gen",
+        "--output",
+        "c:\\DEV\\test1"
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
     },
-    
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI (tsx)",
+      "program": "${workspaceFolder}/src/generator.ts",
+      "args": [
+        "--parse",
+        "C:\\DEV\\for_template_vanilla_ts\\vite-project"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test compile",
+      "program": "${workspaceFolder}/src/generator.ts",
+      "args": [
+        "--file",
+        ".\\test\\compile_test.gen",
+        "--output",
+        "c:\\DEV\\test1"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    }
   ]
 }

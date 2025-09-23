@@ -8,7 +8,7 @@ A simple, extensible command-line generator framework. It interprets a custom DS
 gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
 ```
 
-- `--file`: Path to the `.gen` script to execute. (Default: `./test/project.gen`)
+- `--file`: Path to the `.gen` script to execute.
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 
@@ -27,15 +27,22 @@ gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path
 | load       | `@set var = load ./file.txt`                   | Load the contents of a file into a variable                                                 |
 | http       | `@set var = http https://example.com`          | Fetch the contents of a URL (HTTP GET) into a variable                                      |
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |
-| WRITE/SAVE | `WRITE "content" to path`<br>`WRITE var to path` | Write literal or variable content to a file                                                 |
+| write/save | `write "content" to path`<br>`write var to path` | Write literal or variable content to a file                                                 |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
-| COMPILE    | `COMPILE path with template tpl and { ... }`   | Generate a file from an inline template defined in `config.json`                            |
+| @compile    | `COMPILE ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object        |
+
+
+## Help functions
+It is possibile **to transforma a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
+```bash
+gen --parse C:/DEV/template_vanilla_ts/vite-project
+```
 
 
 ## Example Usage
-
 ```plaintext
+
 # Print a log message
 @log Starting project generation
 
@@ -71,6 +78,9 @@ END
 FOREACH file in files
   @log Found file: ${file}
 END
+
+# Compile a template file to generate multiple files
+COMPILE ./templates/my-template.json
 ```
 
 ---

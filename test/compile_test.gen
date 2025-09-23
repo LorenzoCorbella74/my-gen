@@ -1,18 +1,12 @@
-# Test for the COMPILE command
+# Test di comando @compile
+@log Test di comando @compile
+@set name=input: Nome del progetto?
 
-log --- Starting COMPILE Test ---
+@compile ./template.json
 
-set component_name = input:Come vuoi chiamare il componente?
+@log Istallazione dipendenze
+> npm install 
+> npm pkg set author="Lorenzo Corbella"
 
-# Ensure the output directory for the test exists
-if not_exists test/output
-    > mkdir test\output
-endif
+@log Compilazione template avvenuta con successo
 
-log Compiling {component_name}...
-
-compile test/output/{component_name}.tsx with template component and { "name": "{component_name}", "author": "{author}" }
-
-log {component_name} compiled successfully in test/output.
-
-log --- COMPILE Test Finished ---

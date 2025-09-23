@@ -41,7 +41,7 @@ export class Executor {
     this.commands.set("SAVE", this.handleWrite.bind(this)); // Alias
     this.commands.set("IF", this.handleIf.bind(this));
     this.commands.set("FOREACH", this.handleForeach.bind(this));
-    this.commands.set("COMPILE", this.handleCompile.bind(this));
+    this.commands.set("@COMPILE", this.handleCompile.bind(this));
   }
 
   private async handleLog(node: AstNode): Promise<void> {
@@ -177,42 +177,70 @@ export class Executor {
   }
 
   private async handleCompile(node: AstNode): Promise<void> {
-    const payload = node.payload;
-    const match = payload.match(/^(?<filePath>.+?)\s+with\s+template\s+(?<templateName>.+?)\s+and\s+(?<json>\{.*\})$/);
-
-    if (!match || !match.groups) {
-      throw new Error(`Invalid COMPILE syntax. Use: compile <path> with template <template_name> and { ... }`);
-    }
-
-    const { filePath, templateName, json } = match.groups;
-
-    const finalFilePath = this.resolvePath(this.context.interpolate(filePath));
-    const finalTemplateName = this.context.interpolate(templateName);
-
-    // 1. Get the template content from the context (loaded from config.json)
-    const templateContent = this.context.get(`templates.${finalTemplateName}`);
-    if (typeof templateContent !== 'string') {
-      throw new Error(`Template "${finalTemplateName}" not found or not a string in config.json templates.`);
-    }
-
-    // 2. Interpolate the JSON state string itself
-    const interpolatedJsonString = this.context.interpolate(json);
-
-    // 3. Parse the JSON data
-    let templateData: Record<string, any> = {};
+    const templatePath = this.context.interpolate(node.payload.trim());
+    
+    // Load the template.json file
+    let configData: any;
     try {
-      templateData = JSON.parse(interpolatedJsonString);
+      const configContent = await fs.readFile(templatePath, 'utf8');
+      configData = JSON.parse(configContent);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Invalid JSON provided for template state: ${message}`);
+      throw new Error(`Failed to load template file "${templatePath}": ${message}`);
     }
 
-    // 4. Apply template
-    const finalContent = await this.applyTemplate(templateContent, templateData);
+    // Check if templates property exists
+    if (!configData.templates || typeof configData.templates !== 'object') {
+      throw new Error(`Template file "${templatePath}" must contain a "templates" property with an object value`);
+    }
 
-    // 5. Write final file
-    await fs.writeFile(finalFilePath, finalContent);
-    console.log(chalk.green(`[COMPILE] Created ${finalFilePath} from template ${finalTemplateName}`));
+    // Create a context with the config data for interpolation
+    const templateContext = { ...this.context.getAllVariables(), ...configData };
+    
+    console.log(chalk.blue(`[COMPILE] Processing template file: ${templatePath}`));
+
+    // Loop over each template and create files/folders
+    for (const [filePath, content] of Object.entries(configData.templates)) {
+      if (typeof content !== 'string') {
+        console.warn(chalk.yellow(`[COMPILE] Skipping non-string template: ${filePath}`));
+        continue;
+      }
+
+      // Interpolate the file path
+      const finalFilePath = this.resolvePath(this.interpolateString(filePath, templateContext));
+      
+      // Create directory if it doesn't exist
+      const dir = path.dirname(finalFilePath);
+      await fs.mkdir(dir, { recursive: true });
+
+      // Interpolate the content
+      const finalContent = this.interpolateString(content as string, templateContext);
+
+      // Write the file
+      await fs.writeFile(finalFilePath, finalContent);
+      console.log(chalk.green(`[COMPILE] Created: ${finalFilePath}`));
+    }
+
+    console.log(chalk.blue(`[COMPILE] Template compilation completed`));
+  }
+
+  /**
+   * Helper method to interpolate a string with a given context
+   */
+  private interpolateString(template: string, context: Record<string, any>): string {
+    return template.replace(/\{([^}]+)\}/g, (match, key) => {
+      const value = this.getNestedValue(context, key.trim());
+      return value !== undefined ? String(value) : match;
+    });
+  }
+
+  /**
+   * Helper method to get nested values from an object using dot notation
+   */
+  private getNestedValue(obj: any, path: string): any {
+    return path.split('.').reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : undefined;
+    }, obj);
   }
 
   private async fileExists(path: string): Promise<boolean> {
