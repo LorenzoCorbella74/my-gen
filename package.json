@@ -1,14 +1,14 @@
 {
-  "name": "my-cli-generator",
-  "version": "1.0.0",
-  "description": "A CLI for generating projects from templates.",
+  "name": "my-gen",
+  "version": "0.1.0",
+  "description": "A CLI to run commands reading a simple DSL.",
   "type": "module",
-  "main": "dist/src/generator.js",
+  "main": "dist/src/index.js",
   "bin": {
-    "gen": "dist/generator.js"
+    "@gen": "dist/index.js"
   },
   "scripts": {
-    "start": "tsx src/generator.ts",
+    "start": "tsx src/index.ts",
     "build": "tsc"
   },
   "dependencies": {
