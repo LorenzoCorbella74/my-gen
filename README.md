@@ -11,7 +11,7 @@ Install globally:
 ```bash
 npm install -g my-gen
 ```
-
+Use like this:
 ```bash
 @gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
 ```
