@@ -1,11 +1,11 @@
 {
   "name": "my-gen",
-  "version": "0.1.2",
+  "version": "0.1.6",
   "description": "A CLI to run commands reading a simple DSL.",
   "type": "module",
   "main": "dist/src/index.js",
   "bin": {
-    "@gen": "dist/index.js"
+    "gen": "dist/index.js"
   },
   "scripts": {
     "start": "tsx src/index.ts",

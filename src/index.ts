@@ -5,12 +5,16 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import chalk from "chalk";
 
 import { Context } from "./dsl/context.js";
 import { parseContent } from "./dsl/parser.js";
 import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
 console.log(chalk.blueBright(`@gen v${pkg.version} - Your command runner`));

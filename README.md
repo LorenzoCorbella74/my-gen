@@ -1,8 +1,8 @@
-# my-gen (also known as @gen)
+# my-gen (also known as gen)
 
 ![logo](./doc/logo.png)
 
-**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
+**gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
 
 
 ## Usage
@@ -13,7 +13,7 @@ npm install -g my-gen
 ```
 Use like this:
 ```bash
-@gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
+gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
 ```
 
 - `--file`: Path to the `.gen` script to execute (Default: current directory).
@@ -140,7 +140,7 @@ The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-po
 ## Parse Folder to produce Template!
 It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
 ```bash
-@gen --parse C:/DEV/template_vanilla_ts/vite-project
+gen --parse C:/DEV/template_vanilla_ts/vite-project
 ```
 the content of a `template.json` can be then used with the `@compile` command to generate files and folders based on that template.
 

@@ -1,0 +1,22 @@
+# Test @ai command
+@log Testing AI command integration
+
+# Configure AI settings
+@global AI_MODEL = llama3.2:latest
+@global AI_OLLAMA_HOST = http://127.0.0.1:11434
+@global AI_TEMPERATURE = 0.7
+
+@log AI Configuration:
+@log - Model: {AI_MODEL}
+@log - Host: {AI_OLLAMA_HOST}
+@log - Temperature: {AI_TEMPERATURE}
+
+# Test AI command
+@set aiResponse = @ai What is Node.js? Answer in one sentence.
+
+@log AI Response: {aiResponse}
+
+# Save the response to a file
+@write aiResponse to ai_response.txt
+
+@log Test completed successfully!
