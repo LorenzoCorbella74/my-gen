@@ -7,7 +7,7 @@ import chalk from "chalk";
 import { Context } from "./context.js";
 import { fileURLToPath } from 'url';
 
-export class GlobalVariablesManager {
+export class GlobalContext {
   private globalFilePath: string;
 
   constructor() {

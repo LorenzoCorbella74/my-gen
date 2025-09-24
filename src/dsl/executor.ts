@@ -1,13 +1,13 @@
 // Command Executor
 // This file will contain the logic to execute the AST nodes.
 
-import * as fs from "fs/promises";
+
 import process from "node:process";
 import chalk from "chalk";
 import * as path from "path";
 import { AstNode } from "./parser.js";
 import { Context } from "./context.js";
-import { GlobalVariablesManager } from "./global.js";
+import { GlobalContext } from "./global.js";
 import { SimpleSpinner } from "../utils/spinner.js";
 import {
   handleLog,
@@ -26,12 +26,12 @@ export class Executor {
   private context: Context;
   private commands: Map<string, (node: AstNode) => Promise<void>> = new Map();
   private outputDir: string;
-  private globalManager: GlobalVariablesManager;
+  private globalContext: GlobalContext;
 
   constructor(context: Context, outputDir: string) {
     this.context = context;
     this.outputDir = outputDir;
-    this.globalManager = new GlobalVariablesManager();
+    this.globalContext = new GlobalContext();
     this.registerCommands();
     // Initialize global variables automatically
     this.initializeGlobalVariables();
@@ -42,7 +42,7 @@ export class Executor {
    * Called automatically during constructor
    */
   private async initializeGlobalVariables(): Promise<void> {
-    await this.globalManager.initializeGlobalVariables(this.context);
+    await this.globalContext.initializeGlobalVariables(this.context);
   }
 
   private resolvePath(p: string): string {
@@ -70,40 +70,14 @@ export class Executor {
     return {
       context: this.context,
       outputDir: this.outputDir,
-      globalManager: this.globalManager,
+      globalContext: this.globalContext,
       resolvePath: this.resolvePath.bind(this),
-      fileExists: this.fileExists.bind(this),
-      evaluateCondition: this.evaluateCondition.bind(this),
       execute: this.execute.bind(this)
     };
   }
 
 
-  private async fileExists(path: string): Promise<boolean> {
-    try {
-      await fs.stat(path);
-      return true;
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        return false;
-      }
-      throw error;
-    }
-  }
 
-  private async evaluateCondition(condition: string): Promise<boolean> {
-    const [type, ...args] = condition.split(/\s+/);
-    const p = this.context.interpolate(args.join(' '));
-    const finalPath = this.resolvePath(p);
-
-    if (type === 'exists') {
-      return await this.fileExists(finalPath);
-    } else if (type === 'not_exists') {
-      return !(await this.fileExists(finalPath));
-    }
-
-    return false;
-  }
 
   public async execute(nodes: AstNode[]) {
     for (const node of nodes) {
