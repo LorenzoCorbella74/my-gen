@@ -15,6 +15,11 @@ export interface SetNode extends BaseAstNode {
   payload: string; // The assignment expression (e.g., "name = value")
 }
 
+export interface GlobalNode extends BaseAstNode {
+  type: '@GLOBAL';
+  payload: string; // The assignment expression (e.g., "name = value") - saved to .global.json
+}
+
 export interface ShellNode extends BaseAstNode {
   type: '>';
   payload: string; // The shell command to execute
@@ -38,7 +43,7 @@ export interface ForeachNode extends BaseAstNode {
 }
 
 export interface CompileNode extends BaseAstNode {
-  type: 'COMPILE';
+  type: '@COMPILE';
   payload: string; // The path to the template JSON file
 }
 
@@ -46,6 +51,7 @@ export interface CompileNode extends BaseAstNode {
 export type AstNode = 
   | LogNode 
   | SetNode 
+  | GlobalNode
   | ShellNode 
   | WriteNode 
   | IfNode 
@@ -55,11 +61,12 @@ export type AstNode =
 // Type guards for runtime type checking
 export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
 export const isSetNode = (node: AstNode): node is SetNode => node.type === '@SET';
+export const isGlobalNode = (node: AstNode): node is GlobalNode => node.type === '@GLOBAL';
 export const isShellNode = (node: AstNode): node is ShellNode => node.type === '>';
 export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
 export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
 export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
-export const isCompileNode = (node: AstNode): node is CompileNode => node.type === 'COMPILE';
+export const isCompileNode = (node: AstNode): node is CompileNode => node.type === '@COMPILE';
 
 // Helper type for block commands that have children
 export type BlockNode = IfNode | ForeachNode;
@@ -143,14 +150,18 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@SET':
     case 'SET':
       return '@SET';
+    case '@GLOBAL':
+    case 'GLOBAL':
+      return '@GLOBAL';
     case '@WRITE':
     case 'WRITE':
       return '@WRITE';
     case '@SAVE':
     case 'SAVE':
       return '@SAVE';
+    case '@COMPILE':
     case 'COMPILE':
-      return 'COMPILE';
+      return '@COMPILE';
     default:
       return null;
   }
@@ -165,12 +176,14 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@LOG', payload, line };
     case '@SET':
       return { type: '@SET', payload, line };
+    case '@GLOBAL':
+      return { type: '@GLOBAL', payload, line };
     case '@WRITE':
       return { type: '@WRITE', payload, line };
     case '@SAVE':
       return { type: '@SAVE', payload, line };
-    case 'COMPILE':
-      return { type: 'COMPILE', payload, line };
+    case '@COMPILE':
+      return { type: '@COMPILE', payload, line };
     case '>':
       return { type: '>', payload, line };
     default:

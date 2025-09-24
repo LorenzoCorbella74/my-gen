@@ -1,6 +1,6 @@
 # @gen
 
-**@gen** is a simple, extensible command-line generator framework for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use bash, Python, Make, or Just...? Because it was fun to create a new language and a new tool! 😄
+**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use bash, Python, Make, or Just...? Because it was fun to create a new language and a new tool! 😄
 
 ## Usage
 
@@ -22,11 +22,20 @@ gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path
 # Set a variable from user input
 @set projectName = input:Enter project name
 
+# Set a global variable that persists across runs
+@global authorName = input:Enter your name
+
 # Set a variable from a file content
 @set readmeContent = @load ./README.md
 
+# Set a global variable from a file content
+@global templateContent = @load ./template.md
+
 # Set a variable from the content of a webpage (HTTP GET)
 @set apiData = @http https://api.example.com/data
+
+# Set a global variable from HTTP (persists across runs)
+@global configData = @http https://config.example.com/settings
 
 # List files and folders
 @set files = files in ./src
@@ -53,7 +62,7 @@ FOREACH file in files
 END
 
 # Compile a template file to generate multiple files
-COMPILE ./templates/my-template.json
+@compile ./templates/my-template.json
 ```
 
 ## Scope
@@ -68,6 +77,7 @@ COMPILE ./templates/my-template.json
 |------------|------------------------------------------------|---------------------------------------------------------------------------------------------|
 | @log       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
 | @set       | `@set name = value`<br>`@set x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
+| @global    | `@global name = value`<br>`@global x = input:Prompt`   | Same as @set but saves variables permanently |
 | @load      | `@set var = @load ./file.txt`                  | Load the contents of a file into a variable                                                 |
 | @http      | `@set var = @http https://example.com`         | Fetch the contents of a URL (HTTP GET) into a variable                                      |
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |

@@ -5,6 +5,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
+import chalk from "chalk";
 
 import { Context } from "./dsl/context.js";
 import { parseContent } from "./dsl/parser.js";
@@ -61,7 +62,7 @@ async function main() {
   try {
     await fs.mkdir(outputDir, { recursive: true });
   } catch (error) {
-    console.error(`Error: Could not create output directory "${outputDir}".`);
+    console.error(chalk.red(`Error: Could not create output directory "${outputDir}".`));
     process.exit(1);
   }
 
@@ -72,9 +73,9 @@ async function main() {
       initialContext = JSON.parse(configContent);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(`Error reading or parsing config file: ${error.message}`);
+        console.error(chalk.red(`Error reading or parsing config file: ${error.message}`));
       } else {
-        console.error(`Error reading or parsing config file: ${String(error)}`);
+        console.error(chalk.red(`Error reading or parsing config file: ${String(error)}`));
       }
       process.exit(1);
     }
@@ -87,9 +88,9 @@ async function main() {
     genContent = await fs.readFile(genFile, 'utf-8');
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`Error reading .gen file: ${error.message}`);
+      console.error(chalk.red(`Error reading .gen file: ${error.message}`));
     } else {
-      console.error(`Error reading .gen file: ${String(error)}`);
+      console.error(chalk.red(`Error reading .gen file: ${String(error)}`));
     }
     process.exit(1);
   }
