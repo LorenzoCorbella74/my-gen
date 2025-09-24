@@ -76,9 +76,6 @@ export class Executor {
     };
   }
 
-
-
-
   public async execute(nodes: AstNode[]) {
     for (const node of nodes) {
       const commandFn = this.commands.get(node.type.toUpperCase());
@@ -88,7 +85,6 @@ export class Executor {
         if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL") {
           spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
         }
-
         try {
           await commandFn(node);
           spinner && spinner.succeed(`${node.type} completed`);
@@ -102,8 +98,6 @@ export class Executor {
           process.exit(1);
         }
       } else {
-        const spinner = new SimpleSpinner(`Unknown command "${node.type}"`).start();
-        spinner.fail(`Unknown command "${node.type}"`);
         console.error(chalk.red(`Unknown command "${node.type}" at line ${node.line}`));
         process.exit(1);
       }

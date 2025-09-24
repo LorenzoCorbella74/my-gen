@@ -1,6 +1,6 @@
 # @gen
 
-**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use bash, Python, Make, or Just...? Because it was fun to create a new language and a new tool! 😄
+**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
 
 ## Usage
 

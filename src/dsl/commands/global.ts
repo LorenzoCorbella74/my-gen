@@ -71,7 +71,7 @@ export async function handleGlobal(node: AstNode, ctx: CommandContext): Promise<
   await ctx.globalContext.syncContextWithGlobals(ctx.context);
 
   const valueForLog = typeof finalValue === 'string' && finalValue.length > 100 ?
-    finalValue.substring(0, 100) + '...' : Array.isArray(finalValue) ? `[${finalValue.join(', ')}]` :
-      finalValue;
+    finalValue.substring(0, 100) + '...' : 
+    Array.isArray(finalValue) ? `[${finalValue.join(', ')}]` : finalValue;
   console.log(chalk.magenta(`[GLOBAL] ${varName} = ${valueForLog} (saved to ${ctx.globalContext.getGlobalFilePath()})`));
 }

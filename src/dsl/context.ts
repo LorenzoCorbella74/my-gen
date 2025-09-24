@@ -1,5 +1,3 @@
-// Execution Context
-// This file will manage variables and state.
 
 export class Context {
   private variables: Map<string, any> = new Map();

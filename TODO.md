@@ -3,11 +3,7 @@
   + Example: `@set projectName = @input Enter project name`
 - [x] @select uno, due, tre in place of select:[uno, due, tre].
     - Example: `@set framework = @select Select a framework options: React,Vue,Angular`
-- [x] `@global` similar to @set but sets a global variable that persists across
-  multiple `@gen` executions.
-  - Example: `@global apiKey = input:Enter your API key`
-  - Example: `@global configurations = load ./config.json`
-- `@http` to fetch data from a URL but with data cleaning options
+- [x] `@http` to fetch data from a URL but with data cleaning options
   (Readability.js ??)
 - [x] `@ai` to interact with AI models (like OpenAI's GPT) for generating or
   transforming content.
@@ -32,13 +28,11 @@
   - Example: `@import ./common.gen`
 
 ## VSCode Extension
-
 - [x] A VSCode extension to provide syntax highlighting and snippets for `.gen`
 files.
 
 # Future Plans
 - [ ] reorganize the STDOUT and STDERR with ink.js
 - [ ] Improve error handling and reporting
-- [x] global spinner for long operations
 - [x] make it work globally (WINDOWS, LINUX, MAC)
 - [x] understand  how to extend with new commands "from outside"

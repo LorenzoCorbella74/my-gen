@@ -12,7 +12,7 @@ import { parseContent } from "./dsl/parser.js";
 import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
 
-console.log("Generator CLI");
+console.log(chalk.blueBright("@gen - Your command runner"));
 
 const argv = yargs(hideBin(process.argv))
   .option('file', {
@@ -81,6 +81,7 @@ async function main() {
     }
   }
 
+  // si carica un contesto temporaneo
   const context = new Context(initialContext);
 
   let genContent = "";
@@ -96,10 +97,12 @@ async function main() {
   }
 
   const ast = parseContent(genContent);
+
+  // si recupera il global contest e si mergia nel contesto 
   const executor = new Executor(context, outputDir);
   await executor.execute(ast);
 
-  console.log("\nExecution completed.");
+  console.log(chalk.blueBright("\nExecution completed."));
 }
 
 main();
