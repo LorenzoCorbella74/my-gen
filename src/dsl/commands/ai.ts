@@ -11,7 +11,7 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
   }
 
   // Get configuration from global context
-  const model = ctx.context.get('AI_MODEL') || 'llama3.1';
+  const model = ctx.context.get('AI_MODEL') || 'llama3.2:latest';
   const systemPrompt = ctx.context.get('AI_SYSTEM_PROMPT') || undefined;
   const temperature = ctx.context.get('AI_TEMPERATURE') || 0.7;
   const host = ctx.context.get('AI_OLLAMA_HOST') || 'http://127.0.0.1:11434';

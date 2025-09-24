@@ -1,6 +1,6 @@
-# @gen
+# my-gen (also known as @gen)
 
-**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄##
+**@gen** is a simple, extensible command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
 
 
 ## Usage
@@ -14,18 +14,9 @@ npm install -g my-gen
 @gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
 ```
 
-- `--file`: Path to the `.gen` script to execute.
+- `--file`: Path to the `.gen` script to execute (Default: current directory).
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
-
-## AI with Ollama
-```plaintext
-# Use AI with global configuration
-@global AI_MODEL = llama3.1
-@global AI_OLLAMA_HOST = http://127.0.0.1:11434
-@global AI_TEMPERATURE = 0.7
-@global AI_SYSTEM_PROMPT = You are a helpful coding assistant
-```
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. Here is an example:
@@ -51,7 +42,6 @@ npm install -g my-gen
 
 # Set a global variable from HTTP (persists across runs)
 @global configData = @http https://config.example.com/settings
-
 
 # List files and folders
 @set files = files in ./src
@@ -101,7 +91,21 @@ END
 | @write/@save | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file                                                 |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
-| COMPILE    | `COMPILE ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object        |
+| @compile    | `@compile ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object (key=file path, value=file content)       |
+
+A basic example of the template.json:
+```json
+{
+  "templates": {
+    "index.html": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n <body>\n  <div id=\"app\">Hello world</div>\n    <script type=\"module\" src=\"/src/main.ts\"></script>\n  </body>\n</html>\n",
+    "src\\main.ts": "import './style.css'\n\n\n",
+    "src\\style.css": ":root {\n  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;\n color: rgba(255, 255, 255, 0.87);\n  background-color: #242424;\n\n }\n\nbody {\n  margin: 0;\n  display: flex;\n  place-items: center;\n  min-width: 320px;\n  min-height: 100vh;\n}",
+    "tsconfig.json": "{\n  \"compilerOptions\": ..., \"include\": [\"src/**/*.ts\"],\n  \"exclude\": [\"node_modules\", \"dist\"]\n}\n"
+  }
+}
+```
+
+
 
 ## AI Command Configuration
 
@@ -109,14 +113,14 @@ The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-po
 
 | Variable            | Default Value                | Description                                    |
 |--------------------|------------------------------|------------------------------------------------|
-| `AI_MODEL`         | `llama3.1`                   | The Ollama model to use                       |
+| `AI_MODEL`         | `llama3.2:latest`                   | The Ollama model to use                       |
 | `AI_OLLAMA_HOST`   | `http://127.0.0.1:11434`    | Ollama server URL                             |
 | `AI_TEMPERATURE`   | `0.7`                        | Response creativity (0.0 to 2.0)              |
 | `AI_SYSTEM_PROMPT` | *(none)*                     | System prompt to guide AI behavior            |
 
 **Prerequisites:**
 - [Ollama](https://ollama.com/) must be installed and running
-- The specified model must be pulled: `ollama pull llama3.1`
+- The specified model must be pulled: `ollama pull llama3.2:latest`
 
 **Example:**
 ```plaintext
