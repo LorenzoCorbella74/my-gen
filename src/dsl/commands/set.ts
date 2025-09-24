@@ -53,6 +53,16 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<voi
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     finalValue = await response.text();
+  } else if (valueExpression.startsWith('@ai ') || valueExpression.startsWith('ai ')) {
+    // Import the AI handler function
+    const { handleAi } = await import('./ai.js');
+    // Create a temporary node for the AI handler
+    const aiNode: AstNode = {
+      type: '@AI' as any, // We'll add this to the parser types
+      payload: valueExpression.startsWith('@ai ') ? valueExpression.substring(4).trim() : valueExpression.substring(3).trim(),
+      line: node.line
+    };
+    finalValue = await handleAi(aiNode, ctx);
   } else if (valueExpression.startsWith('files in ')) {
     const dirPath = ctx.resolvePath(ctx.context.interpolate(valueExpression.substring(9).trim()));
     const entries = await fs.readdir(dirPath, { withFileTypes: true });

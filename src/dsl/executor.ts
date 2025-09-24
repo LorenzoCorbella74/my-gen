@@ -13,6 +13,7 @@ import {
   handleLog,
   handleSet,
   handleGlobal,
+  handleAiCommand,
   handleShell,
   handleWrite,
   handleCompile,
@@ -58,6 +59,7 @@ export class Executor {
     this.commands.set("@LOG", (node: AstNode) => handleLog(node, ctx));
     this.commands.set("@SET", (node: AstNode) => handleSet(node, ctx));
     this.commands.set("@GLOBAL", (node: AstNode) => handleGlobal(node, ctx));
+    this.commands.set("@AI", (node: AstNode) => handleAiCommand(node, ctx));
     this.commands.set(">", (node: AstNode) => handleShell(node, ctx));
     this.commands.set("@WRITE", (node: AstNode) => handleWrite(node, ctx));
     this.commands.set("@SAVE", (node: AstNode) => handleWrite(node, ctx)); // Alias

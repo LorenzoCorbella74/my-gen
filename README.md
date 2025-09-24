@@ -18,6 +18,15 @@ npm install -g my-gen
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 
+## AI with Ollama
+```plaintext
+# Use AI with global configuration
+@global AI_MODEL = llama3.1
+@global AI_OLLAMA_HOST = http://127.0.0.1:11434
+@global AI_TEMPERATURE = 0.7
+@global AI_SYSTEM_PROMPT = You are a helpful coding assistant
+```
+
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. Here is an example:
 ```plaintext
@@ -42,6 +51,7 @@ npm install -g my-gen
 
 # Set a global variable from HTTP (persists across runs)
 @global configData = @http https://config.example.com/settings
+
 
 # List files and folders
 @set files = files in ./src
@@ -84,6 +94,7 @@ END
 | @log       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
 | @set       | `@set name = value`<br>`@set x = input:Prompt`   | Set a variable, prompt for input, load file, fetch HTTP, list files/folders, or interpolate |
 | @global    | `@global name = value`<br>`@global x = input:Prompt`   | Same as @set but saves variables permanently |
+| @ai        | `@set reply = @ai What is Node.js?`            | Send a prompt to Ollama AI and get a response (configurable via global variables)          |
 | @load      | `@set var = @load ./file.txt`                  | Load the contents of a file into a variable                                                 |
 | @http      | `@set var = @http https://example.com`         | Fetch the contents of a URL (HTTP GET) into a variable                                      |
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |
@@ -91,6 +102,33 @@ END
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
 | COMPILE    | `COMPILE ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object        |
+
+## AI Command Configuration
+
+The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-powered text generation. Configure the AI behavior using global variables:
+
+| Variable            | Default Value                | Description                                    |
+|--------------------|------------------------------|------------------------------------------------|
+| `AI_MODEL`         | `llama3.1`                   | The Ollama model to use                       |
+| `AI_OLLAMA_HOST`   | `http://127.0.0.1:11434`    | Ollama server URL                             |
+| `AI_TEMPERATURE`   | `0.7`                        | Response creativity (0.0 to 2.0)              |
+| `AI_SYSTEM_PROMPT` | *(none)*                     | System prompt to guide AI behavior            |
+
+**Prerequisites:**
+- [Ollama](https://ollama.com/) must be installed and running
+- The specified model must be pulled: `ollama pull llama3.1`
+
+**Example:**
+```plaintext
+# Configure AI settings
+@global AI_MODEL = codellama
+@global AI_TEMPERATURE = 0.3
+@global AI_SYSTEM_PROMPT = You are a helpful coding assistant
+
+# Use AI to generate code
+@set jsFunction = @ai Create a JavaScript function to validate email addresses
+@write jsFunction to validate-email.js
+```
 
 
 ## Parse Folder to produce Template!

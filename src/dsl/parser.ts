@@ -20,6 +20,11 @@ export interface GlobalNode extends BaseAstNode {
   payload: string; // The assignment expression (e.g., "name = value") - saved to .global.json
 }
 
+export interface AiNode extends BaseAstNode {
+  type: '@AI';
+  payload: string; // The AI prompt to send to Ollama
+}
+
 export interface ShellNode extends BaseAstNode {
   type: '>';
   payload: string; // The shell command to execute
@@ -52,6 +57,7 @@ export type AstNode =
   | LogNode 
   | SetNode 
   | GlobalNode
+  | AiNode
   | ShellNode 
   | WriteNode 
   | IfNode 
@@ -62,6 +68,7 @@ export type AstNode =
 export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
 export const isSetNode = (node: AstNode): node is SetNode => node.type === '@SET';
 export const isGlobalNode = (node: AstNode): node is GlobalNode => node.type === '@GLOBAL';
+export const isAiNode = (node: AstNode): node is AiNode => node.type === '@AI';
 export const isShellNode = (node: AstNode): node is ShellNode => node.type === '>';
 export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
 export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
@@ -153,6 +160,9 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@GLOBAL':
     case 'GLOBAL':
       return '@GLOBAL';
+    case '@AI':
+    case 'AI':
+      return '@AI';
     case '@WRITE':
     case 'WRITE':
       return '@WRITE';
@@ -178,6 +188,8 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@SET', payload, line };
     case '@GLOBAL':
       return { type: '@GLOBAL', payload, line };
+    case '@AI':
+      return { type: '@AI', payload, line };
     case '@WRITE':
       return { type: '@WRITE', payload, line };
     case '@SAVE':

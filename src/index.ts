@@ -18,7 +18,7 @@ const argv = yargs(hideBin(process.argv))
   .option('file', {
     type: 'string',
     description: 'Path to the .gen file',
-    default: './test/project.gen',
+    default: '.',
   })
   .option('config', {
     type: 'string',

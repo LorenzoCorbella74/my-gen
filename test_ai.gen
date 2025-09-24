@@ -1,0 +1,8 @@
+# Test AI command
+@GLOBAL AI_MODEL = llama3.1
+@GLOBAL AI_OLLAMA_HOST = http://127.0.0.1:11434
+@GLOBAL AI_TEMPERATURE = 0.7
+
+@set reply = @ai Why is the sky blue? Please answer in one sentence.
+
+@LOG AI replied: {reply}
