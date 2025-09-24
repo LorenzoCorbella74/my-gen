@@ -36,7 +36,7 @@ export class GlobalContext {
   /**
    * Save global variables to .global.json file
    */
-  async saveGlobalVariables(globals: Record<string, any>): Promise<void> {
+  private async saveGlobalVariables(globals: Record<string, any>): Promise<void> {
     const content = JSON.stringify(globals, null, 2);
     await fs.writeFile(this.globalFilePath, content, 'utf-8');
   }
@@ -44,7 +44,7 @@ export class GlobalContext {
   /**
    * Set a global variable and save to file
    */
-  async setGlobalVariable(key: string, value: any): Promise<void> {
+  async set(key: string, value: any): Promise<void> {
     const globalVars = await this.loadGlobalVariables();
     globalVars[key] = value;
     await this.saveGlobalVariables(globalVars);
@@ -53,7 +53,7 @@ export class GlobalContext {
   /**
    * Get a specific global variable
    */
-  async getGlobalVariable(key: string): Promise<any> {
+  async get(key: string): Promise<any> {
     const globalVars = await this.loadGlobalVariables();
     return globalVars[key];
   }
@@ -61,7 +61,7 @@ export class GlobalContext {
   /**
    * Check if a global variable exists
    */
-  async hasGlobalVariable(key: string): Promise<boolean> {
+  async has(key: string): Promise<boolean> {
     const globalVars = await this.loadGlobalVariables();
     return key in globalVars;
   }
@@ -69,7 +69,7 @@ export class GlobalContext {
   /**
    * Delete a global variable
    */
-  async deleteGlobalVariable(key: string): Promise<boolean> {
+  async erase(key: string): Promise<boolean> {
     const globalVars = await this.loadGlobalVariables();
     if (key in globalVars) {
       delete globalVars[key];
@@ -111,25 +111,11 @@ export class GlobalContext {
     this.mergeGlobalVariablesIntoContext(globalVars, context);
   }
 
-  /**
-   * Get the path to the global variables file
-   */
-  getGlobalFilePath(): string {
-    return this.globalFilePath;
-  }
-
-  /**
-   * Get count of global variables
-   */
-  async getGlobalVariablesCount(): Promise<number> {
-    const globalVars = await this.loadGlobalVariables();
-    return Object.keys(globalVars).length;
-  }
 
   /**
    * Clear all global variables
    */
-  async clearAllGlobalVariables(): Promise<void> {
+  async clear(): Promise<void> {
     await this.saveGlobalVariables({});
   }
 }

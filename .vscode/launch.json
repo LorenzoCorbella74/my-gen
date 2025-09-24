@@ -4,8 +4,8 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug CLI (tsx)",
-      "program": "${workspaceFolder}/src/generator.ts",
+      "name": "Debug vite",
+      "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--file",
         ".\\test\\ai.gen",
@@ -18,8 +18,8 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug CLI (tsx)",
-      "program": "${workspaceFolder}/src/generator.ts",
+      "name": "Debug parsing folder",
+      "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--parse",
         "C:\\DEV\\for_template_vanilla_ts\\vite-project"
@@ -31,12 +31,24 @@
       "type": "node",
       "request": "launch",
       "name": "Test compile",
-      "program": "${workspaceFolder}/src/generator.ts",
+      "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--file",
         ".\\test\\compile_test.gen",
         "--output",
         "c:\\DEV\\test1"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @ai",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\ollama.gen"
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"

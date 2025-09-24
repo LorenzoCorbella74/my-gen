@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Entrypoint for the CLI
+import { readFileSync } from 'fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs/promises';
@@ -12,7 +12,8 @@ import { parseContent } from "./dsl/parser.js";
 import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
 
-console.log(chalk.blueBright("@gen - Your command runner"));
+const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
+console.log(chalk.blueBright(`@gen v${pkg.version} - Your command runner`));
 
 const argv = yargs(hideBin(process.argv))
   .option('file', {
@@ -31,7 +32,7 @@ const argv = yargs(hideBin(process.argv))
   })
   .option('parse', {
     type: 'string',
-    description: 'Parse a folder and return a json representation of the folder'
+    description: 'Parse a folder and return a .json representation of the folder'
   })
   .help()
   .alias('help', 'h')

@@ -1,0 +1,6 @@
+{
+  "AI_MODEL": "llama3.2:latest",
+  "AI_OLLAMA_HOST": "http://127.0.0.1:11434",
+  "AI_TEMPERATURE": "0.7",
+  "AI_SYSTEM_PROMPT": "You are a helpful assistant"
+}

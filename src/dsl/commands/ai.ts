@@ -11,10 +11,10 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
   }
 
   // Get configuration from global context
-  const model = ctx.context.get('AI_MODEL') || 'llama3.2:latest';
-  const systemPrompt = ctx.context.get('AI_SYSTEM_PROMPT') || undefined;
-  const temperature = ctx.context.get('AI_TEMPERATURE') || 0.7;
-  const host = ctx.context.get('AI_OLLAMA_HOST') || 'http://127.0.0.1:11434';
+  const model = await ctx.globalContext.get('AI_MODEL') || 'llama3.2:latest';
+  const systemPrompt = await ctx.globalContext.get('AI_SYSTEM_PROMPT') || undefined;
+  const temperature = await ctx.globalContext.get('AI_TEMPERATURE') || 0.7;
+  const host = await ctx.globalContext.get('AI_OLLAMA_HOST') || 'http://127.0.0.1:11434';
 
   console.log(chalk.cyan(`[AI] Using model: ${model} on ${host}`));
 
@@ -41,7 +41,7 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
     const response = await ollama.generate(request) as any;
     
     // Return only the text content
-    return response.response.content;
+    return response.response;
 
   } catch (error) {
     if (error instanceof Error) {
@@ -63,7 +63,7 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
 export async function handleAiCommand(node: AstNode, ctx: CommandContext): Promise<void> {
   try {
     const result = await handleAi(node, ctx);
-    console.log(chalk.green(`[AI] ${result}`));
+    console.log(chalk.green(`\n[AI]: ${result}`));
   } catch (error) {
     throw error;
   }

@@ -1,12 +1,13 @@
 # Configure AI settings globally
-@GLOBAL AI_MODEL = llama3.1
-@GLOBAL AI_OLLAMA_HOST = http://127.0.0.1:11434
-@GLOBAL AI_TEMPERATURE = 0.7
-@GLOBAL AI_SYSTEM_PROMPT = You are a helpful assistant
+# @GLOBAL AI_MODEL = llama3.2:latest
+# @GLOBAL AI_OLLAMA_HOST = http://127.0.0.1:11434
+# @GLOBAL AI_TEMPERATURE = 0.7
+# @GLOBAL AI_SYSTEM_PROMPT = You are a helpful assistant
 
 # Use with @SET command (recommended)
-@set reply = @ai Why is the sky blue?
-@LOG The AI said: {reply}
+# @set reply = @ai Why is the sky blue?
+# @log The AI said: {reply}
+# 
+# @write reply to ./reply.txt 
 
-# Direct usage (will just print the response)
-@AI What is the capital of France?
+@ai Sai darmi la definizione di capitalismo?

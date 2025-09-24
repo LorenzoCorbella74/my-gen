@@ -23,8 +23,4 @@ Thumbs.db
 bin/
 dist/
 
-# Test output
-coverage/
 
-# Ignore lock file if not needed
-# deno.lock
