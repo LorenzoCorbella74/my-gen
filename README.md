@@ -7,7 +7,7 @@
 
 Install globally:
 ```bash
-npm install -g 
+npm install -g my-gen
 ```
 
 ```bash
