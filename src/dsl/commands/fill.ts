@@ -5,29 +5,30 @@ import { AstNode } from "../parser.js";
 import { CommandContext } from "./types.js";
 
 export async function handleFill(node: AstNode, ctx: CommandContext): Promise<void> {
-  const filePath = ctx.context.interpolate(node.payload.trim());
-  
-  if (!filePath) {
-    throw new Error('Fill command requires a file path');
-  }
+    const filePath = ctx.context.interpolate(node.payload.trim());
 
-  // The content should be stored in the node's content property
-  const fillNode = node as any; // Cast to access content property
-  if (!fillNode.content || fillNode.content.length === 0) {
-    throw new Error('Fill command requires content between quote delimiters');
-  }
+    if (!filePath) {
+        throw new Error('Fill command requires a file path');
+    }
 
-  // Join content lines with newlines
-  const content = fillNode.content.join('\n');
+    // The content should be stored in the node's content property
+    const fillNode = node as any; // Cast to access content property
+    if (!fillNode.content || fillNode.content.length === 0) {
+        throw new Error('Fill command requires content between quote delimiters');
+    }
 
-  const finalPath = ctx.resolvePath(filePath);
-  
-  // Create directory if it doesn't exist
-  const dir = path.dirname(finalPath);
-  await fs.mkdir(dir, { recursive: true });
+    // Join content lines with newlines
+    const content = fillNode.content.join('\n');
+    const interpolatedContent = ctx.context.interpolate(content);
 
-  // Write the content to the file
-  await fs.writeFile(finalPath, content, 'utf-8');
-  
-  console.log(chalk.green(`[FILL] Content written to ${finalPath} (${content.length} characters)`));
+    const finalPath = ctx.resolvePath(filePath);
+
+    // Create directory if it doesn't exist
+    const dir = path.dirname(finalPath);
+    await fs.mkdir(dir, { recursive: true });
+
+    // Write the content to the file
+    await fs.writeFile(finalPath, interpolatedContent, 'utf-8');
+
+    console.log(chalk.green(`[FILL] Content written to ${finalPath} (${interpolatedContent.length} characters)`));
 }

@@ -44,6 +44,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Test @fill",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\simple_fill.gen",
+        "--output",
+        "c:/DEV/prova-ts"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Test @ai",
       "program": "${workspaceFolder}/src/index.ts",
       "args": [

@@ -1,8 +1,9 @@
 # Simple test
 @log Testing basic functionality
+@set nome= input: Nome autore?
 @fill simple.txt
 "
-Hello World!
+Hello World {nome}!
 This is a test.
 "
 @log Test completed
