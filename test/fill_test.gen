@@ -1,0 +1,34 @@
+# Test @fill command
+@log Testing @fill command with multi-line content
+
+# Create a simple JavaScript file
+@fill test_output/example.js
+"
+// This is a test file generated with @fill
+function greetUser(name) {
+    console.log("Hello, " + name + "!");
+    console.log("Welcome to the gen CLI tool!");
+}
+
+greetUser("World");
+"
+
+# Create a TypeScript configuration file
+@fill test_output/tsconfig.json
+"
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext", 
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+"
+
+@log @fill command test completed successfully!

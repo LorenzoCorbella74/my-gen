@@ -1,0 +1,8 @@
+# Simple test
+@log Testing basic functionality
+@fill simple.txt
+"
+Hello World!
+This is a test.
+"
+@log Test completed

@@ -56,6 +56,13 @@ gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path
 @write "Hello, {projectName}!" to hello.txt
 @write readmeContent to copy_of_readme.txt
 
+# Fill a file with multi-line content
+@fill src/index.ts
+"
+console.log("Hello from {projectName}!");
+console.log("Generated with @gen");
+"
+
 # Conditional execution
 IF exists hello.txt
   @log hello.txt exists!
@@ -91,6 +98,7 @@ END
 | @http      | `@set var = @http https://example.com`         | Fetch the contents of a URL (HTTP GET) into a variable                                      |
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |
 | @write/@save | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file                                                 |
+| @fill        | `@fill path/to/file.txt`<br>`"`<br>`content here`<br>`"` | Write multi-line content to a file using quote delimiters                                   |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
 | @compile    | `@compile ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object (key=file path, value=file content)       |

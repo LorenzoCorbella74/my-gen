@@ -5,6 +5,7 @@ export { handleAiCommand } from "./ai.js";
 export { handleShell } from "./shell.js";
 export { handleWrite } from "./write.js";
 export { handleCompile } from "./compile.js";
+export { handleFill } from "./fill.js";
 export { handleIf } from "./if.js";
 export { handleForeach } from "./foreach.js";
 

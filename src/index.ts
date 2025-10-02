@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
-console.log(chalk.blueBright(`@gen v${pkg.version} - Your command runner`));
+console.log(chalk.blueBright(`Gen v${pkg.version} - Your command runner`));
 
 const argv = yargs(hideBin(process.argv))
   .option('file', {

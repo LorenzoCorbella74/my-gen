@@ -19,7 +19,7 @@
 - [x] @md: to export variables to Markdown files with optional front-matter.
   - Example:
     `@md content to path/to/file.md frontmatter:{"title":"My Document","date":"2024-10-01"}`
-- --chat to transform @gen into a chat interface (with ChatGPT ???) o come una repl... .
+- --chat to transform gen into a chat interface (with ChatGPT ???) o come una repl... .
 - --workflow to define and run multiple .gen files in sequence with dependencies ??.
 - [x] @task to fragment sequence of commands after a .gen file has been loaded but not yet executed. Fragments can be executed upon request
   - Example:

@@ -52,6 +52,12 @@ export interface CompileNode extends BaseAstNode {
   payload: string; // The path to the template JSON file
 }
 
+export interface FillNode extends BaseAstNode {
+  type: '@FILL';
+  payload: string; // The file path to write to
+  content?: string[]; // Array containing the content lines
+}
+
 // Union type for all possible AST nodes
 export type AstNode = 
   | LogNode 
@@ -62,7 +68,8 @@ export type AstNode =
   | WriteNode 
   | IfNode 
   | ForeachNode 
-  | CompileNode;
+  | CompileNode
+  | FillNode;
 
 // Type guards for runtime type checking
 export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
@@ -74,6 +81,7 @@ export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '
 export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
 export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
 export const isCompileNode = (node: AstNode): node is CompileNode => node.type === '@COMPILE';
+export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
 
 // Helper type for block commands that have children
 export type BlockNode = IfNode | ForeachNode;
@@ -117,6 +125,39 @@ export function parseContent(content: string): AstNode[] {
         currentAst.push(newNode);
         stack.push(newNode.children);
         currentAst = newNode.children;
+    } else if (upperCommand === '@FILL' || upperCommand === 'FILL') {
+        // Handle @fill command with multi-line content
+        const fillNode: FillNode = { type: '@FILL', payload: payload, line: lineNumber, content: [] };
+        
+        // Look for the opening quote on the next line
+        let j = i + 1;
+        while (j < lines.length && lines[j].trim() !== '"') {
+          j++;
+        }
+        
+        if (j >= lines.length) {
+          throw new Error(`@FILL command at line ${lineNumber} missing opening quote delimiter`);
+        }
+        
+        // Skip the opening quote line
+        j++;
+        const contentLines: string[] = [];
+        
+        // Collect content until closing quote
+        while (j < lines.length && lines[j].trim() !== '"') {
+          contentLines.push(lines[j]);
+          j++;
+        }
+        
+        if (j >= lines.length) {
+          throw new Error(`@FILL command at line ${lineNumber} missing closing quote delimiter`);
+        }
+        
+        fillNode.content = contentLines;
+        currentAst.push(fillNode);
+        
+        // Skip processed lines
+        i = j;
     } else if (upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH') {
         stack.pop();
         currentAst = stack[stack.length - 1];
@@ -172,6 +213,9 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@COMPILE':
     case 'COMPILE':
       return '@COMPILE';
+    case '@FILL':
+    case 'FILL':
+      return '@FILL';
     default:
       return null;
   }
@@ -196,6 +240,8 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@SAVE', payload, line };
     case '@COMPILE':
       return { type: '@COMPILE', payload, line };
+    case '@FILL':
+      return { type: '@FILL', payload, line, content: [] };
     case '>':
       return { type: '>', payload, line };
     default:

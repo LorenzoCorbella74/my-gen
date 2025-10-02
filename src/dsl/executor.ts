@@ -17,6 +17,7 @@ import {
   handleShell,
   handleWrite,
   handleCompile,
+  handleFill,
   handleIf,
   handleForeach,
   type CommandHandler,
@@ -63,6 +64,7 @@ export class Executor {
     this.commands.set(">", (node: AstNode) => handleShell(node, ctx));
     this.commands.set("@WRITE", (node: AstNode) => handleWrite(node, ctx));
     this.commands.set("@SAVE", (node: AstNode) => handleWrite(node, ctx)); // Alias
+    this.commands.set("@FILL", (node: AstNode) => handleFill(node, ctx));
     this.commands.set("IF", (node: AstNode) => handleIf(node, ctx));
     this.commands.set("FOREACH", (node: AstNode) => handleForeach(node, ctx));
     this.commands.set("COMPILE", (node: AstNode) => handleCompile(node, ctx));
