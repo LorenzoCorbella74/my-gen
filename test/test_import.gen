@@ -1,0 +1,4 @@
+# Test the @import command
+@log Start test_import.gen
+@import ./test/imported_commands.gen
+@log End of test_import.gen

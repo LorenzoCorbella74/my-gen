@@ -78,6 +78,11 @@ END
 
 # Compile a template file to generate multiple files
 @compile ./templates/my-template.json
+
+# Import commands from another file
+@import ./common-steps.gen
+
+# The commands in common-steps.gen will be executed here
 ```
 
 ## Scope
@@ -102,6 +107,7 @@ END
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
 | @compile    | `@compile ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object (key=file path, value=file content)       |
+| @import    | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
 
 A basic example of the template.json:
 ```json

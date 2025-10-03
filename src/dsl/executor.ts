@@ -20,6 +20,7 @@ import {
   handleFill,
   handleIf,
   handleForeach,
+  handleImport,
   type CommandHandler,
   type CommandContext
 } from "./commands/index.js";
@@ -68,6 +69,7 @@ export class Executor {
     this.commands.set("IF", (node: AstNode) => handleIf(node, ctx));
     this.commands.set("FOREACH", (node: AstNode) => handleForeach(node, ctx));
     this.commands.set("COMPILE", (node: AstNode) => handleCompile(node, ctx));
+    this.commands.set("@IMPORT", (node: AstNode) => handleImport(node, ctx));
   }
 
   private createCommandContext(): CommandContext {

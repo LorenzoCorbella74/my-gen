@@ -58,18 +58,24 @@ export interface FillNode extends BaseAstNode {
   content?: string[]; // Array containing the content lines
 }
 
+export interface ImportNode extends BaseAstNode {
+  type: '@IMPORT';
+  payload: string; // The file path to import
+}
+
 // Union type for all possible AST nodes
-export type AstNode = 
-  | LogNode 
-  | SetNode 
+export type AstNode =
+  | LogNode
+  | SetNode
   | GlobalNode
   | AiNode
-  | ShellNode 
-  | WriteNode 
-  | IfNode 
-  | ForeachNode 
+  | ShellNode
+  | WriteNode
+  | IfNode
+  | ForeachNode
   | CompileNode
-  | FillNode;
+  | FillNode
+  | ImportNode;
 
 // Type guards for runtime type checking
 export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
@@ -82,6 +88,7 @@ export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
 export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
 export const isCompileNode = (node: AstNode): node is CompileNode => node.type === '@COMPILE';
 export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
+export const isImportNode = (node: AstNode): node is ImportNode => node.type === '@IMPORT';
 
 // Helper type for block commands that have children
 export type BlockNode = IfNode | ForeachNode;
@@ -121,66 +128,66 @@ export function parseContent(content: string): AstNode[] {
       stack.push(newNode.children);
       currentAst = newNode.children;
     } else if (upperCommand === 'FOREACH') {
-        const newNode: ForeachNode = { type: 'FOREACH', payload: payload, line: lineNumber, children: [] };
-        currentAst.push(newNode);
-        stack.push(newNode.children);
-        currentAst = newNode.children;
+      const newNode: ForeachNode = { type: 'FOREACH', payload: payload, line: lineNumber, children: [] };
+      currentAst.push(newNode);
+      stack.push(newNode.children);
+      currentAst = newNode.children;
     } else if (upperCommand === '@FILL' || upperCommand === 'FILL') {
-        // Handle @fill command with multi-line content
-        const fillNode: FillNode = { type: '@FILL', payload: payload, line: lineNumber, content: [] };
-        
-        // Look for the opening quote on the next line
-        let j = i + 1;
-        while (j < lines.length && lines[j].trim() !== '"') {
-          j++;
-        }
-        
-        if (j >= lines.length) {
-          throw new Error(`@FILL command at line ${lineNumber} missing opening quote delimiter`);
-        }
-        
-        // Skip the opening quote line
+      // Handle @fill command with multi-line content
+      const fillNode: FillNode = { type: '@FILL', payload: payload, line: lineNumber, content: [] };
+
+      // Look for the opening quote on the next line
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() !== '"') {
         j++;
-        const contentLines: string[] = [];
-        
-        // Collect content until closing quote
-        while (j < lines.length && lines[j].trim() !== '"') {
-          contentLines.push(lines[j]);
-          j++;
-        }
-        
-        if (j >= lines.length) {
-          throw new Error(`@FILL command at line ${lineNumber} missing closing quote delimiter`);
-        }
-        
-        fillNode.content = contentLines;
-        currentAst.push(fillNode);
-        
-        // Skip processed lines
-        i = j;
+      }
+
+      if (j >= lines.length) {
+        throw new Error(`@FILL command at line ${lineNumber} missing opening quote delimiter`);
+      }
+
+      // Skip the opening quote line
+      j++;
+      const contentLines: string[] = [];
+
+      // Collect content until closing quote
+      while (j < lines.length && lines[j].trim() !== '"') {
+        contentLines.push(lines[j]);
+        j++;
+      }
+
+      if (j >= lines.length) {
+        throw new Error(`@FILL command at line ${lineNumber} missing closing quote delimiter`);
+      }
+
+      fillNode.content = contentLines;
+      currentAst.push(fillNode);
+
+      // Skip processed lines
+      i = j;
     } else if (upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH') {
-        stack.pop();
-        currentAst = stack[stack.length - 1];
+      stack.pop();
+      currentAst = stack[stack.length - 1];
     } else {
-        // Handle different command types
-        if (line.startsWith('>')) {
-            const shellNode: ShellNode = {
-                type: '>',
-                payload: line.substring(1).trim(),
-                line: lineNumber
-            };
-            currentAst.push(shellNode);
+      // Handle different command types
+      if (line.startsWith('>')) {
+        const shellNode: ShellNode = {
+          type: '>',
+          payload: line.substring(1).trim(),
+          line: lineNumber
+        };
+        currentAst.push(shellNode);
+      } else {
+        // Map command strings to specific node types
+        const nodeType = mapCommandToType(upperCommand);
+        if (nodeType) {
+          const node = createNodeByType(nodeType, payload, lineNumber);
+          currentAst.push(node);
         } else {
-            // Map command strings to specific node types
-            const nodeType = mapCommandToType(upperCommand);
-            if (nodeType) {
-                const node = createNodeByType(nodeType, payload, lineNumber);
-                currentAst.push(node);
-            } else {
-                // Handle unknown commands - could throw error or create generic node
-                console.warn(`Unknown command "${upperCommand}" at line ${lineNumber}`);
-            }
+          // Handle unknown commands - could throw error or create generic node
+          console.warn(`Unknown command "${upperCommand}" at line ${lineNumber}`);
         }
+      }
     }
   }
 
@@ -216,6 +223,9 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@FILL':
     case 'FILL':
       return '@FILL';
+    case '@IMPORT':
+    case 'IMPORT':
+      return '@IMPORT';
     default:
       return null;
   }
@@ -242,6 +252,8 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@COMPILE', payload, line };
     case '@FILL':
       return { type: '@FILL', payload, line, content: [] };
+    case '@IMPORT':
+      return { type: '@IMPORT', payload, line };
     case '>':
       return { type: '>', payload, line };
     default:

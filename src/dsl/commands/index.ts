@@ -8,5 +8,6 @@ export { handleCompile } from "./compile.js";
 export { handleFill } from "./fill.js";
 export { handleIf } from "./if.js";
 export { handleForeach } from "./foreach.js";
+export { handleImport } from "./import.js";
 
 export type { CommandHandler, CommandContext } from "./types.js";

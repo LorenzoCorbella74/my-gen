@@ -1,0 +1,4 @@
+# This file will be imported by test_import.gen
+@log This is a command from imported_commands.gen
+@set importedVar = Hello from imported file!
+@log importedVar: {importedVar}
