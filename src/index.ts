@@ -36,7 +36,7 @@ const argv = yargs(hideBin(process.argv))
   })
   .option('parse', {
     type: 'string',
-    description: 'Parse a folder and return a .json representation of the folder'
+    description: 'Parse a folder and return a .gen representation of the folder'
   })
   .help()
   .alias('help', 'h')
@@ -46,13 +46,7 @@ const genFile = argv.file;
 const configFile = argv.config;
 const parsedFolder = argv.parse;
 
-// If --parse is provided, parse the folder and output to template.json
-if (parsedFolder) {
- const folderContent = await loadFolderAsObject(parsedFolder, ['node_modules', 'dist', '.txt', '.git']);
-  await fs.writeFile(path.join(process.cwd(), 'template.json'), JSON.stringify(folderContent, null, 2), 'utf-8');
-  console.log("\nTemplate folder parsed correctly. Output written to template.json");
-  process.exit(0);
-}
+
 
 // overwise, run the generator
 const outputDir = argv.output ? path.resolve(argv.output) : process.cwd();
@@ -88,6 +82,15 @@ async function main() {
 
   // si carica un contesto temporaneo
   const context = new Context(initialContext);
+
+  // If --parse is provided, parse the folder and output to template.gen
+  if (parsedFolder) {
+    const folderContent = await loadFolderAsObject(parsedFolder, ['node_modules', 'dist', '.git']);
+    const interpolatedContent = context.interpolate(folderContent)
+    await fs.writeFile(path.join(process.cwd(), 'template.gen'), interpolatedContent, 'utf-8');
+    console.log("\nTemplate folder parsed correctly. Output written to template.gen");
+    process.exit(0);
+  }
 
   let genContent = "";
   try {

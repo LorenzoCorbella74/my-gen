@@ -47,5 +47,10 @@ export async function loadFolderAsObject(dir: string, exclude: string[] = []) {
     }
 
     await walk(dir);
-    return { templates: result };
+    // Concatenate all properties as @fill key "\nvalue\n" blocks
+    let genContent = '';
+    for (const [key, value] of Object.entries(result)) {
+        genContent += `@fill ${key}\n"\n${value}\n"\n`;
+    }
+    return genContent;
 }

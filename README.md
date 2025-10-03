@@ -1,4 +1,4 @@
-# my-gen (also known as gen)
+# (my-gen AKA) gen
 
 ![logo](./doc/logo.png)
 
@@ -106,23 +106,15 @@ END
 | @fill        | `@fill path/to/file.txt`<br>`"`<br>`content here`<br>`"` | Write multi-line content to a file using quote delimiters                                   |
 | IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
 | FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
-| @compile    | `@compile ./template.json`                      | Generate files and folders from a template JSON file containing a `templates` object (key=file path, value=file content)       |
 | @import    | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
 
-A basic example of the template.json:
-```json
-{
-  "templates": {
-    "index.html": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n <body>\n  <div id=\"app\">Hello world</div>\n    <script type=\"module\" src=\"/src/main.ts\"></script>\n  </body>\n</html>\n",
-    "src\\main.ts": "import './style.css'\n\n\n",
-    "src\\style.css": ":root {\n  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;\n color: rgba(255, 255, 255, 0.87);\n  background-color: #242424;\n\n }\n\nbody {\n  margin: 0;\n  display: flex;\n  place-items: center;\n  min-width: 320px;\n  min-height: 100vh;\n}",
-    "tsconfig.json": "{\n  \"compilerOptions\": ..., \"include\": [\"src/**/*.ts\"],\n  \"exclude\": [\"node_modules\", \"dist\"]\n}\n"
-  }
-}
+## Parse Folder to produce Template!
+It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.gen` file in the current working directory excluding some common folders like `node_modules`, `dist`, `.git`.
+```bash
+gen --parse C:/DEV/template_vanilla_ts/vite-project
 ```
 
-
-
+---
 ## AI Command Configuration
 
 The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-powered text generation. Configure the AI behavior using global variables:
@@ -150,15 +142,6 @@ The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-po
 @write jsFunction to validate-email.js
 ```
 
-
-## Parse Folder to produce Template!
-It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.json` file in the current working directory with the content of the folder as key-value pairs, excluding some common files and folders like `node_modules`, `dist`, `.git` and `.txt` files.
-```bash
-gen --parse C:/DEV/template_vanilla_ts/vite-project
-```
-the content of a `template.json` can be then used with the `@compile` command to generate files and folders based on that template.
-
----
 
 ## [Next steps](./doc/TODO.md)
 

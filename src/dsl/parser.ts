@@ -47,11 +47,6 @@ export interface ForeachNode extends BaseAstNode {
   children: AstNode[]; // Always has children for FOREACH blocks
 }
 
-export interface CompileNode extends BaseAstNode {
-  type: '@COMPILE';
-  payload: string; // The path to the template JSON file
-}
-
 export interface FillNode extends BaseAstNode {
   type: '@FILL';
   payload: string; // The file path to write to
@@ -73,7 +68,6 @@ export type AstNode =
   | WriteNode
   | IfNode
   | ForeachNode
-  | CompileNode
   | FillNode
   | ImportNode;
 
@@ -86,7 +80,6 @@ export const isShellNode = (node: AstNode): node is ShellNode => node.type === '
 export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
 export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
 export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
-export const isCompileNode = (node: AstNode): node is CompileNode => node.type === '@COMPILE';
 export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
 export const isImportNode = (node: AstNode): node is ImportNode => node.type === '@IMPORT';
 
@@ -217,9 +210,6 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@SAVE':
     case 'SAVE':
       return '@SAVE';
-    case '@COMPILE':
-    case 'COMPILE':
-      return '@COMPILE';
     case '@FILL':
     case 'FILL':
       return '@FILL';
@@ -248,8 +238,6 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@WRITE', payload, line };
     case '@SAVE':
       return { type: '@SAVE', payload, line };
-    case '@COMPILE':
-      return { type: '@COMPILE', payload, line };
     case '@FILL':
       return { type: '@FILL', payload, line, content: [] };
     case '@IMPORT':
