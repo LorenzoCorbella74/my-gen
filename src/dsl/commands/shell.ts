@@ -54,35 +54,65 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
   return new Promise((resolve, reject) => {
     let output = '';
     let errorOutput = '';
+    
+    // Generate unique marker for this command
+    const marker = `COMMAND_END_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Determine echo command based on platform
+    const echoCommand = os.platform() === "win32" 
+      ? `echo ${marker}` 
+      : `echo "${marker}"`;
 
     const onData = (data: Buffer) => {
-      output += data.toString();
+      const dataStr = data.toString();
+      output += dataStr;
+      
+      // Check if marker is present in output
+      if (output.includes(marker)) {
+        // Command completed, cleanup and resolve
+        shellProcess.stdout!.removeListener('data', onData);
+        shellProcess.stderr!.removeListener('data', onError);
+        
+        // Remove marker from output and clean up
+        const cleanOutput = output.replace(new RegExp(`.*${marker}.*\n?`, 'g'), '').trim();
+        
+        if (errorOutput.trim()) {
+          console.error(chalk.red(`[CMD-ERROR] ${errorOutput.trim()}`));
+        }
+        if (cleanOutput) {
+          console.log(cleanOutput);
+        }
+        
+        resolve();
+      }
     };
 
     const onError = (data: Buffer) => {
       errorOutput += data.toString();
     };
 
-    shellProcess.stdout!.on('data', onData);
-    shellProcess.stderr!.on('data', onError);
-
-    // Send command to shell
-    shellProcess.stdin!.write(`${command}\n`);
-
-    // Wait a bit for command to execute
-    setTimeout(() => {
+    // Set up error timeout as fallback (30 seconds)
+    const timeout = setTimeout(() => {
       shellProcess.stdout!.removeListener('data', onData);
       shellProcess.stderr!.removeListener('data', onError);
-
-      if (errorOutput) {
-        console.error(chalk.red(`[CMD-ERROR] ${errorOutput}`));
-      }
+      console.error(chalk.red(`[CMD-TIMEOUT] Command timed out after 30 seconds`));
       if (output) {
         console.log(output);
       }
-
       resolve();
-    }, 100);
+    }, 30000);
+
+    shellProcess.stdout!.on('data', onData);
+    shellProcess.stderr!.on('data', onError);
+
+    // Send command followed by marker
+    shellProcess.stdin!.write(`${command}\n`);
+    shellProcess.stdin!.write(`${echoCommand}\n`);
+    
+    // Clear timeout when command completes normally
+    shellProcess.stdout!.on('removeListener', () => {
+      clearTimeout(timeout);
+    });
   });
 }
 

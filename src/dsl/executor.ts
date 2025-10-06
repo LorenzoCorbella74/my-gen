@@ -92,7 +92,7 @@ export class Executor {
         let spinner
         // Create spinner with command info
         if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL") {
-          spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
+          spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line} `).start();
         }
         try {
           await commandFn(node);

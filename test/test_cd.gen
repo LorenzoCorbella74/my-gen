@@ -2,6 +2,6 @@
 @log Test cd
 
 > md prova
-> cd
 > cd prova
-> cd
+> pnpm init
+> echo pippo > pippo.txt
