@@ -1,7 +1,12 @@
 # TEst di cd per cambiare pwd
 @log Test cd
-
-> md prova
-> cd prova
 > pnpm init
-> echo pippo > pippo.txt
+
+> mkdir prova\uno
+> cd prova\uno
+> pnpm init
+> pnpm install fastify
+> echo tutto ok > text.txt
+> cd ..
+> cd ..
+> echo root > root.txt
