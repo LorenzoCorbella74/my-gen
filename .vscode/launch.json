@@ -78,6 +78,18 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @cd",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\test_cd.gen"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }

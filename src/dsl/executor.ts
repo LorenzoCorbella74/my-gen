@@ -16,13 +16,14 @@ import {
   handleAiCommand,
   handleShell,
   handleWrite,
-  handleCompile,
   handleFill,
   handleIf,
   handleForeach,
   handleImport,
+  cleanupGlobalShell,
   type CommandHandler,
-  type CommandContext
+  type CommandContext,
+  type GlobalShell
 } from "./commands/index.js";
 
 export class Executor {
@@ -30,11 +31,13 @@ export class Executor {
   private commands: Map<string, (node: AstNode) => Promise<void>> = new Map();
   private outputDir: string;
   private globalContext: GlobalContext;
+  private globalShell: GlobalShell;
 
   constructor(context: Context, outputDir: string) {
     this.context = context;
     this.outputDir = outputDir;
     this.globalContext = new GlobalContext();
+    this.globalShell = { cwd: outputDir };
     this.registerCommands();
     // Initialize global variables automatically
     this.initializeGlobalVariables();
@@ -68,7 +71,6 @@ export class Executor {
     this.commands.set("@FILL", (node: AstNode) => handleFill(node, ctx));
     this.commands.set("IF", (node: AstNode) => handleIf(node, ctx));
     this.commands.set("FOREACH", (node: AstNode) => handleForeach(node, ctx));
-    this.commands.set("COMPILE", (node: AstNode) => handleCompile(node, ctx));
     this.commands.set("@IMPORT", (node: AstNode) => handleImport(node, ctx));
   }
 
@@ -77,6 +79,7 @@ export class Executor {
       context: this.context,
       outputDir: this.outputDir,
       globalContext: this.globalContext,
+      globalShell: this.globalShell,
       resolvePath: this.resolvePath.bind(this),
       execute: this.execute.bind(this)
     };
@@ -108,5 +111,12 @@ export class Executor {
         process.exit(1);
       }
     }
+  }
+
+  /**
+   * Cleanup resources (like global shell) when executor is done
+   */
+  public cleanup(): void {
+    cleanupGlobalShell(this.createCommandContext());
   }
 }

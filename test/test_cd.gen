@@ -1,0 +1,7 @@
+# TEst di cd per cambiare pwd
+@log Test cd
+
+> md prova
+> cd
+> cd prova
+> cd

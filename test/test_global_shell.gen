@@ -1,0 +1,16 @@
+# Test global shell functionality
+@log Starting global shell test
+
+# Set a variable in the shell
+> set TEST_VAR=hello_world
+
+# Change directory
+> cd test
+
+# Check if the variable is still available
+> echo %TEST_VAR%
+
+# Check current directory (should be test/)
+> cd
+
+@log Global shell test completed

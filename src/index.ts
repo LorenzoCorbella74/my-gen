@@ -109,6 +109,9 @@ async function main() {
   // si recupera il global contest e si mergia nel contesto 
   const executor = new Executor(context, outputDir);
   await executor.execute(ast);
+  
+  // Cleanup resources like global shell
+  executor.cleanup();
 
   console.log(chalk.blueBright("\nExecution completed."));
 }

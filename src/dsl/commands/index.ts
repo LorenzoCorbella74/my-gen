@@ -2,12 +2,11 @@ export { handleLog } from "./log.js";
 export { handleSet } from "./set.js";
 export { handleGlobal } from "./global.js";
 export { handleAiCommand } from "./ai.js";
-export { handleShell } from "./shell.js";
+export { handleShell, cleanupGlobalShell } from "./shell.js";
 export { handleWrite } from "./write.js";
-export { handleCompile } from "./compile.js";
 export { handleFill } from "./fill.js";
 export { handleIf } from "./if.js";
 export { handleForeach } from "./foreach.js";
 export { handleImport } from "./import.js";
 
-export type { CommandHandler, CommandContext } from "./types.js";
+export type { CommandHandler, CommandContext, GlobalShell } from "./types.js";
