@@ -95,8 +95,16 @@ export class GlobalContext {
     try {
       const globalVars = await this.loadGlobalVariables();
       this.mergeGlobalVariablesIntoContext(globalVars, context);
+      
       if (Object.keys(globalVars).length > 0) {
-        console.log(chalk.cyan(`[GLOBAL] Loaded ${Object.keys(globalVars).length} global variables from ${this.globalFilePath}`));
+        console.log(chalk.cyan(`[GLOBAL] Loaded ${Object.keys(globalVars).length} global variables:`));
+        for (const [key, value] of Object.entries(globalVars)) {
+          // Truncate long values for display
+          const displayValue = String(value).length > 50 
+            ? String(value).substring(0, 47) + "..." 
+            : String(value);
+          console.log(chalk.cyan(`  ${key} = ${displayValue}`));
+        }
       }
     } catch (error) {
       // Ignore errors during initialization (file might not exist yet)

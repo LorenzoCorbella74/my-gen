@@ -36,15 +36,23 @@ export interface WriteNode extends BaseAstNode {
 }
 
 export interface IfNode extends BaseAstNode {
-  type: 'IF';
-  payload: string; // The condition (e.g., "exists path" or "not_exists path")
+  type: '@IF';
+  payload: string; // The condition (e.g., "exists path", "var is value", "var isnot value")
   children: AstNode[]; // Always has children for IF blocks
+  elseifBlocks?: ElseIfBlock[]; // Optional elseif blocks
+  elseBlock?: AstNode[]; // Optional else block
+}
+
+export interface ElseIfBlock {
+  condition: string; // The elseif condition
+  children: AstNode[]; // Commands to execute if condition is true
+  line: number; // Line number for error reporting
 }
 
 export interface ForeachNode extends BaseAstNode {
-  type: 'FOREACH';
+  type: '@LOOP';
   payload: string; // The iteration expression (e.g., "item in listVar")
-  children: AstNode[]; // Always has children for FOREACH blocks
+  children: AstNode[]; // Always has children for LOOP blocks
 }
 
 export interface FillNode extends BaseAstNode {
@@ -78,8 +86,8 @@ export const isGlobalNode = (node: AstNode): node is GlobalNode => node.type ===
 export const isAiNode = (node: AstNode): node is AiNode => node.type === '@AI';
 export const isShellNode = (node: AstNode): node is ShellNode => node.type === '>';
 export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
-export const isIfNode = (node: AstNode): node is IfNode => node.type === 'IF';
-export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === 'FOREACH';
+export const isIfNode = (node: AstNode): node is IfNode => node.type === '@IF';
+export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === '@LOOP';
 export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
 export const isImportNode = (node: AstNode): node is ImportNode => node.type === '@IMPORT';
 
@@ -90,7 +98,7 @@ export type BlockNode = IfNode | ForeachNode;
  * Parses the content of a DSL (.gen) file into an Abstract Syntax Tree (AST).
  *
  * The parser processes each line, ignoring empty lines and comments (lines starting with `#`).
- * It recognizes block commands such as `IF`, `FOREACH`, and their corresponding end commands (`ENDIF`, `ENDFOREACH`),
+ * It recognizes block commands such as `@IF`, `@LOOP`, and their corresponding end commands (`@END`, `@ENDLOOP`),
  * managing nested structures using a stack. Other lines are parsed as individual AST nodes.
  *
  * @param content - The raw string content of the DSL file to parse.
@@ -115,13 +123,43 @@ export function parseContent(content: string): AstNode[] {
 
     const upperCommand = command.toUpperCase();
 
-    if (upperCommand === 'IF') {
-      const newNode: IfNode = { type: 'IF', payload: payload, line: lineNumber, children: [] };
+    if (upperCommand === '@IF' || upperCommand === 'IF') {
+      const newNode: IfNode = { type: '@IF', payload: payload, line: lineNumber, children: [], elseifBlocks: [] };
       currentAst.push(newNode);
       stack.push(newNode.children);
       currentAst = newNode.children;
-    } else if (upperCommand === 'FOREACH') {
-      const newNode: ForeachNode = { type: 'FOREACH', payload: payload, line: lineNumber, children: [] };
+    } else if (upperCommand === '@ELSEIF' || upperCommand === 'ELSEIF') {
+      // Find the current IF node at the top of the stack
+      if (stack.length < 2) {
+        throw new Error(`@ELSEIF at line ${lineNumber} without corresponding @IF`);
+      }
+      
+      // Pop current children and get the IF node
+      stack.pop();
+      const parentAst = stack[stack.length - 1];
+      const ifNode = parentAst[parentAst.length - 1] as IfNode;
+      
+      if (ifNode.type !== '@IF') {
+        throw new Error(`@ELSEIF at line ${lineNumber} not inside @IF block`);
+      }
+      
+      // Create elseif block
+      const elseifBlock: ElseIfBlock = {
+        condition: payload,
+        children: [],
+        line: lineNumber
+      };
+      
+      if (!ifNode.elseifBlocks) {
+        ifNode.elseifBlocks = [];
+      }
+      ifNode.elseifBlocks.push(elseifBlock);
+      
+      // Set current context to elseif children
+      stack.push(elseifBlock.children);
+      currentAst = elseifBlock.children;
+    } else if (upperCommand === '@LOOP' || upperCommand === 'LOOP' || upperCommand === 'FOREACH') {
+      const newNode: ForeachNode = { type: '@LOOP', payload: payload, line: lineNumber, children: [] };
       currentAst.push(newNode);
       stack.push(newNode.children);
       currentAst = newNode.children;
@@ -158,7 +196,10 @@ export function parseContent(content: string): AstNode[] {
 
       // Skip processed lines
       i = j;
-    } else if (upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH') {
+    } else if (upperCommand === '@END' || upperCommand === 'END' || upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH' || upperCommand === '@ENDLOOP' || upperCommand === 'ENDLOOP') {
+      if (stack.length <= 1) {
+        throw new Error(`${upperCommand} at line ${lineNumber} without corresponding opening block`);
+      }
       stack.pop();
       currentAst = stack[stack.length - 1];
     } else {
@@ -216,6 +257,13 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case '@IMPORT':
     case 'IMPORT':
       return '@IMPORT';
+    case '@IF':
+    case 'IF':
+      return '@IF';
+    case '@LOOP':
+    case 'LOOP':
+    case 'FOREACH':
+      return '@LOOP';
     default:
       return null;
   }
@@ -242,6 +290,10 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@FILL', payload, line, content: [] };
     case '@IMPORT':
       return { type: '@IMPORT', payload, line };
+    case '@IF':
+      return { type: '@IF', payload, line, children: [], elseifBlocks: [] };
+    case '@LOOP':
+      return { type: '@LOOP', payload, line, children: [] };
     case '>':
       return { type: '>', payload, line };
     default:

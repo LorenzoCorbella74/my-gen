@@ -39,15 +39,14 @@ export class Executor {
     this.globalContext = new GlobalContext();
     this.globalShell = { cwd: outputDir };
     this.registerCommands();
-    // Initialize global variables automatically
-    this.initializeGlobalVariables();
+    // Note: initializeGlobalVariables will be called explicitly before execute
   }
 
   /**
    * Initialize global variables by loading them into the current context
-   * Called automatically during constructor
+   * Must be called before execute
    */
-  private async initializeGlobalVariables(): Promise<void> {
+  public async initializeGlobalVariables(): Promise<void> {
     await this.globalContext.initializeGlobalVariables(this.context);
   }
 
@@ -59,19 +58,54 @@ export class Executor {
   }
 
   private registerCommands() {
-    const ctx = this.createCommandContext();
-    
-    this.commands.set("@LOG", (node: AstNode) => handleLog(node, ctx));
-    this.commands.set("@SET", (node: AstNode) => handleSet(node, ctx));
-    this.commands.set("@GLOBAL", (node: AstNode) => handleGlobal(node, ctx));
-    this.commands.set("@AI", (node: AstNode) => handleAiCommand(node, ctx));
-    this.commands.set(">", (node: AstNode) => handleShell(node, ctx));
-    this.commands.set("@WRITE", (node: AstNode) => handleWrite(node, ctx));
-    this.commands.set("@SAVE", (node: AstNode) => handleWrite(node, ctx)); // Alias
-    this.commands.set("@FILL", (node: AstNode) => handleFill(node, ctx));
-    this.commands.set("IF", (node: AstNode) => handleIf(node, ctx));
-    this.commands.set("FOREACH", (node: AstNode) => handleForeach(node, ctx));
-    this.commands.set("@IMPORT", (node: AstNode) => handleImport(node, ctx));
+    this.commands.set("@LOG", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleLog(node, ctx);
+    });
+    this.commands.set("@SET", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleSet(node, ctx);
+    });
+    this.commands.set("@GLOBAL", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleGlobal(node, ctx);
+    });
+    this.commands.set("@AI", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleAiCommand(node, ctx);
+    });
+    this.commands.set(">", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleShell(node, ctx);
+    });
+    this.commands.set("@WRITE", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleWrite(node, ctx);
+    });
+    this.commands.set("@SAVE", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleWrite(node, ctx);
+    });
+    this.commands.set("@FILL", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleFill(node, ctx);
+    });
+    this.commands.set("@IF", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleIf(node, ctx);
+    });
+    this.commands.set("@LOOP", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleForeach(node, ctx);
+    });
+    this.commands.set("FOREACH", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleForeach(node, ctx);
+    }); // Backward compatibility
+    this.commands.set("@IMPORT", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleImport(node, ctx);
+    });
   }
 
   private createCommandContext(): CommandContext {
@@ -91,7 +125,7 @@ export class Executor {
       if (commandFn) {
         let spinner
         // Create spinner with command info
-        if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL") {
+        if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL" && node.type !== "@IF" && node.type !== "@LOOP") {
           spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line} `).start();
         }
         try {

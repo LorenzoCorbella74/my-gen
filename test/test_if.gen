@@ -1,0 +1,66 @@
+# Test @if command with new features
+@log Starting @if test
+
+# Set up test variables
+@set name "John"
+@set age "25"
+@set status "active"
+
+# Test variable comparison with @if ... is
+@log Testing variable comparison - name is John
+@if name is "John"
+    @log ✅ Name is correctly John
+@end
+
+# Test variable comparison with interpolation
+@set expected_name "John"
+@log Testing variable comparison with interpolation
+@if name is "{expected_name}"
+    @log ✅ Name matches expected value with interpolation
+@end
+
+# Test @if ... isnot
+@log Testing variable comparison - status is not inactive
+@if status isnot "inactive"
+    @log ✅ Status is not inactive
+@end
+
+# Test @elseif
+@log Testing @elseif functionality
+@if age is "30"
+    @log ❌ This should not execute - age is not 30
+@elseif age is "25"
+    @log ✅ Correct! Age is 25 (elseif worked)
+@elseif age is "20"
+    @log ❌ This should not execute - age is not 20
+@end
+
+# Test file existence
+@log Testing file existence
+@if exists "test/test_if.gen"
+    @log ✅ Test file exists
+@elseif exists "nonexistent.txt"
+    @log ❌ This should not execute
+@end
+
+# Test multiple conditions with different types
+@log Testing complex conditions
+@set file_status "missing"
+@if file_status is "present"
+    @log ❌ File should not be present
+@elseif file_status is "missing"
+    @log ✅ File status is correctly missing
+    @if name isnot "Jane"
+        @log ✅ Nested condition: name is not Jane
+    @end
+@end
+
+# Test with non-existing variable (should be handled gracefully)
+@log Testing with undefined variable
+@if undefined_var is "test"
+    @log ❌ This should not execute - undefined_var doesn't exist
+@elseif undefined_var isnot "test"
+    @log ✅ Correctly handled undefined variable
+@end
+
+@log @if test completed successfully!

@@ -128,6 +128,30 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @if",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\test_if.gen",
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @loop",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\test_loop.gen",
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }

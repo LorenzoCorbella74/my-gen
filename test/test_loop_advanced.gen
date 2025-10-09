@@ -1,0 +1,66 @@
+# Advanced @loop test with complex scenarios
+@log Starting advanced @loop test
+
+# Test 1: Loop with complex data structures
+@log === Test 1: Loop with file operations ===
+@set extensions "js,ts,md,json"
+@loop ext in extensions
+    @log Processing *.{ext} files
+    @if ext is "js"
+        @log Found JavaScript files
+    @elseif ext is "ts"
+        @log Found TypeScript files
+    @elseif ext is "md"
+        @log Found Markdown files
+    @end
+@endloop
+
+# Test 2: Loop with variable manipulation
+@log === Test 2: Loop with variable updates ===
+@set counter "0"
+@set items "item1,item2,item3"
+@loop item in items
+    @set counter "{counter}1"
+    @log Processing {item} (counter: {counter})
+@endloop
+
+# Test 3: Triple nested loop
+@log === Test 3: Triple nested loops ===
+@set sizes "small,large"
+@set colors "red,blue"
+@set shapes "circle,square"
+@loop size in sizes
+    @log Size: {size}
+    @loop color in colors
+        @log   Color: {color}
+        @loop shape in shapes
+            @log     Shape: {shape}
+            @log     Creating {size} {color} {shape}
+        @endloop
+    @endloop
+@endloop
+
+# Test 4: Loop with file writing
+@log === Test 4: Loop with file operations ===
+@set languages "javascript,typescript,python"
+@loop lang in languages
+    @write "# {lang} configuration file" to config_{lang}.txt
+    @log Created config file for {lang}
+@endloop
+
+# Test 5: Empty array handling
+@log === Test 5: Empty array handling ===
+@set empty_list ""
+@loop item in empty_list
+    @log This should not print
+@endloop
+@log Empty array handled correctly
+
+# Test 6: Backward compatibility test
+@log === Test 6: Backward compatibility (FOREACH) ===
+@set old_style "test1,test2"
+FOREACH item in old_style
+    @log Backward compatibility: {item}
+END
+
+@log Advanced @loop test completed successfully!

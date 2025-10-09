@@ -117,6 +117,10 @@ async function main() {
 
   // si recupera il global contest e si mergia nel contesto 
   const executor = new Executor(context, outputDir);
+  
+  // Initialize global variables before execution
+  await executor.initializeGlobalVariables();
+  
   await executor.execute(ast);
   
   // Cleanup resources like global shell

@@ -1,0 +1,99 @@
+# Advanced @if test with nested conditions and complex scenarios
+@log Starting advanced @if test
+
+# Setup test environment
+@set environment "development"
+@set debug_mode "enabled"
+@set user_role "admin"
+@set version "1.2.0"
+
+# Test 1: Multiple @elseif conditions
+@log === Test 1: Multiple @elseif conditions ===
+@if environment is "production"
+    @log ❌ Should not be production
+@elseif environment is "staging"
+    @log ❌ Should not be staging
+@elseif environment is "development"
+    @log ✅ Correct environment: development
+    
+    # Nested condition inside elseif
+    @if debug_mode is "enabled"
+        @log ✅ Debug mode is enabled in development
+    @end
+@elseif environment is "test"
+    @log ❌ Should not be test
+@end
+
+# Test 2: Complex variable interpolation
+@log === Test 2: Variable interpolation in conditions ===
+@set base_path "src"
+@set file_name "index.js"
+@set full_path "{base_path}/{file_name}"
+@if full_path is "src/index.js"
+    @log ✅ Interpolated path comparison works
+@end
+
+# Test 3: Nested @if statements
+@log === Test 3: Nested @if statements ===
+@if user_role is "admin"
+    @log ✅ User is admin
+    
+    @if debug_mode isnot "disabled"
+        @log ✅ Debug mode is not disabled for admin
+        
+        @if version is "1.2.0"
+            @log ✅ Version check passed in nested condition
+        @elseif version is "1.1.0"
+            @log ❌ Should not be version 1.1.0
+        @end
+    @end
+@end
+
+# Test 4: File existence with @elseif
+@log === Test 4: File existence checks ===
+@if exists "nonexistent_file.txt"
+    @log ❌ File should not exist
+@elseif exists "test/test_if.gen"
+    @log ✅ Found test_if.gen file
+@elseif exists "README.md"
+    @log ⚠️ Found README.md (but should have found test_if.gen first)
+@end
+
+# Test 5: Mixed condition types
+@log === Test 5: Mixed condition types ===
+@set file_exists_check "yes"
+@if exists "src/"
+    @log ✅ src directory exists
+    
+    @if file_exists_check is "yes"
+        @log ✅ File existence check variable is yes
+    @end
+@elseif file_exists_check isnot "no"
+    @log ⚠️ This should not execute if src/ exists
+@end
+
+# Test 6: Edge cases
+@log === Test 6: Edge cases ===
+@set empty_var ""
+@set null_var 
+
+@if empty_var is ""
+    @log ✅ Empty string comparison works
+@end
+
+@if null_var isnot "something"
+    @log ✅ Undefined variable handled correctly
+@end
+
+# Test 7: Complex interpolation scenarios
+@log === Test 7: Complex interpolation ===
+@set prefix "app"
+@set suffix "config"
+@set separator "_"
+@set expected_file "{prefix}{separator}{suffix}.json"
+
+@if expected_file is "app_config.json"
+    @log ✅ Complex interpolation with multiple variables works
+@end
+
+@log Advanced @if test completed successfully!

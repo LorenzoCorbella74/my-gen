@@ -64,18 +64,27 @@ console.log("Hello from {projectName}!");
 console.log("Generated with @gen");
 "
 
-# Conditional execution
-IF exists hello.txt
+# Conditional execution with file existence
+@if exists hello.txt
   @log hello.txt exists!
-END
-IF not_exists missing.txt
-  @log missing.txt does not exist.
-END
+@end
+
+# Conditional execution with variable comparison
+@if projectName is "MyApp"
+  @log Project name is MyApp
+@elseif projectName is "TestApp"
+  @log Project name is TestApp
+@end
+
+# Conditional execution with negation
+@if status isnot "inactive"
+  @log Status is active
+@end
 
 # Loop over a list
-FOREACH file in files
-  @log Found file: ${file}
-END
+@loop file in files
+  @log Found file: {file}
+@endloop
 
 # Import commands from another file
 @import ./common-steps.gen
@@ -102,8 +111,11 @@ END
 | >          | `> echo Hello`                                 | Run a shell command                                                                         |
 | @write/@save | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file                                                 |
 | @fill        | `@fill path/to/file.txt`<br>`"`<br>`content here`<br>`"` | Write multi-line content to a file using quote delimiters                                   |
-| IF         | `IF exists path`                               | Conditionally execute child commands if a file/folder exists or not                          |
-| FOREACH    | `FOREACH item in listVar`                      | Iterate over an array variable, setting `item` and executing child commands                 |
+| @if          | `@if exists path`<br>`@if var is "value"`<br>`@if var isnot "value"` | Conditionally execute child commands based on file existence or variable comparison           |
+| @elseif      | `@elseif var is "value"`                      | Alternative condition within @if block                                                       |
+| @end         | `@end`                                        | Closes @if and FOREACH blocks                                                                |
+| @loop        | `@loop item in listVar`                        | Iterate over an array variable, setting `item` and executing child commands                 |
+| @endloop     | `@endloop`                                     | Closes @loop blocks                                                                          |
 | @import    | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
 
 ## Parse Folder to produce Template!
@@ -111,6 +123,93 @@ It is possibile **to transform a folder to a template** thanks to the `--parse <
 ```bash
 gen --parse C:/DEV/template_vanilla_ts/vite-project
 ```
+
+---
+## Conditional Logic with @if
+
+The `@if` command supports multiple types of conditions:
+
+### File Existence
+```plaintext
+@if exists path/to/file.txt
+  @log File exists!
+@end
+```
+
+### Variable Comparison
+```plaintext
+@set status "active"
+@if status is "active"
+  @log Status is active
+@elseif status is "inactive"
+  @log Status is inactive
+@end
+```
+
+### Variable Negation
+```plaintext
+@if status isnot "inactive"
+  @log Status is not inactive
+@end
+```
+
+### Variable Interpolation in Conditions
+```plaintext
+@set expected "test"
+@if myVar is "{expected}_value"
+  @log Variable matches interpolated value
+@end
+```
+
+**Condition Types:**
+- `exists <path>` - Check if file or directory exists
+- `<variable> is "<value>"` - Check if variable equals value (supports interpolation)
+- `<variable> isnot "<value>"` - Check if variable does not equal value (supports interpolation)
+
+**Block Structure:**
+- `@if` - Start conditional block
+- `@elseif` - Alternative condition (optional, multiple allowed)
+- `@end` - End conditional block
+
+---
+## Loops with @loop
+
+The `@loop` command allows iteration over arrays and lists:
+
+### Basic Loop
+```plaintext
+@set fruits "apple,banana,orange"
+@loop fruit in fruits
+  @log Processing: {fruit}
+@endloop
+```
+
+### Nested Loops
+```plaintext
+@set colors "red,blue"
+@set fruits "apple,banana"
+@loop color in colors
+  @loop fruit in fruits
+    @log {color} {fruit}
+  @endloop
+@endloop
+```
+
+### Loop with Conditionals
+```plaintext
+@set numbers "1,2,3,4,5"
+@loop num in numbers
+  @if num is "3"
+    @log Found the magic number: {num}!
+  @end
+@endloop
+```
+
+**Syntax:**
+- `@loop <item> in <arrayVariable>` - Start loop block
+- `@endloop` - End loop block
+- Inside the loop, `<item>` contains the current array element
+- Supports variable interpolation: `{item}`
 
 ---
 ## AI Command Configuration

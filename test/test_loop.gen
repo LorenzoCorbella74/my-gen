@@ -1,0 +1,40 @@
+# Test @loop command functionality
+@log Starting @loop test
+
+# Set up test data
+@set fruits "apple,banana,orange"
+@set numbers "1,2,3,4,5"
+
+# Test basic loop with array
+@log === Test 1: Basic loop ===
+@loop fruit in fruits
+    @log Processing fruit: {fruit}
+@endloop
+
+# Test loop with numbers
+@log === Test 2: Loop with numbers ===
+@loop num in numbers
+    @log Number: {num}
+@endloop
+
+# Test nested loops
+@log === Test 3: Nested loops ===
+@set colors "red,blue"
+@loop color in colors
+    @log Color: {color}
+    @loop fruit in fruits
+        @log   - {color} {fruit}
+    @endloop
+@endloop
+
+# Test loop with conditional inside
+@log === Test 4: Loop with conditional ===
+@loop num in numbers
+    @if num is "3"
+        @log Found the magic number: {num}!
+    @elseif num is "1"
+        @log First number: {num}
+    @end
+@endloop
+
+@log @loop test completed successfully!
