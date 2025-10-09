@@ -1,0 +1,19 @@
+# Test @select and @multiselect commands
+
+@log Testing @select command
+@set framework = @select Which framework do you prefer? [ react vue angular svelte ]
+@log Selected framework: {framework}
+
+@log Testing @multiselect command  
+@set features = @multiselect Which features do you want   ? [ authentication database api testing deployment ]
+@log Selected features: {features}
+
+@log Testing backward compatibility with input:
+@set projectName = input:Enter project name
+@log Project name: {projectName}
+
+@log Testing new @input command
+@set authorName = @input Enter author name
+@log Author name: {authorName}
+
+@log All tests completed successfully!

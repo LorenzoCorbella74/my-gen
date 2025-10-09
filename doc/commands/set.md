@@ -8,7 +8,9 @@ The `@set` command creates and assigns values to variables for use throughout th
 
 ```
 @set <variableName> = <value>
-@set <variableName> = input:<prompt>
+@set <variableName> = @input <prompt>
+@set <variableName> = @select <question>? [ option1 option2 option3 ]
+@set <variableName> = @multiselect <question>? [ option1 option2 option3 ]
 @set <variableName> = @load <filePath>
 @set <variableName> = @http <url>
 @set <variableName> = files in <directory>
@@ -26,8 +28,27 @@ The `@set` command creates and assigns values to variables for use throughout th
 ### User Input
 Prompts the user for input during execution:
 ```plaintext
+@set userName = @input Enter your name
+@set email = @input What is your email address?
+```
+
+**Backward Compatibility:** The old `input:` syntax is still supported:
+```plaintext
 @set userName = input:Enter your name
-@set email = input:What is your email address?
+```
+
+### Single Selection
+Presents a list of options for the user to choose one:
+```plaintext
+@set framework = @select Which framework do you prefer? [ react vue angular svelte ]
+@set environment = @select Choose environment? [ development staging production ]
+```
+
+### Multiple Selection
+Allows the user to select multiple options from a list:
+```plaintext
+@set features = @multiselect Which features do you want? [ auth database api testing ]
+@set platforms = @multiselect Target platforms? [ windows mac linux ]
 ```
 
 ### File Content
@@ -65,10 +86,23 @@ Once set, variables can be used with interpolation syntax `{variableName}`:
 
 ### Project Setup
 ```plaintext
-@set projectName = input:Enter project name
-@set author = input:Enter author name
+@set projectName = @input Enter project name
+@set author = @input Enter author name
+@set framework = @select Choose your framework? [ react vue angular next nuxt ]
+@set features = @multiselect Select features? [ typescript eslint prettier testing ]
 @set license = "MIT"
-@log Creating project {projectName} by {author} with {license} license
+@log Creating {projectName} by {author} using {framework} with features: {features}
+```
+
+### Interactive Configuration
+```plaintext
+@set environment = @select Which environment? [ development staging production ]
+@set database = @select Choose database? [ mysql postgresql mongodb sqlite ]
+@set services = @multiselect Enable services? [ redis cache queue logging monitoring ]
+
+@if environment is "production"
+    @log Production setup with {database} and services: {services}
+@end
 ```
 
 ### File Processing

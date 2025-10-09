@@ -10,6 +10,7 @@ The `@fill` command writes multi-line content to files using quote delimiters fo
 @fill <filePath>
 "
 <multi-line content>
+...
 "
 ```
 
@@ -23,8 +24,8 @@ The `@fill` command writes multi-line content to files using quote delimiters fo
 
 ## Basic Usage
 
-### Simple Text File
 ```plaintext
+# Example of fill.gen
 
 @fill script.js
 "

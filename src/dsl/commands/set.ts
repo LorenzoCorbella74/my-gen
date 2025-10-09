@@ -12,35 +12,46 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<voi
 
     let finalValue: any;
 
-    if (valueExpression.startsWith('input:')) {
+    if (valueExpression.startsWith('@input ')) {
+        const promptText = ctx.context.interpolate(valueExpression.substring(7).trim());
+        const answer = await input({ message: promptText });
+        finalValue = answer
+    } else if (valueExpression.startsWith('input:')) {
+        // Backward compatibility
         const promptText = ctx.context.interpolate(valueExpression.substring(6).trim());
         const answer = await input({ message: promptText });
         finalValue = answer
-    } else if (valueExpression.startsWith('select:')) {
-        const match = valueExpression.match(/^select:(.*?):\[(.*?)\]$/);
+    } else if (valueExpression.startsWith('@select ')) {
+        const match = valueExpression.match(/^@select\s+(.*?)\s*\?\s*\[(.*?)\]\s*$/);
         if (match) {
             const promptText = ctx.context.interpolate(match[1].trim());
-            const options = match[2].split(',').map((opt: string) => opt.trim());
+            const options = match[2].split(/\s+/).filter(opt => opt.length > 0);
+            if (options.length === 0) {
+                throw new Error('Invalid @select syntax. Use: @select Question text? [ option1 option2 option3 ]');
+            }
             const answer = await select({
                 message: promptText,
                 choices: options
             });
             finalValue = answer;
         } else {
-            throw new Error('Invalid select syntax. Use: select:<prompt>:[v1,v2]');
+            throw new Error('Invalid @select syntax. Use: @select Question text? [ option1 option2 option3 ]');
         }
-    } else if (valueExpression.startsWith('multiselect:')) {
-        const match = valueExpression.match(/^multiselect:(.*?):\[(.*?)\]$/);
+    } else if (valueExpression.startsWith('@multiselect ')) {
+        const match = valueExpression.match(/^@multiselect\s+(.*?)\s*\?\s*\[(.*?)\]\s*$/);
         if (match) {
             const promptText = ctx.context.interpolate(match[1].trim());
-            const options = match[2].split(',').map((opt: string) => opt.trim());
+            const options = match[2].split(/\s+/).filter(opt => opt.length > 0);
+            if (options.length === 0) {
+                throw new Error('Invalid @multiselect syntax. Use: @multiselect Question text? [ option1 option2 option3 ]');
+            }
             const answer = await checkbox({
                 message: promptText,
                 choices: options
             });
             finalValue = answer;
         } else {
-            throw new Error('Invalid multiselect syntax. Use: multiselect:<prompt>:[v1,v2,v3]');
+            throw new Error('Invalid @multiselect syntax. Use: @multiselect Question text? [ option1 option2 option3 ]');
         }
     } else if (valueExpression.startsWith('@load ') || valueExpression.startsWith('load ')) {
         const spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();

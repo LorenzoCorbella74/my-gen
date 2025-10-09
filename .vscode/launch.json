@@ -152,6 +152,18 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @input @select",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\test_select_multiselect.gen",
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }
