@@ -1,0 +1,9 @@
+# Set a variable from user input
+@set projectName = input:Enter project name
+
+# Set a variable from a file content
+@set readmeContent = @load README.md
+
+# Write content to a file
+@write "Hello, {projectName}!" to hello.txt
+@write readmeContent to copy_of_readme.txt
