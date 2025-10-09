@@ -49,7 +49,7 @@
       "patterns": [
         {
           "name": "variable.parameter.gen",
-          "match": "\\{[^}]+\\""
+          "match": "\\{[^}]+\\"
         }
       ]
     }
