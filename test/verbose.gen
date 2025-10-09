@@ -1,0 +1,18 @@
+# Test verbose logging functionality
+# Note: Run with --verbose to see command output
+@log Starting verbose test
+
+# Test shell commands with output
+> echo "This is a test command"
+> dir /b
+
+# Test with directory listing (Windows)
+> echo "Directory contents:"
+> dir
+
+# Test with system info
+> echo "System information:"
+> systeminfo | findstr "OS Name"
+
+@log Verbose test completed
+

@@ -82,11 +82,36 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Test @cd",
+      "name": "Test @cd2",
       "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--file",
         ".\\test\\test_cd.gen"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test fasti",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\fasti.gen"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Verbose",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        ".\\test\\verbose.gen",
+        "--verbose"
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"

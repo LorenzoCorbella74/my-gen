@@ -1,0 +1,13 @@
+> mkdir apps 
+> mkdir packages
+> mkdir apps\frontend 
+# > mkdir apps\backend 
+> mkdir packages\common
+
+@log Backend with fastify
+> cd apps
+> mkdir backend
+> cd backend
+> pnpm init
+> pnpm install fastify
+> pnpm install --save-dev tsx @types/node

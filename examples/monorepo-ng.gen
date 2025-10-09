@@ -1,0 +1,14 @@
+# Monorepo con Angular NG (WINDOWS)
+> ng new angular-monorepo --create-application=false --ai-config copilot
+> cd angular-monorepo
+
+@log Creating apps....
+> ng generate application app1 --routing=true --style=scss --standalone=true --zoneless=false --ssr=false
+> ng generate application app2 --routing=true --style=scss --standalone=true --zoneless=false --ssr=false
+
+@log Creating Libraries
+> ng generate library ui-library --standalone=true
+> ng generate library api-service --standalone=true
+
+> code .
+

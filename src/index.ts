@@ -38,6 +38,11 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Parse a folder and return a .gen representation of the folder'
   })
+  .option('verbose', {
+    type: 'boolean',
+    description: 'Enable verbose logging for commands',
+    default: false
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
@@ -45,6 +50,7 @@ const argv = yargs(hideBin(process.argv))
 const genFile = argv.file;
 const configFile = argv.config;
 const parsedFolder = argv.parse;
+const verbose = argv.verbose;
 
 
 
@@ -79,6 +85,9 @@ async function main() {
       process.exit(1);
     }
   }
+
+  // Add verbose flag to initial context
+  initialContext = { ...initialContext, VERBOSE: verbose };
 
   // si carica un contesto temporaneo
   const context = new Context(initialContext);

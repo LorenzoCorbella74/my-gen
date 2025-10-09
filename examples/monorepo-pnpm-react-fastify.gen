@@ -1,0 +1,44 @@
+# Monorepo for Backend with Fastify and Frontend with React (for WINDOWS)
+
+@set author = input:Author?
+@log Monorepo Frontend + Backend
+> pnpm init
+echo "#PNPM monorepo" > README.md
+
+@log init Git
+> git init
+> echo node_modules > .gitignore
+
+@log Creating pnpm-workspace.yaml
+> echo packages: > pnpm-workspace.yaml
+> echo   - "apps/*" >> pnpm-workspace.yaml
+> echo   - "packages/*" >> pnpm-workspace.yaml
+
+@log Creating directories for your packages and applications
+> md packages apps
+
+@log create the frontend in react
+> pnpm create vite apps/frontend --template react-ts
+> cd apps/frontend
+> pnpm pkg set version="0.0.1" 
+> pnpm pkg set author="{author}" 
+> cd ../..
+
+@log Creating the backend with Fastify
+> pnpm dlx fastify-cli generate apps/backend --lang=ts --no-eslint --no-tests
+> cd apps/backend
+> pnpm pkg set version="0.0.1" 
+> pnpm pkg set author="{author}" 
+> cd ../..
+
+@log install from root
+> pnpm install
+
+@log Setting scripts in root....
+> pnpm pkg set scripts.start:ui="pnpm --filter frontend dev"
+> pnpm pkg set scripts.start:api="pnpm --filter backend dev"
+> pnpm pkg set scripts.start="pnpm run start:ui & pnpm run start:api"
+> pnpm pkg set scripts.build="pnpm recursive run build"
+
+@log Start to code...
+> code .

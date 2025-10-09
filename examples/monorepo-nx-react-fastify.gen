@@ -1,0 +1,24 @@
+# Monorepo con
+# 1. Frontend con React.js + Typescript
+# 2. Backend con Fastify + Typescript
+
+@log Creating Frontend App...
+> npx create-nx-workspace@latest my-monorepo --preset=react-monorepo --aiAgents=copilot --nxCloud=skip --appName=frontend --bundler=vite --routing=true --style=css --unitTestRunner=none --e2eTestRunner=none --formatter=none --linter=none  --interactive=false
+> cd my-monorepo
+
+# Plugin per Node.js (per Fastify)
+> npx nx add @nx/node
+
+@log Creating Backend App with Fastify...
+> npx nx generate @nx/node:application apps/backend --framework=fastify --bundler=esbuild --unitTestRunner=none --e2eTestRunner=none --formatter=none --linter=none
+
+@log Installing global dep...
+> npm install ai @ai-sdk/google
+
+@log Setting env...
+> echo GEMINI_API_KEY="AIzaSyDdiiqQd0l2OVJ2VdtfsVbAf289NDr-vs8" > .env
+
+
+> npm pkg set "scripts.dev-FE"="npx nx serve frontend"
+> npm pkg set "scripts.dev-BE"="npx nx serve backend"
+> npm pkg set "scripts.dev"="npx nx run-many --target=serve --projects=frontend,backend --parallel"

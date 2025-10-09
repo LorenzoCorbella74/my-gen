@@ -1,6 +1,6 @@
 # TEst di cd per cambiare pwd
 @log Test cd
-> pnpm init
+
 
 > mkdir prova\uno
 > cd prova\uno
@@ -10,3 +10,7 @@
 > cd ..
 > cd ..
 > echo root > root.txt
+
+> mkdir prova\due
+> cd prova\due
+> pnpm init

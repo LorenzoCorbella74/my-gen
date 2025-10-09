@@ -79,7 +79,10 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
         if (errorOutput.trim()) {
           console.error(chalk.red(`[CMD-ERROR] ${errorOutput.trim()}`));
         }
-        if (cleanOutput) {
+        
+        // Only log cleanOutput if VERBOSE is enabled
+        const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
+        if (cleanOutput && isVerbose) {
           console.log(cleanOutput);
         }
         

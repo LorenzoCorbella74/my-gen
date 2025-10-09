@@ -13,12 +13,13 @@ npm install -g my-gen
 ```
 Use like this:
 ```bash
-gen --file <path/to/your.gen> --config <path/to/your/config.json> --output <path/to/output/dir>
+gen --file <path/to/your.gen> --output <path/to/output/dir>
 ```
 
 - `--file`: Path to the `.gen` script to execute (Default: current directory).
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
+- `--verbose`: Optional path to enable verbose logging.
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. Here is an example:
@@ -75,9 +76,6 @@ END
 FOREACH file in files
   @log Found file: ${file}
 END
-
-# Compile a template file to generate multiple files
-@compile ./templates/my-template.json
 
 # Import commands from another file
 @import ./common-steps.gen
@@ -142,6 +140,8 @@ The `@ai` command integrates with [Ollama](https://ollama.com/) to provide AI-po
 @write jsFunction to validate-email.js
 ```
 
+## Examples
+Look inside the folder [examples](./examples/) for ready-to-use .gen scripts and templates.
 
 ## [Next steps](./doc/TODO.md)
 
