@@ -1,0 +1,144 @@
+# Crea un monorepo con frontend React.js + backend con fastify
+# il Backedend comunica con LLM tramite Vercel AI SDK
+
+@log Installing global dependancies...
+> pnpm init
+# > pnpm install ai typescript concurrently
+# 
+# @log Setting ROOT package.json
+# > npm pkg set "version"="0.0.1"
+# > npm pkg set "name"="monorepo"
+# > npm pkg set type="module"
+# > npm pkg set "scripts.dev:frontend"="pnpm --filter frontend dev"
+# > npm pkg set "scripts.dev:backend"="pnpm --filter backend dev"
+# > npm pkg set "scripts.dev"="concurrently \"pnpm run dev:frontend\" \"pnpm run dev:backend\""
+
+@fill pnpm-workspace.yaml
+"
+packages:
+ - 'packages/**'
+ - 'apps/**'
+"
+> mkdir apps 
+> mkdir packages
+> mkdir apps\frontend 
+> mkdir apps\backend 
+> mkdir packages\common
+
+# @log Setting Git...
+# > git init
+# @fill .gitignore
+# "
+# node_modules
+# dist
+# .env
+# "
+
+# > echo GEMINI_API_KEY="AIzaSyDdiiqQd0l2OVJ2VdtfsVbAf289NDr-vs8" > .env
+# 
+# @log Frontend with React.js + Typescript ...
+# > pnpm create vite apps/frontend --template react-ts
+# 
+# > pnpm install
+
+@log Backend with fastify
+> cd apps\backend
+> pnpm init 
+> pnpm install fastify
+> pnpm install --save-dev tsx @types/node
+
+# @log Setting BACKEND package.json
+# > npm pkg set "type"="module"
+# > npm pkg set "version"="0.0.1"
+# > npm pkg set "scripts.dev"="tsx --watch src/index.ts"
+# 
+# > mkdir src
+# @fill src/index.ts
+# "
+# import { google } from '@ai-sdk/google';
+# import { streamText } from 'ai';
+# import Fastify from 'fastify';
+# 
+# const fastify = Fastify({ logger: true });
+# 
+# fastify.post('/api/chat', async function (request, reply) {
+#     console.log("Prompt:", request.body)
+#   const result = streamText({
+#      model: google('gemini-2.5-flash'),
+#     prompt: 'Invent a new holiday and describe its traditions.',
+#   });
+# 
+#   // Mark the response as a v1 data stream:
+#   reply.header('X-Vercel-AI-Data-Stream', 'v1');
+#   reply.header('Content-Type', 'text/plain; charset=utf-8');
+# 
+#   return reply.send(result.toDataStream({ data }));
+# });
+# 
+# // Start the server
+# const start = async () => {
+#   try {
+#     await fastify.listen({ port: 3000 });
+#     console.log('Server is running on http://localhost:3000');
+#   } catch (error) {
+#     console.error('Error starting server:', error);
+#     process.exit(1);
+#   }
+# };
+# 
+# start();
+# "
+# 
+# @fill tsconfig.json
+# "
+# {
+#   "compilerOptions": {
+#     /* Modern JavaScript & Browser Compatibility: */
+#     "target": "ESNext", // Uses the latest ECMAScript features for modern JavaScript support
+# 
+#     /* Module System Settings: */
+#     "module": "NodeNext", // Configures Node.js to use ESM module system
+#     "rootDir": "src", // Specifies the source directory for your code
+#     "outDir": "dist", // Specifies the output directory for compiled files
+#     "sourceMap": true, // Enables source maps for easier debugging
+# 
+#     /* Module Resolution Strategy: */
+#     "moduleResolution": "NodeNext", // Resolves modules using Node’s ESM strategy
+#     "moduleDetection": "force", // Forces TypeScript to treat files as modules
+# 
+#     /* Interoperability and File Consistency: */
+#     "esModuleInterop": true, // Ensures compatibility between CommonJS and ESM modules
+#     "forceConsistentCasingInFileNames": true, // Prevents case-sensitivity issues across platforms
+# 
+#     /* Strict Type-Checking: */
+#     "strict": true, // Enables strict type-checking for fewer runtime errors
+#     "noUncheckedIndexedAccess": true, // Enforces type safety for array/object accesses
+#     "noImplicitOverride": true, // Enforces explicit use of `override` for methods overriding base class methods
+#     "noImplicitAny": true, // Prevents the use of `any` type unless explicitly defined
+#     "skipLibCheck": true, // Skips type-checking of declaration files for faster compilation
+#     "resolveJsonModule": true, // Allows importing JSON files as modules
+#     "declaration": true, // Generates `.d.ts` files for type definitions
+#     "allowSyntheticDefaultImports": true, // Allows default imports for CommonJS modules
+#     "allowImportingTsExtensions": true, // Allows importing `.ts` files with their extensions
+#     "verbatimModuleSyntax": true, // Keeps the `import`/`export` syntax as-is without transformation
+# 
+#     // Include modern ECMAScript (ES2022)
+#     "lib": ["ES2022"]
+#   },
+#   "include": ["src"], // Includes the `src` directory in the project
+#   "exclude": ["node_modules", "dist"] // Excludes `node_modules` and `dist` directories from the project
+# }
+# "
+# 
+# @log Setting BACKEND package.json
+# > npm pkg set "type"="module"
+# > npm pkg set "version"="0.0.1"
+# > npm pkg set "name"="Backend"
+# > npm pkg set "scripts.dev"="tsx --watch src/index.ts"
+# > npm pkg set "scripts.build"="tsc"
+# > npm pkg set "scripts.watch"="tsc --watch"
+# 
+# > cd ..
+# > cd ..
+# 
+# > code .

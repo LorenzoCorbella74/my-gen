@@ -11,7 +11,7 @@
 > echo node_modules > .gitignore
 
 @log Istallazione dipendenze
-> pnpm install ai @ai-sdk/google zod dotenv
+> pnpm install ai @ai-sdk/google zod dotenv ollama-ai-provider-v2
 > pnpm i -D typescript tsx @types/node
 
 @log Creating files....
@@ -19,13 +19,14 @@
 @fill src/index.ts
 "
 import { google } from '@ai-sdk/google';
+import { ollama } from 'ollama-ai-provider-v2';
 import { generateText } from 'ai';
 import dotenv from 'dotenv';
 
 dotenv.config()
 
 const { text, usage } = await generateText({
-  model: google('gemini-2.5-flash'),
+  model: google('gemini-2.5-flash'), // ollama('llama3.2-latest')
   prompt: 'Write a vegetarian lasagna recipe for 4 people.',
 });
 console.log(text, usage);
