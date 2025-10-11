@@ -15,6 +15,7 @@ export interface CommandContext {
     globalShell: GlobalShell;
     resolvePath: (p: string) => string;
     execute: (nodes: AstNode[]) => Promise<void>;
+    executeNodes: (nodes: AstNode[]) => Promise<void>;
 }
 
 export type CommandHandler = (node: AstNode, ctx: CommandContext) => Promise<void>;

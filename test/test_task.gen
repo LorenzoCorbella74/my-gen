@@ -1,0 +1,12 @@
+# Test file for @TASK command
+
+@TASK setup
+@LOG Starting setup task
+@SET projectName = @input What is the project name?
+> mkdir -p {projectName}
+@WRITE "console.log('Hello {projectName}');" to {projectName}/index.js
+
+@TASK deploy
+@LOG Starting deployment task
+> echo "Deploying to production..."
+> echo "Deployment completed"

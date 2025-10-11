@@ -30,6 +30,9 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
 
   const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
   console.log('Saving to :', finalPath);
+  // if the path is not present create it
+  await fs.mkdir(ctx.resolvePath(ctx.context.interpolate(filePath)).replace(/\/[^\/]+$/, ''), { recursive: true });
+  // write the file
   await fs.writeFile(finalPath, String(contentToWrite));
   console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
 }

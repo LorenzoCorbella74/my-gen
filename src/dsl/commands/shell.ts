@@ -6,11 +6,11 @@ import os from "os";
 
 function getShellCommand(): { shell: string; args: string[] } {
   if (process.env.SHELL) {
-    return { shell: process.env.SHELL, args: ["-i"] }; // interactive shell
+    return { shell: process.env.SHELL, args: [] }; // Non-interactive shell
   } else if (os.platform() === "win32") {
-    return { shell: process.env.COMSPEC || "cmd.exe", args: ["/k"] }; // keep cmd open
+    return { shell: process.env.COMSPEC || "cmd.exe", args: ["/C"] }; // Execute and exit
   }
-  return { shell: "/bin/sh", args: ["-i"] };
+  return { shell: "/bin/sh", args: [] }; // Non-interactive shell
 }
 
 function initGlobalShell(ctx: CommandContext): void {
@@ -41,6 +41,16 @@ function initGlobalShell(ctx: CommandContext): void {
 export async function handleShell(node: AstNode, ctx: CommandContext): Promise<void> {
   const command = ctx.context.interpolate(node.payload);
   console.log(chalk.gray(`[CMD] > ${command}`));
+  
+  // Debug logging
+  const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
+  if (isVerbose) {
+    console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
+    console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
+    console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
+    console.log(chalk.gray(`[SHELL-DEBUG] OutputDir: ${ctx.outputDir}`));
+    console.log(chalk.gray(`[SHELL-DEBUG] Global shell exists: ${!!ctx.globalShell.process}`));
+  }
 
   // Initialize global shell if needed
   initGlobalShell(ctx);
@@ -67,11 +77,16 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
       const dataStr = data.toString();
       output += dataStr;
       
-      // Check if marker is present in output
-      if (output.includes(marker)) {
+      if (isVerbose) {
+        console.log(chalk.gray(`[SHELL-DEBUG] Received chunk: ${JSON.stringify(dataStr)}`));
+      }
+      
+      // Check if marker is present in output (more aggressive detection)
+      if (output.includes(marker) || dataStr.includes(marker)) {
         // Command completed, cleanup and resolve
         shellProcess.stdout!.removeListener('data', onData);
         shellProcess.stderr!.removeListener('data', onError);
+        clearTimeout(timeout);
         
         // Remove marker from output and clean up
         const cleanOutput = output.replace(new RegExp(`.*${marker}.*\n?`, 'g'), '').trim();
@@ -81,9 +96,12 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
         }
         
         // Only log cleanOutput if VERBOSE is enabled
-        const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
         if (cleanOutput && isVerbose) {
-          console.log(cleanOutput);
+          console.log(chalk.gray(`[SHELL-OUTPUT] ${cleanOutput}`));
+        }
+        
+        if (isVerbose) {
+          console.log(chalk.gray(`[SHELL-DEBUG] Marker detected, command completed`));
         }
         
         resolve();
@@ -94,23 +112,41 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
       errorOutput += data.toString();
     };
 
-    // Set up error timeout as fallback (30 seconds)
+    // Set up error timeout as fallback (reduce to 10 seconds for faster feedback)
     const timeout = setTimeout(() => {
       shellProcess.stdout!.removeListener('data', onData);
       shellProcess.stderr!.removeListener('data', onError);
-      console.error(chalk.red(`[CMD-TIMEOUT] Command timed out after 30 seconds`));
-      if (output) {
+      console.error(chalk.red(`[CMD-TIMEOUT] Command timed out after 10 seconds`));
+      if (isVerbose) {
+        console.error(chalk.red(`[CMD-TIMEOUT] Command was: ${command}`));
+        console.error(chalk.red(`[CMD-TIMEOUT] Marker was: ${marker}`));
+        console.error(chalk.red(`[CMD-TIMEOUT] Output so far: ${JSON.stringify(output)}`));
+      }
+      if (output && isVerbose) {
         console.log(output);
       }
       resolve();
-    }, 30000);
+    }, 10000); // Reduced from 30 seconds to 10 seconds
 
     shellProcess.stdout!.on('data', onData);
     shellProcess.stderr!.on('data', onError);
 
     // Send command followed by marker
+    if (isVerbose) {
+      console.log(chalk.gray(`[SHELL-DEBUG] Sending command: "${command}"`));
+      console.log(chalk.gray(`[SHELL-DEBUG] Sending marker command: "${echoCommand}"`));
+    }
+    
+    // Send the actual command
     shellProcess.stdin!.write(`${command}\n`);
-    shellProcess.stdin!.write(`${echoCommand}\n`);
+    
+    // Wait a bit then send marker - this helps with command sequencing
+    setTimeout(() => {
+      shellProcess.stdin!.write(`${echoCommand}\n`);
+      if (isVerbose) {
+        console.log(chalk.gray(`[SHELL-DEBUG] Marker command sent`));
+      }
+    }, 100);
     
     // Clear timeout when command completes normally
     shellProcess.stdout!.on('removeListener', () => {

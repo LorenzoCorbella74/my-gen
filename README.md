@@ -93,6 +93,23 @@ console.log("Generated with @gen");
   @log Found file: {file}
 @endloop
 
+# Define tasks for organized workflows.
+# A prompt will ask the user to choose a task to execute.
+@task setup
+@log Setting up project
+@set projectName = @input Enter project name
+> mkdir -p {projectName}
+@write "console.log('Hello {projectName}');" to {projectName}/index.js
+
+@task build
+@log Building project
+> npm install
+> npm run build
+
+@task deploy
+@log Deploying project
+> npm run deploy
+
 # Import commands from another file
 @import ./common-steps.gen
 ```
@@ -111,6 +128,7 @@ console.log("Generated with @gen");
 | [`@if`](doc/commands/if.md)         | `@if exists path`<br>`@if var is "value"`<br>`@if var isnot "value"` | Conditionally execute child commands based on file existence or variable comparison           |
 | [`@loop`](doc/commands/loop.md)     | `@loop item in listVar`                        | Iterate over an array variable, setting `item` and executing child commands                 |
 | [`@import`](doc/commands/import.md) | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
+| [`@task`](doc/commands/task.md)     | `@task taskname`                               | Define a named task that groups commands until the next empty line. When tasks are present in a file, shows a selection menu to choose which task to execute |
 
 ## Parse Folder to produce Template!
 It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.gen` file in the current working directory excluding some common folders like `node_modules`, `dist`, `.git`.

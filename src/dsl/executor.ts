@@ -5,7 +5,8 @@
 import process from "node:process";
 import chalk from "chalk";
 import * as path from "path";
-import { AstNode } from "./parser.js";
+import { select } from '@inquirer/prompts';
+import { AstNode, isTaskNode } from "./parser.js";
 import { Context } from "./context.js";
 import { GlobalContext } from "./global.js";
 import { SimpleSpinner } from "../utils/spinner.js";
@@ -20,6 +21,7 @@ import {
   handleIf,
   handleForeach,
   handleImport,
+  handleTask,
   cleanupGlobalShell,
   type CommandHandler,
   type CommandContext,
@@ -106,6 +108,10 @@ export class Executor {
       const ctx = this.createCommandContext();
       return handleImport(node, ctx);
     });
+    this.commands.set("@TASK", async (node: AstNode) => {
+      const ctx = this.createCommandContext();
+      return handleTask(node, ctx);
+    });
   }
 
   private createCommandContext(): CommandContext {
@@ -115,17 +121,69 @@ export class Executor {
       globalContext: this.globalContext,
       globalShell: this.globalShell,
       resolvePath: this.resolvePath.bind(this),
-      execute: this.execute.bind(this)
+      execute: this.execute.bind(this),
+      executeNodes: this.executeNodes.bind(this)
     };
   }
 
   public async execute(nodes: AstNode[]) {
+    // Check if there are any tasks in the nodes
+    const tasks = this.findTasks(nodes);
+    
+    if (tasks.length > 0) {
+      // If tasks are present, show selection menu
+      await this.executeWithTaskSelection(tasks);
+    } else {
+      // Execute normally if no tasks
+      await this.executeNodes(nodes);
+    }
+  }
+
+  /**
+   * Find all task nodes in the AST
+   */
+  private findTasks(nodes: AstNode[]): { name: string; node: AstNode }[] {
+    const tasks: { name: string; node: AstNode }[] = [];
+
     for (const node of nodes) {
-      const commandFn = this.commands.get(node.type.toUpperCase());
+      if (isTaskNode(node)) {
+        tasks.push({ name: node.payload, node });
+      }
+    }
+    return tasks;
+  }
+
+  /**
+   * Show task selection menu and execute chosen task
+   */
+  private async executeWithTaskSelection(tasks: { name: string; node: AstNode }[]): Promise<void> {
+    console.log(chalk.yellow(`Found ${tasks.length} task(s) in the file.`));
+    
+    const choices = tasks.map(task => ({
+      name: task.name,
+      value: task.node
+    }));
+    
+    const selectedTask = await select({
+      message: 'Which task would you like to execute?',
+      choices
+    });
+    
+    console.log(chalk.blue(`Executing task: ${(selectedTask as any).payload}`));
+    await this.executeNodes([selectedTask as AstNode]);
+  }
+
+  /**
+   * Execute a list of nodes
+   */
+  private async executeNodes(nodes: AstNode[]) {
+    for (const node of nodes) {
+      const commandFn = this.
+      commands.get(node.type.toUpperCase());
       if (commandFn) {
         let spinner
         // Create spinner with command info
-        if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL" && node.type !== "@IF" && node.type !== "@LOOP") {
+        if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL" && node.type !== "@IF" && node.type !== "@LOOP" && node.type !== "@TASK") {
           spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line} `).start();
         }
         try {

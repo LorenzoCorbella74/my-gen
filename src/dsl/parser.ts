@@ -66,6 +66,12 @@ export interface ImportNode extends BaseAstNode {
   payload: string; // The file path to import
 }
 
+export interface TaskNode extends BaseAstNode {
+  type: '@TASK';
+  payload: string; // The task name
+  children: AstNode[]; // Commands to execute for this task
+}
+
 // Union type for all possible AST nodes
 export type AstNode =
   | LogNode
@@ -77,7 +83,8 @@ export type AstNode =
   | IfNode
   | ForeachNode
   | FillNode
-  | ImportNode;
+  | ImportNode
+  | TaskNode;
 
 // Type guards for runtime type checking
 export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
@@ -90,9 +97,10 @@ export const isIfNode = (node: AstNode): node is IfNode => node.type === '@IF';
 export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === '@LOOP';
 export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
 export const isImportNode = (node: AstNode): node is ImportNode => node.type === '@IMPORT';
+export const isTaskNode = (node: AstNode): node is TaskNode => node.type === '@TASK';
 
 // Helper type for block commands that have children
-export type BlockNode = IfNode | ForeachNode;
+export type BlockNode = IfNode | ForeachNode | TaskNode;
 
 /**
  * Parses the content of a DSL (.gen) file into an Abstract Syntax Tree (AST).
@@ -163,6 +171,56 @@ export function parseContent(content: string): AstNode[] {
       currentAst.push(newNode);
       stack.push(newNode.children);
       currentAst = newNode.children;
+    } else if (upperCommand === '@TASK' || upperCommand === 'TASK') {
+      const taskNode: TaskNode = { type: '@TASK', payload: payload, line: lineNumber, children: [] };
+      currentAst.push(taskNode);
+      
+      // Collect commands until empty line or end of file
+      let j = i + 1;
+      while (j < lines.length) {
+        const taskLine = lines[j].trim();
+        
+        // Stop at empty line
+        if (!taskLine) {
+          break;
+        }
+        
+        // Skip comments
+        if (taskLine.startsWith('#')) {
+          j++;
+          continue;
+        }
+        
+        // Parse the command line
+        const [taskCommand, ...taskRest] = taskLine.split(/\s+/);
+        const taskPayload = taskRest.join(' ');
+        const taskLineNumber = j + 1;
+        const taskUpperCommand = taskCommand.toUpperCase();
+        
+        // Handle shell commands
+        if (taskLine.startsWith('>')) {
+          const shellNode: ShellNode = {
+            type: '>',
+            payload: taskLine.substring(1).trim(),
+            line: taskLineNumber
+          };
+          taskNode.children.push(shellNode);
+        } else {
+          // Handle other commands
+          const nodeType = mapCommandToType(taskUpperCommand);
+          if (nodeType) {
+            const node = createNodeByType(nodeType, taskPayload, taskLineNumber);
+            taskNode.children.push(node);
+          } else {
+            console.warn(`Unknown command "${taskUpperCommand}" at line ${taskLineNumber} in task "${payload}"`);
+          }
+        }
+        
+        j++;
+      }
+      
+      // Skip processed lines
+      i = j - 1;
     } else if (upperCommand === '@FILL' || upperCommand === 'FILL') {
       // Handle @fill command with multi-line content
       const fillNode: FillNode = { type: '@FILL', payload: payload, line: lineNumber, content: [] };
@@ -264,6 +322,9 @@ function mapCommandToType(command: string): AstNode['type'] | null {
     case 'LOOP':
     case 'FOREACH':
       return '@LOOP';
+    case '@TASK':
+    case 'TASK':
+      return '@TASK';
     default:
       return null;
   }
@@ -294,6 +355,8 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       return { type: '@IF', payload, line, children: [], elseifBlocks: [] };
     case '@LOOP':
       return { type: '@LOOP', payload, line, children: [] };
+    case '@TASK':
+      return { type: '@TASK', payload, line, children: [] };
     case '>':
       return { type: '>', payload, line };
     default:

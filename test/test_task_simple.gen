@@ -1,0 +1,11 @@
+# Simple test file for @TASK command
+
+@TASK hello
+@LOG Hello from task hello!
+@SET greeting = @input come si chiama il tuo progetto? 
+@LOG Greeting: {greeting}
+
+@TASK goodbye  
+@LOG Goodbye from task goodbye!
+@SET farewell = See you later
+@LOG Farewell: {farewell}

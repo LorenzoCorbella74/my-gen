@@ -119,11 +119,11 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Test write",
+      "name": "Test write MAC",
       "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--file",
-        ".\\test\\test_write.gen",
+        "./test/test_write.gen",
         "--verbose"
       ],
       "console": "integratedTerminal",
@@ -161,6 +161,18 @@
       "args": [
         "--file",
         ".\\test\\test_select_multiselect.gen",
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test @task MAC",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        "./test/test_task.gen",
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
