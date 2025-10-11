@@ -8,8 +8,7 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
   const match = payload.match(/^(?:("(.+?)")|(\w+))\s+to\s+(.+)$/);
 
   if (!match) {
-    console.error(chalk.red(`[WRITE-ERROR] Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`));
-    return;
+    throw new Error(`Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`);
   }
 
   const [, , literalContent, variableName, filePath] = match;
@@ -20,19 +19,24 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
   } else if (variableName) {
     contentToWrite = ctx.context.get(variableName);
     if (contentToWrite === undefined) {
-      console.error(chalk.red(`[WRITE-ERROR] Variable "${variableName}" is not defined.`));
-      return;
+      throw new Error(`Variable "${variableName}" is not defined.`);
     }
   } else {
-    console.error(chalk.red(`[WRITE-ERROR] Invalid content specified.`));
-    return;
+    throw new Error(`Invalid content specified.`);
   }
 
-  const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
-  console.log('Saving to :', finalPath);
-  // if the path is not present create it
-  await fs.mkdir(ctx.resolvePath(ctx.context.interpolate(filePath)).replace(/\/[^\/]+$/, ''), { recursive: true });
-  // write the file
-  await fs.writeFile(finalPath, String(contentToWrite));
-  console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
+  try {
+    const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
+    console.log('Saving to :', finalPath);
+    // if the path is not present create it
+    await fs.mkdir(ctx.resolvePath(ctx.context.interpolate(filePath)).replace(/\/[^\/]+$/, ''), { recursive: true });
+    // write the file
+    await fs.writeFile(finalPath, String(contentToWrite));
+    console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to write content: ${error.message}`);
+    }
+    throw error;
+  }
 }

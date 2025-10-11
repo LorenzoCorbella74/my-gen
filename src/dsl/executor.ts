@@ -178,8 +178,7 @@ export class Executor {
    */
   private async executeNodes(nodes: AstNode[]) {
     for (const node of nodes) {
-      const commandFn = this.
-      commands.get(node.type.toUpperCase());
+      const commandFn = this.commands.get(node.type.toUpperCase());
       if (commandFn) {
         let spinner
         // Create spinner with command info
@@ -191,11 +190,23 @@ export class Executor {
           spinner && spinner.succeed(`${node.type} completed`);
         } catch (error) {
           spinner && spinner.fail(`${node.type} failed`);
+          
+          // Centralized error handling with better formatting
+          let errorMessage = `Error executing ${node.type} command at line ${node.line}`;
+          
           if (error && typeof error === "object" && "message" in error) {
-            console.error(chalk.red(`Error executing command at line ${node.line}: ${(error as { message: string }).message}`));
+            const originalMessage = (error as { message: string }).message;
+            // Remove redundant prefixes from error messages
+            const cleanMessage = originalMessage
+              .replace(/^\[.*?\]\s*/, '') // Remove [TAG] prefixes
+              .replace(/^Error:\s*/, '') // Remove "Error:" prefix
+              .trim();
+            errorMessage += `: ${cleanMessage}`;
           } else {
-            console.error(chalk.red(`Error executing command at line ${node.line}: ${String(error)}`));
+            errorMessage += `: ${String(error)}`;
           }
+          
+          console.error(chalk.red(errorMessage));
           process.exit(1);
         }
       } else {

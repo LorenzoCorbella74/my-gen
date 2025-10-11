@@ -29,7 +29,7 @@ function initGlobalShell(ctx: CommandContext): void {
 
   // Handle shell errors
   shellProcess.on('error', (error) => {
-    console.error(chalk.red(`[SHELL-ERROR] ${error.message}`));
+    console.log(chalk.red(`[SHELL-ERROR] ${error.message}`));
   });
 
   shellProcess.on('exit', (code) => {
@@ -42,7 +42,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
   const command = ctx.context.interpolate(node.payload);
   console.log(chalk.gray(`[CMD] > ${command}`));
   
-  // Debug logging
+  // Debug logging (only in verbose mode)
   const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
   if (isVerbose) {
     console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
@@ -57,8 +57,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
 
   const shellProcess = ctx.globalShell.process;
   if (!shellProcess || !shellProcess.stdin || !shellProcess.stdout || !shellProcess.stderr) {
-    console.error(chalk.red('[SHELL-ERROR] Global shell not available'));
-    return;
+    throw new Error('Global shell not available');
   }
 
   return new Promise((resolve, reject) => {
@@ -92,7 +91,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
         const cleanOutput = output.replace(new RegExp(`.*${marker}.*\n?`, 'g'), '').trim();
         
         if (errorOutput.trim()) {
-          console.error(chalk.red(`[CMD-ERROR] ${errorOutput.trim()}`));
+          console.log(chalk.red(`[CMD-ERROR] ${errorOutput.trim()}`));
         }
         
         // Only log cleanOutput if VERBOSE is enabled
@@ -116,15 +115,16 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     const timeout = setTimeout(() => {
       shellProcess.stdout!.removeListener('data', onData);
       shellProcess.stderr!.removeListener('data', onError);
-      console.error(chalk.red(`[CMD-TIMEOUT] Command timed out after 10 seconds`));
       if (isVerbose) {
-        console.error(chalk.red(`[CMD-TIMEOUT] Command was: ${command}`));
-        console.error(chalk.red(`[CMD-TIMEOUT] Marker was: ${marker}`));
-        console.error(chalk.red(`[CMD-TIMEOUT] Output so far: ${JSON.stringify(output)}`));
+        console.log(chalk.red(`[CMD-TIMEOUT] Command timed out after 10 seconds`));
+        console.log(chalk.red(`[CMD-TIMEOUT] Command was: ${command}`));
+        console.log(chalk.red(`[CMD-TIMEOUT] Marker was: ${marker}`));
+        console.log(chalk.red(`[CMD-TIMEOUT] Output so far: ${JSON.stringify(output)}`));
       }
       if (output && isVerbose) {
         console.log(output);
       }
+      // Don't throw error on timeout, just resolve
       resolve();
     }, 10000); // Reduced from 30 seconds to 10 seconds
 

@@ -1,0 +1,5 @@
+# Test error handling
+
+@LOG Testing error handling
+@SET name = test
+@WRITE undefined_variable to test.txt

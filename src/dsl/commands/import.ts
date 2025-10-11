@@ -15,7 +15,6 @@ export async function handleImport(node: AstNode, ctx: CommandContext): Promise<
     await ctx.execute(importedAst);
     console.log(chalk.green(`[IMPORT] Imported and executed commands from ${importPath}`));
   } catch (error) {
-    console.error(chalk.red(`[IMPORT-ERROR] Failed to import ${importPath}: ${error}`));
-    throw error;
+    throw new Error(`Failed to import ${importPath}: ${error}`);
   }
 }

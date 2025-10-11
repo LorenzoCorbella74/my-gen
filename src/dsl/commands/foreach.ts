@@ -11,8 +11,7 @@ export async function handleForeach(node: AstNode, ctx: CommandContext): Promise
   const list = ctx.context.get(listVar);
 
   if (!Array.isArray(list)) {
-    console.error(chalk.red(`[LOOP-ERROR] Variable "${listVar}" is not an array.`));
-    return;
+    throw new Error(`Variable "${listVar}" is not an array.`);
   }
 
   for (const item of list) {
