@@ -27,92 +27,8 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--verbose`: Optional path to enable verbose logging.
 
 ## .gen file SYNTAX & DSL Example
-**.gen** file contains commands line by line based on a simple custom Domain Specific Language. Here is an example:
-```plaintext
-
-# Print a log message
-@log Starting project generation
-
-# Set a variable from user input
-@set projectName = @input Enter project name
-# Set a variable with single selection
-@set framework = @select Choose framework? [ react vue angular ]
-# Set a variable with multiple selection  
-@set features = @multiselect Select features? [ auth database api testing ]
-
-# Set a global variable that persists across runs
-@global authorName = @input Enter your name
-
-# Set a variable from a file content
-@set readmeContent = @load ./README.md
-# Set a global variable from a file content
-@global templateContent = @load ./template.md
-
-# Set a variable from the content of a webpage (HTTP GET)
-@set apiData = @http https://api.example.com/data
-# Set a global variable from HTTP (persists across runs)
-@global configData = @http https://config.example.com/settings
-
-# List files and folders
-@set files = files in ./src
-@set folders = folders in ./src
-
-# Run a shell command with > and the shell commands
-> echo Project: {projectName}
-
-# Write content to a file
-@write "Hello, {projectName}!" to hello.txt
-@write readmeContent to copy_of_readme.txt
-
-# Fill a file with multi-line content
-@fill src/index.ts
-"
-console.log("Hello from {projectName}!");
-console.log("Generated with @gen");
-"
-
-# Conditional execution with file existence
-@if exists hello.txt
-  @log hello.txt exists!
-@end
-
-# Conditional execution with variable comparison
-@if projectName is "MyApp"
-  @log Project name is MyApp
-@elseif projectName is "TestApp"
-  @log Project name is TestApp
-@end
-
-# Conditional execution with negation
-@if status isnot "inactive"
-  @log Status is active
-@end
-
-# Loop over a list
-@loop file in files
-  @log Found file: {file}
-@endloop
-
-# Define tasks for organized workflows.
-# A prompt will ask the user to choose a task to execute.
-@task setup
-@log Setting up project
-@set projectName = @input Enter project name
-> mkdir -p {projectName}
-@write "console.log('Hello {projectName}');" to {projectName}/index.js
-
-@task build
-@log Building project
-> npm install
-> npm run build
-
-@task deploy
-@log Deploying project
-> npm run deploy
-
-# Import commands from another file
-@import ./common-steps.gen
-```
+**.gen** file contains commands line by line based on a simple custom Domain Specific Language. 
+![gen-syntax](./doc/gen.png)
 
 ## Supported Commands
 
@@ -130,11 +46,8 @@ console.log("Generated with @gen");
 | [`@import`](doc/commands/import.md) | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
 | [`@task`](doc/commands/task.md)     | `@task taskname`                               | Define a named task that groups commands until the next empty line. When tasks are present in a file, shows a selection menu to choose which task to execute |
 
-## Parse Folder to produce Template!
-It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.gen` file in the current working directory excluding some common folders like `node_modules`, `dist`, `.git`.
-```bash
-gen --parse C:/DEV/template_vanilla_ts/vite-project
-```
+## Syntax Highlights VSCode Extension
+You can get the extension from [gen-vsc-extension](https://github.com/LorenzoCorbella74/gen-vsc-extension) and install it in your VSCode extension panel by choosing "Install from VSIX..." and selecting the downloaded `gen-vsc-extension-0.0.1.vsix` file.
 
 ## Examples
 Look inside the folder [examples](./examples/) for ready-to-use .gen scripts and templates.
