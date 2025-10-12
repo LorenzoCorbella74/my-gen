@@ -12,6 +12,7 @@ import { Context } from "./dsl/context.js";
 import { parseContent } from "./dsl/parser.js";
 import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
+import { generateDocumentation } from './dsl/documentor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +44,11 @@ const argv = yargs(hideBin(process.argv))
     description: 'Enable verbose logging for commands',
     default: false
   })
+  .option('doc', {
+    type: 'boolean',
+    description: 'Convert .gen file to markdown documentation',
+    default: false
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
@@ -51,6 +57,7 @@ const genFile = argv.file;
 const configFile = argv.config;
 const parsedFolder = argv.parse;
 const verbose = argv.verbose;
+const generateDoc = argv.doc;
 
 
 
@@ -99,6 +106,22 @@ async function main() {
     await fs.writeFile(path.join(process.cwd(), 'template.gen'), interpolatedContent, 'utf-8');
     console.log("\nTemplate folder parsed correctly. Output written to template.gen");
     process.exit(0);
+  }
+
+  // If --doc is provided, generate markdown documentation
+  if (generateDoc) {
+    try {
+      const outputFile = await generateDocumentation(genFile);
+      console.log(chalk.green(`\nDocumentation generated successfully: ${outputFile}`));
+      process.exit(0);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(chalk.red(`Error generating documentation: ${error.message}`));
+      } else {
+        console.error(chalk.red(`Error generating documentation: ${String(error)}`));
+      }
+      process.exit(1);
+    }
   }
 
   let genContent = "";

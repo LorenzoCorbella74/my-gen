@@ -25,6 +25,7 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--verbose`: Optional path to enable verbose logging.
+- `--doc`: Convert the `.gen` file to markdown documentation.
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 
@@ -45,6 +46,23 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 | [`@loop`](doc/commands/loop.md)     | `@loop item in listVar`                        | Iterate over an array variable, setting `item` and executing child commands                 |
 | [`@import`](doc/commands/import.md) | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
 | [`@task`](doc/commands/task.md)     | `@task taskname`                               | Define a named task that groups commands until the next empty line. When tasks are present in a file, shows a selection menu to choose which task to execute |
+
+## Documentation Generation
+
+The `--doc` flag allows you to convert `.gen` files into readable markdown documentation. This is useful for:
+- Creating project setup guides
+- Documenting automation scripts
+- Sharing project templates with clear instructions
+```bash
+# transform a .gen file to markdown documentation
+gen --file=path/to/your/script.gen --doc
+```
+
+## Parse Folder to produce Template!
+It is possibile **to transform a folder to a template** thanks to the `--parse <folder>` option. It will create a `template.gen` file in the current working directory excluding some common folders like `node_modules`, `dist`, `.git`.
+```bash
+gen --parse C:/DEV/template_vanilla_ts/vite-project
+```
 
 ## Syntax Highlights VSCode Extension
 You can get the extension from [gen-vsc-extension](https://github.com/LorenzoCorbella74/gen-vsc-extension) and install it in your VSCode extension panel by choosing "Install from VSIX..." and selecting the downloaded `gen-vsc-extension-0.0.1.vsix` file.

@@ -1,0 +1,25 @@
+# Test file with tasks
+@log Starting task demo
+
+@task setup
+@log Setting up project
+> mkdir test-project
+> cd test-project
+> npm init -y
+
+@task install
+@log Installing dependencies
+> npm install express
+> npm install -D typescript
+
+@task config
+@log Creating configuration
+@fill tsconfig.json
+"
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs"
+  }
+}
+"
