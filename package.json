@@ -9,7 +9,12 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "postpublish": "git push && git push --tags",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.6",

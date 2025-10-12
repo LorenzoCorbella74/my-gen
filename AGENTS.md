@@ -71,6 +71,7 @@ A `.gen` file is a script written in a custom Domain Specific Language (DSL) des
 ```
 
 #### [@fill](doc/commands/fill.md) - Multi-line Content
+The content between the quotes is written to the specified file, preserving line breaks and formatting.
 ```plaintext
 @fill path/to/file.txt
 "
@@ -130,6 +131,8 @@ Variables work: {variableName}
 ```
 
 #### [@task](doc/commands/task.md) - Named Task Groups
+Tasks help organize related commands. When tasks are defined, users can select which task to execute.
+Task commnands area are grouped until the next empty line or end of file.
 ```plaintext
 @task setup
 @log Setting up project
@@ -151,7 +154,7 @@ Variables work: {variableName}
 ### 1. Interactive Project Setup
 ```plaintext
 # Gather user input
-@set projectName = @input Enter project name
+@set projectName = @input Enter project name?
 @set framework = @select Choose framework? [ react vue angular ]
 @set features = @multiselect Select features? [ typescript eslint prettier testing ]
 
