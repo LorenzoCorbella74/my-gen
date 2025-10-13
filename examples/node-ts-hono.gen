@@ -17,16 +17,11 @@ ENV=development
 "
 
 @log Getting dependencies...
-> npm i -D typescript tsx @types/node @types/jsonwebtoken @types/bcrypt
-> npm i dotenv hono jsonwebtoken uuid bcrypt
+> npm i -D typescript tsx @types/node @types/jsonwebtoken @types/bcrypt @types/better-sqlite3
+> npm i dotenv hono jsonwebtoken uuid better-sqlite3 bcrypt @hono/node-server
 
 @log Creating files....
 >md src
-@fill src/index.ts
-"
-// {nomeProgetto}
-console.log("Code here...");
-"
 
 @fill tsconfig.json
 "
@@ -67,36 +62,32 @@ export const BCRYPT_ROUNDS = 10;
 export const ENV = process.env.ENV || 'development';
 "
 
-@fill src/db/database.t
+@fill src/db/database.ts
 "
 import Database from 'better-sqlite3';
+import path from 'path';
 
-export const db = new Database('./data/database.sqlite');
+// 🚀 Inizializzazione del database
+const dbPath = path.join(__dirname, '..', 'database.sqlite');
+export const db = new Database(dbPath) as any;
 
 // Creazione tabelle se non esistono
 db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS token_blacklist (
-  token TEXT PRIMARY KEY,
-  expires_at DATETIME NOT NULL
-);
-CREATE TABLE IF NOT EXISTS chats (
-  id TEXT PRIMARY KEY,
-  nome TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS messages (
-  id TEXT PRIMARY KEY,
-  chatId TEXT NOT NULL,
-  role TEXT NOT NULL,
-  content TEXT NOT NULL,
-  FOREIGN KEY(chatId) REFERENCES chats(id) ON DELETE CASCADE
-);
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS token_blacklist (
+    token TEXT PRIMARY KEY,
+    expires_at DATETIME NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS chats (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL
+  );
 `);
 "
 
@@ -231,25 +222,26 @@ export const chatController = {
 
 @fill src/routes/chatRoutes.ts
 "
-import { Router } from 'hono';
+import { Hono } from 'hono';
 import { chatController } from '../controllers/chatController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
-const router = new Router();
+const routes = new Hono();
 
-router.use('*', authMiddleware);
-router.post('/', chatController.create);
-router.get('/', chatController.list);
-router.get('/:id', chatController.get);
-router.put('/:id', chatController.update);
-router.delete('/:id', chatController.delete);
+routes.use('*', authMiddleware);
+routes.post('/', chatController.create);
+routes.get('/', chatController.list);
+routes.get('/:id', chatController.get);
+routes.put('/:id', chatController.update);
+routes.delete('/:id', chatController.delete);
 
-export default router;
+export default routes;
 "
 
 @fill src/index.ts
 "
 import { Hono } from 'hono';
+import { serve } from '@hono/node-server'
 import authRoutes from './routes/authRoutes';
 import chatRoutes from './routes/chatRoutes';
 import { PORT } from './config';
@@ -259,16 +251,16 @@ const app = new Hono();
 // Rotte
 app.route('/auth', authRoutes);
 app.route('/chats', chatRoutes);
-app.route('/messages', messageRoutes);
 
 // Health check
 app.get('/', (c) => c.json({ status: 'API Chat Server', version: '1.0.0' }));
 
-console.log(`🚀 Server avviato su http://localhost:${PORT}`);
-export default {
+serve({
   port: Number(PORT),
   fetch: app.fetch
-};
+}, (info) => {
+  console.log(`🚀 Server avviato su http://localhost:${info.port}`)
+});
 "
 
 @fill src/services/userService.ts
@@ -460,6 +452,57 @@ export const authController = {
     return c.json({ user });
   }
 };
+"
+
+@fill .vscode/launch.json
+"
+{
+"version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug REAST API",
+            "program": "${workspaceFolder}/src/index.ts",
+            "args": [],
+            "console": "integratedTerminal",
+            "runtimeExecutable": "tsx"
+        }
+    ]
+}
+"
+
+@fill test.http
+"
+@baseUrl = http://localhost:3001
+@token=
+
+POST {{baseUrl}}/auth/register 
+Content-Type: application/json
+
+{
+  "username": "mario",
+  "email": "mario@example.com", 
+  "password": "password123"
+}
+
+
+### LOGIN
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "mario",
+  "password": "password123"
+}
+
+### Test Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+### Test Get Profile
+GET {{baseUrl}}/auth/me  
+Authorization: Bearer {{token}}
 "
 
 @log Setting scripts in package.json....
