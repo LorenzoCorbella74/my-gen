@@ -1,4 +1,4 @@
-# Inizializzazione di progetti con AI SDK con WIN
+# Inizializzazione di progetti con AI SDK V5 con WIN
 @log Progett0 con AI SDK
 @set nomeProgetto=input: Nome del progetto?
 @set author = Lorenzo Corbella

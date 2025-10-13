@@ -176,6 +176,20 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test regressione",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        "./examples/node-ts-hono.gen",
+        "--output",
+        "../test-hono"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }

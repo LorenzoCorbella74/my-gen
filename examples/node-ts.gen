@@ -1,6 +1,6 @@
 # Simple Typescript project (WIN) V. 0.0.1
 @log Creating Simple typescript template....
-@set nomeProgetto= input: Nome del progetto?
+@set nomeProgetto= @input Nome del progetto?
 @set author = Lorenzo Corbella
 
 > pnpm init

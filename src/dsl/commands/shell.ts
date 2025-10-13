@@ -6,11 +6,11 @@ import os from "os";
 
 function getShellCommand(): { shell: string; args: string[] } {
   if (process.env.SHELL) {
-    return { shell: process.env.SHELL, args: [] }; // Non-interactive shell
+    return { shell: process.env.SHELL, args: ["-i"] }; // interactive shell
   } else if (os.platform() === "win32") {
-    return { shell: process.env.COMSPEC || "cmd.exe", args: ["/C"] }; // Execute and exit
+    return { shell: process.env.COMSPEC || "cmd.exe", args: ["/k"] }; // keep cmd open
   }
-  return { shell: "/bin/sh", args: [] }; // Non-interactive shell
+  return { shell: "/bin/sh", args: ["-i"] }; // interactive shell
 }
 
 function initGlobalShell(ctx: CommandContext): void {

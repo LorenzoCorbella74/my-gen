@@ -1,0 +1,473 @@
+# Hono REAT API project (WIN) V. 0.0.1
+@log Creating Hono REAT API template....
+@set nomeProgetto= @input Nome del progetto?
+@set author = Lorenzo Corbella
+
+> npm init -y
+> echo "# {nomeProgetto}" > README.md
+
+@log init Git
+> git init
+> echo node_modules > .gitignore
+@fill .env
+"
+PORT=3000
+JWT_SECRET=secret
+ENV=development
+"
+
+@log Getting dependencies...
+> npm i -D typescript tsx @types/node @types/jsonwebtoken @types/bcrypt
+> npm i dotenv hono jsonwebtoken uuid bcrypt
+
+@log Creating files....
+>md src
+@fill src/index.ts
+"
+// {nomeProgetto}
+console.log("Code here...");
+"
+
+@fill tsconfig.json
+"
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "target": "esnext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+"
+
+@fill src/config/index.ts
+"
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const PORT = process.env.PORT || '3000';
+export const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+export const DB_PATH = process.env.DB_PATH || './data/db.sqlite';
+export const BCRYPT_ROUNDS = 10;
+export const ENV = process.env.ENV || 'development';
+"
+
+@fill src/db/database.t
+"
+import Database from 'better-sqlite3';
+
+export const db = new Database('./data/database.sqlite');
+
+// Creazione tabelle se non esistono
+db.exec(`
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS token_blacklist (
+  token TEXT PRIMARY KEY,
+  expires_at DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS chats (
+  id TEXT PRIMARY KEY,
+  nome TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  chatId TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  FOREIGN KEY(chatId) REFERENCES chats(id) ON DELETE CASCADE
+);
+`);
+"
+
+@fill src/middleware/authMiddleware.ts
+"
+import { Context, Next } from 'hono';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config';
+import { userService } from '../services/userService';
+
+export async function authMiddleware(c: Context, next: Next) {
+  const auth = c.req.header('Authorization');
+  if (!auth?.startsWith('Bearer ')) {
+    return c.json({ error: 'Token mancante' }, 401);
+  }
+
+  const token = auth.slice(7);
+  
+  try {
+    // Verifica se il token è in blacklist
+    if (userService.isTokenBlacklisted(token)) {
+      return c.json({ error: 'Token non valido' }, 401);
+    }
+
+    const payload = jwt.verify(token, JWT_SECRET) as any;
+    c.set('user', payload);
+    await next();
+  } catch {
+    return c.json({ error: 'Token non valido' }, 401);
+  }
+}
+"
+
+@fill src/routes/authRoutes.ts
+"
+import { Hono } from 'hono';
+import { authController } from '../controllers/authController';
+import { authMiddleware } from '../middleware/authMiddleware';
+
+const router = new Hono();
+
+// Rotte pubbliche
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+
+// Rotte protette
+router.post('/logout', authMiddleware, authController.logout);
+router.get('/me', authMiddleware, authController.me);
+
+export default router;
+"
+
+@fill src/services/chatService.ts
+"
+import { db } from '../db/database';
+import { v4 as uuid } from 'uuid';
+
+export interface Chat { 
+  id: string; 
+  nome: string; 
+  userId: string;
+  created_at?: string;
+}
+
+export const chatService = {
+  create(nome: string, userId: string): Chat {
+    const id = uuid();
+    db.prepare('INSERT INTO chats (id, nome, userId) VALUES (?, ?, ?)').run(id, nome, userId);
+    return { id, nome, userId };
+  },
+
+  listByUser(userId: string): Chat[] {
+    return db.prepare('SELECT * FROM chats WHERE userId = ?').all(userId) as Chat[];
+  },
+
+  getById(id: string, userId: string): Chat | undefined {
+    return db.prepare('SELECT * FROM chats WHERE id = ? AND userId = ?').get(id, userId) as Chat;
+  },
+
+  update(id: string, nome: string, userId: string): Chat | undefined {
+    db.prepare('UPDATE chats SET nome = ? WHERE id = ? AND userId = ?').run(nome, id, userId);
+    return this.getById(id, userId);
+  },
+
+  delete(id: string, userId: string): void {
+    db.prepare('DELETE FROM chats WHERE id = ? AND userId = ?').run(id, userId);
+  }
+};
+"
+
+@fill src/controllers/chatController.ts
+"
+import { Context } from 'hono';
+import { chatService } from '../services/chatService';
+
+export const chatController = {
+  create: async (c: Context) => {
+    const { nome } = await c.req.json();
+    const user = c.get('user');
+    
+    if (!nome) return c.json({ error: 'Nome richiesto' }, 400);
+    
+    const chat = chatService.create(nome, user.id);
+    return c.json(chat, 201);
+  },
+
+  list: (c: Context) => {
+    const user = c.get('user');
+    return c.json(chatService.listByUser(user.id));
+  },
+
+  get: (c: Context) => {
+    const user = c.get('user');
+    const chat = chatService.getById(c.req.param('id'), user.id);
+    return chat ? c.json(chat) : c.json({ error: 'Non trovato' }, 404);
+  },
+
+  update: async (c: Context) => {
+    const { nome } = await c.req.json();
+    const user = c.get('user');
+    const updated = chatService.update(c.req.param('id'), nome, user.id);
+    return updated ? c.json(updated) : c.json({ error: 'Non trovato' }, 404);
+  },
+
+  delete: (c: Context) => {
+    const user = c.get('user');
+    chatService.delete(c.req.param('id'), user.id);
+    return c.json({}, 204);
+  }
+};
+"
+
+@fill src/routes/chatRoutes.ts
+"
+import { Router } from 'hono';
+import { chatController } from '../controllers/chatController';
+import { authMiddleware } from '../middleware/authMiddleware';
+
+const router = new Router();
+
+router.use('*', authMiddleware);
+router.post('/', chatController.create);
+router.get('/', chatController.list);
+router.get('/:id', chatController.get);
+router.put('/:id', chatController.update);
+router.delete('/:id', chatController.delete);
+
+export default router;
+"
+
+@fill src/index.ts
+"
+import { Hono } from 'hono';
+import authRoutes from './routes/authRoutes';
+import chatRoutes from './routes/chatRoutes';
+import { PORT } from './config';
+
+const app = new Hono();
+
+// Rotte
+app.route('/auth', authRoutes);
+app.route('/chats', chatRoutes);
+app.route('/messages', messageRoutes);
+
+// Health check
+app.get('/', (c) => c.json({ status: 'API Chat Server', version: '1.0.0' }));
+
+console.log(`🚀 Server avviato su http://localhost:${PORT}`);
+export default {
+  port: Number(PORT),
+  fetch: app.fetch
+};
+"
+
+@fill src/services/userService.ts
+"
+import { db } from '../db/database';
+import { v4 as uuid } from 'uuid';
+import bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../config';
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+}
+
+export interface CreateUserData {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export const userService = {
+  async create(userData: CreateUserData): Promise<User> {
+    const id = uuid();
+    const hashedPassword = await bcrypt.hash(userData.password, BCRYPT_ROUNDS);
+    
+    try {
+      db.prepare('INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)')
+        .run(id, userData.username, userData.email, hashedPassword);
+      
+      return {
+        id,
+        username: userData.username,
+        email: userData.email
+      };
+    } catch (error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        throw new Error('Username o email già esistenti');
+      }
+      throw error;
+    }
+  },
+
+  async authenticate(username: string, password: string): Promise<User | null> {
+    const user = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?')
+      .get(username, username) as any;
+    
+    if (!user) return null;
+    
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return null;
+    
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email
+    };
+  },
+
+  getById(id: string): User | undefined {
+    const user = db.prepare('SELECT id, username, email FROM users WHERE id = ?').get(id) as any;
+    return user;
+  },
+
+  blacklistToken(token: string, expiresAt: Date): void {
+    db.prepare('INSERT INTO token_blacklist (token, expires_at) VALUES (?, ?)')
+      .run(token, expiresAt.toISOString());
+  },
+
+  isTokenBlacklisted(token: string): boolean {
+    const result = db.prepare('SELECT token FROM token_blacklist WHERE token = ?').get(token);
+    return !!result;
+  }
+};
+"
+
+@fill src/services/authService.ts
+"
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET, JWT_EXPIRES_IN } from '../config';
+import { userService, User } from './userService';
+
+export interface AuthTokens {
+  accessToken: string;
+  user: User;
+}
+
+export const authService = {
+  generateToken(user: User): string {
+    return jwt.sign(
+      { 
+        id: user.id, 
+        username: user.username,
+        email: user.email 
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+  },
+
+  async login(username: string, password: string): Promise<AuthTokens | null> {
+    const user = await userService.authenticate(username, password);
+    if (!user) return null;
+
+    const accessToken = this.generateToken(user);
+    return { accessToken, user };
+  },
+
+  async register(username: string, email: string, password: string): Promise<AuthTokens> {
+    const user = await userService.create({ username, email, password });
+    const accessToken = this.generateToken(user);
+    return { accessToken, user };
+  },
+
+  logout(token: string): void {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const expiresAt = new Date(decoded.exp * 1000);
+      userService.blacklistToken(token, expiresAt);
+    } catch (error) {
+      // Token già invalido, non serve fare nulla
+    }
+  }
+};
+"
+
+@fill src/controllers/authController.ts
+"
+import { Context } from 'hono';
+import { authService } from '../services/authService';
+
+export const authController = {
+  register: async (c: Context) => {
+    try {
+      const { username, email, password } = await c.req.json();
+      
+      if (!username || !email || !password) {
+        return c.json({ error: 'Username, email e password sono richiesti' }, 400);
+      }
+
+      if (password.length < 6) {
+        return c.json({ error: 'La password deve essere di almeno 6 caratteri' }, 400);
+      }
+
+      const result = await authService.register(username, email, password);
+      return c.json(result, 201);
+    } catch (error: any) {
+      return c.json({ error: error.message }, 400);
+    }
+  },
+
+  login: async (c: Context) => {
+    try {
+      const { username, password } = await c.req.json();
+      
+      if (!username || !password) {
+        return c.json({ error: 'Username e password sono richiesti' }, 400);
+      }
+
+      const result = await authService.login(username, password);
+      if (!result) {
+        return c.json({ error: 'Credenziali non valide' }, 401);
+      }
+
+      return c.json(result);
+    } catch (error: any) {
+      return c.json({ error: 'Errore durante il login' }, 500);
+    }
+  },
+
+  logout: (c: Context) => {
+    try {
+      const auth = c.req.header('Authorization');
+      if (!auth?.startsWith('Bearer ')) {
+        return c.json({ error: 'Token mancante' }, 400);
+      }
+
+      const token = auth.slice(7);
+      authService.logout(token);
+      
+      return c.json({ message: 'Logout effettuato con successo' });
+    } catch (error) {
+      return c.json({ error: 'Errore durante il logout' }, 500);
+    }
+  },
+
+  me: (c: Context) => {
+    const user = c.get('user');
+    return c.json({ user });
+  }
+};
+"
+
+@log Setting scripts in package.json....
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+> npm pkg set main="src/index.js" 
+> npm pkg set scripts.dev="tsx --watch src/index.ts"
+> npm pkg set scripts.build="tsc -p tsconfig.json"
+
+@log Start coding...
+> code .
