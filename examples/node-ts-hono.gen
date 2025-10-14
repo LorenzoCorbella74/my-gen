@@ -8,7 +8,12 @@
 
 @log init Git
 > git init
-> echo node_modules > .gitignore
+@fill .gitignore
+"
+node_modules
+.env
+"
+
 @fill .env
 "
 PORT=3000
@@ -514,3 +519,5 @@ Authorization: Bearer {{token}}
 
 @log Start coding...
 > code .
+
+@log Start Development Server with npm run dev
