@@ -2,13 +2,15 @@
 @log Starting global shell test
 
 # Set a variable in the shell
-> set TEST_VAR=hello_world
+@set TEST_VAR=hello_world
 
+> cd
 # Change directory
 > cd test
 
 # Check if the variable is still available
-> echo %TEST_VAR%
+> echo {TEST_VAR}
+@log {TEST_VAR}
 
 # Check current directory (should be test/)
 > cd

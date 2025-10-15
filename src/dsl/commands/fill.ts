@@ -22,7 +22,10 @@ export async function handleFill(node: AstNode, ctx: CommandContext): Promise<vo
         const content = fillNode.content.join('\n');
         const interpolatedContent = ctx.context.interpolate(content);
 
-        const finalPath = ctx.resolvePath(filePath);
+        // Resolve path relative to global shell's current working directory
+        const finalPath = path.isAbsolute(filePath) 
+            ? filePath 
+            : path.resolve(ctx.globalShell.cwd, filePath);
 
         // Create directory if it doesn't exist
         const dir = path.dirname(finalPath);

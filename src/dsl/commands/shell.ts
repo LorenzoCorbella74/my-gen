@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import { AstNode } from "../parser.js";
 import { CommandContext } from "./types.js";
 import os from "os";
+import path from "path";
 
 function getShellCommand(): { shell: string; args: string[] } {
   if (process.env.SHELL) {
@@ -26,6 +27,7 @@ function initGlobalShell(ctx: CommandContext): void {
 
   ctx.globalShell.process = shellProcess;
   ctx.globalShell.cwd = ctx.outputDir;
+  ctx.context.set('pwd',  ctx.globalShell.cwd) // si salva la cartella di output
 
   // Handle shell errors
   shellProcess.on('error', (error) => {
@@ -38,9 +40,38 @@ function initGlobalShell(ctx: CommandContext): void {
   });
 }
 
+function updateWorkingDirectory(ctx: CommandContext, targetDir: string, isVerbose: boolean): void {
+  try {
+    // Resolve the target directory relative to current working directory
+    const newCwd = path.isAbsolute(targetDir) 
+      ? targetDir 
+      : path.resolve(ctx.globalShell.cwd, targetDir);
+    
+    // Normalize the path
+    const normalizedCwd = path.resolve(newCwd);
+    
+    // Update the global shell's cwd
+    ctx.globalShell.cwd = normalizedCwd;
+    
+    // Update the context variable as well
+    ctx.context.set('pwd', normalizedCwd);
+    
+    if (isVerbose) {
+      console.log(chalk.gray(`[SHELL-DEBUG] Updated working directory to: ${normalizedCwd}`));
+    }
+  } catch (error) {
+    if (isVerbose) {
+      console.log(chalk.yellow(`[SHELL-WARN] Could not update working directory: ${error}`));
+    }
+  }
+}
+
 export async function handleShell(node: AstNode, ctx: CommandContext): Promise<void> {
   const command = ctx.context.interpolate(node.payload);
   console.log(chalk.gray(`[CMD] > ${command}`));
+  
+  // Check if this is a cd command to update working directory
+  const cdMatch = command.trim().match(/^cd\s+(.*)$/);
   
   // Debug logging (only in verbose mode)
   const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
@@ -50,6 +81,9 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
     console.log(chalk.gray(`[SHELL-DEBUG] OutputDir: ${ctx.outputDir}`));
     console.log(chalk.gray(`[SHELL-DEBUG] Global shell exists: ${!!ctx.globalShell.process}`));
+    if (cdMatch) {
+      console.log(chalk.gray(`[SHELL-DEBUG] CD command detected: ${cdMatch[1]}`));
+    }
   }
 
   // Initialize global shell if needed
@@ -101,6 +135,11 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
         
         if (isVerbose) {
           console.log(chalk.gray(`[SHELL-DEBUG] Marker detected, command completed`));
+        }
+        
+        // Update working directory if this was a cd command
+        if (cdMatch && !errorOutput.trim()) {
+          updateWorkingDirectory(ctx, cdMatch[1], isVerbose);
         }
         
         resolve();
