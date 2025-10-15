@@ -154,12 +154,6 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     const timeout = setTimeout(() => {
       shellProcess.stdout!.removeListener('data', onData);
       shellProcess.stderr!.removeListener('data', onError);
-      if (isVerbose) {
-        console.log(chalk.red(`[CMD-TIMEOUT] Command timed out after 10 seconds`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Command was: ${command}`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Marker was: ${marker}`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Output so far: ${JSON.stringify(output)}`));
-      }
       if (output && isVerbose) {
         console.log(output);
       }

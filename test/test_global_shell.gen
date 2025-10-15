@@ -3,16 +3,14 @@
 
 # Set a variable in the shell
 @set TEST_VAR=hello_world
-
-> cd
-# Change directory
+> echo {pwd} > pwd.txt
 > cd test
-
-# Check if the variable is still available
-> echo {TEST_VAR}
-@log {TEST_VAR}
-
+# Change directory
+@fill prova/prova.txt
+"
+prova di testo
+"
 # Check current directory (should be test/)
-> cd
+> echo {pwd} >> pwd.txt
 
 @log Global shell test completed
