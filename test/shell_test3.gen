@@ -1,0 +1,22 @@
+@log Testing shell commands with directory changes on Windows
+
+@log Step 1: Create a test directory
+> mkdir test_dir
+
+@log Step 2: Change to test directory
+> cd test_dir
+
+@log Step 3: Create a file in test_dir
+@write "This file is in test_dir" to test_file.txt
+
+@log Step 4: Create a file in parent directory
+@fill src/prova.txt
+"
+prova di testo
+"
+
+@log Step 5: Go back to parent directory
+> cd ..
+@write "This file is output.txt" to ./output.txt
+
+@log Shell test completed!

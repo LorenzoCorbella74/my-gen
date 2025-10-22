@@ -203,6 +203,19 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Global shell 3",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        "./test/shell_test3.gen",
+        "--verbose"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }

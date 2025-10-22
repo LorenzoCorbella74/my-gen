@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import * as fs from "fs/promises";
+import * as path from "path";
 import { AstNode } from "../parser.js";
 import { CommandContext } from "./types.js";
 
@@ -27,11 +28,12 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
 
   try {
     const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
-    console.log('Saving to :', finalPath);
-    // if the path is not present create it
-    await fs.mkdir(ctx.resolvePath(ctx.context.interpolate(filePath)).replace(/\/[^\/]+$/, ''), { recursive: true });
-    // write the file
-    await fs.writeFile(finalPath, String(contentToWrite));
+    // Create directory if it doesn't exist
+    const dir = path.dirname(finalPath);
+    await fs.mkdir(dir, { recursive: true });
+    // Write the content to the file
+    await fs.writeFile(finalPath, String(contentToWrite), 'utf-8');
+
     console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
   } catch (error) {
     if (error instanceof Error) {

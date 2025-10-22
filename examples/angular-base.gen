@@ -1,0 +1,561 @@
+
+# Inizializzazione di template progetti  Angular e DaisyUI 
+# https://angular.dev/cli/new
+# 
+# gen --file=C:/GEN/angular-base.gen
+
+@log Template Angular BASE
+@set nomeProgetto= @input Nome del progetto?
+@set author = Lorenzo Corbella
+> ng new {nomeProgetto} --routing=true --style=scss --zoneless=false --ssr=false --ai-config=copilot
+> echo "# {nomeProgetto}" > README.md
+
+# @log UI Framework
+# > ng add @ng-bootstrap/ng-bootstrap
+
+@fill {nomeProgetto}/src/app/app.config.ts
+"
+import { ApplicationConfig, inject, LOCALE_ID, provideAppInitializer, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
+import { ROUTES } from './app.routes';
+import { ErrorInterceptor } from './common/interceptors/error.interceptor';
+import { HttpHeaderInterceptor } from './common/interceptors/http-interceptor';
+import { SpinnerInterceptor } from './common/interceptors/spinner-interceptor';
+// import { AppConfigService } from './common/services/app.config.service';
+import { GlobalSpinnerService } from './common/services/spinner.service';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // provideAppInitializer(() => firstValueFrom(inject(AppConfigService).load())),
+    GlobalSpinnerService,
+    provideBrowserGlobalErrorListeners(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideHttpClient(withInterceptors(
+      [ErrorInterceptor, HttpHeaderInterceptor, SpinnerInterceptor]
+    )),
+    provideRouter(ROUTES, withComponentInputBinding()),
+    { provide: LOCALE_ID, useValue: 'it-IT' },
+  ]
+};
+"
+
+@fill {nomeProgetto}/src/app/app.routes.ts
+"
+import { Routes } from '@angular/router';
+import { AppRoutes } from './common/enums/routes-paths';
+
+export const ROUTES: Routes = [
+    {
+        path: '',
+        loadComponent: () =>import('../app/common/layout/layout.component').then((l) => l.LayoutComponent),
+        children: [
+            {
+                path: AppRoutes.home,
+                loadComponent: () => import('../app/features/home/home.component').then(
+                    (c) => c.HomeComponent
+                )
+            }
+        ]
+    },
+];
+"
+
+@fill {nomeProgetto}/src/app/common/layout/layout.component.ts
+"
+import { CommonModule } from '@angular/common';
+import { Component, ViewEncapsulation } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+import { GlobalSpinnerComponent } from "../components/global-spinner";
+
+@Component({
+  selector: 'base-layout',
+  encapsulation: ViewEncapsulation.None,
+  template: `
+    <div class="main-layout">
+      <div class="main-content">
+        <router-outlet></router-outlet>
+        <app-global-spinner />
+      </div>
+    </div>
+  `,
+  styles: [`
+    .main-layout {
+      display: flex;
+      height: 100vh;
+      justify-content: space-between;
+      flex-direction: column;
+    }
+    .main-content {
+      height: 100%;
+    }
+  `],
+  imports: [CommonModule, RouterOutlet, GlobalSpinnerComponent],
+})
+export class LayoutComponent {}
+"
+
+@fill {nomeProgetto}/src/app/common/services/spinner.service.ts
+"
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class GlobalSpinnerService {
+  public spinner$: BehaviorSubject<boolean>;
+  private countRunningLoaders: number = 0;
+
+  constructor() {
+    this.spinner$ = new BehaviorSubject<boolean>(false);
+  }
+
+  showSpinner() {
+    this.countRunningLoaders++;
+    this.spinner$.next(true);
+  }
+
+  hideSpinner() {
+    if (this.countRunningLoaders !== 0)
+      this.countRunningLoaders--;
+    if (this.countRunningLoaders == 0) this.spinner$.next(false);
+  }
+}
+
+"
+
+@fill {nomeProgetto}/src/app/common/services/app.config.service.ts
+"
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import {
+  Observable,
+  map,
+  tap
+} from 'rxjs';
+
+type AppConfig = { [key: string]: any }
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AppConfigService {
+  private _configuration: AppConfig = {} as AppConfig;
+
+  constructor(private http: HttpClient) {}
+
+  get appConfig(): AppConfig {
+    if (!this._configuration) {
+      console.error('Configuration was not ready. Data could be wrong!');
+    }
+    return this._configuration;
+  }
+
+  load(): Observable<AppConfig> {
+    return this.http.get('./assets/config/config.json').pipe(
+      map((config) => {
+        this._configuration = config as AppConfig;
+        return this._configuration;
+      }),
+      tap((config) => console.log('CONFIG:', config))
+    );
+  }
+}
+"
+
+@fill {nomeProgetto}/src/app/common/services/api.service.ts
+"
+import { HttpClient, HttpHeaders, HttpParams, HttpContext, HttpContextToken } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+export const SHOW_ERRORS = new HttpContextToken<boolean>(() => true);
+export const SHOW_SPINNER = new HttpContextToken<boolean>(() => true);
+export const PASS_JWT = new HttpContextToken<boolean>(() => true);
+
+@Injectable({
+    providedIn: 'root',
+})
+export class ApiService {
+    constructor(private http: HttpClient) { }
+
+    // Imposta solo se diverso dal default
+    private manageContext(overrides?: {
+        showErrors?: boolean;
+        showSpinner?: boolean;
+        passJWT?: boolean;
+    }): HttpContext {
+        const context = new HttpContext();
+        let showErrors = (overrides?.showErrors ===false) ? overrides.showErrors : true;
+        context.set(SHOW_ERRORS, showErrors);
+        let showSpinner = (overrides?.showSpinner ===false) ? overrides.showSpinner : true;
+        context.set(SHOW_SPINNER, showSpinner);
+        let passJWT = (overrides?.passJWT ===false) ? overrides.passJWT : true;
+        context.set(PASS_JWT, passJWT);
+        return context;
+    }
+
+    get<T>(
+        url: string,
+        options?: {
+            params?: { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean> };
+            contextOverrides?: {
+                showErrors?: boolean;
+                showSpinner?: boolean;
+                passJWT?: boolean;
+            };
+        }
+    ): Observable<T> {
+        const context = this.manageContext(options?.contextOverrides);
+        let httpParams = new HttpParams();
+        if (options?.params) {
+            Object.entries(options.params).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach(v => {
+                        httpParams = httpParams.append(key, String(v));
+                    });
+                } else {
+                    httpParams = httpParams.set(key, String(value));
+                }
+            });
+        }
+        return this.http.get<T>(url, { params: httpParams, context });
+    }
+
+    post<T>(
+        url: string,
+        body: any,
+        options?: {
+            showErrors?: boolean;
+            showSpinner?: boolean;
+            passJWT?: boolean;
+        }
+    ): Observable<T> {
+        const context = this.manageContext(options);
+        return this.http.post<T>(url, body, { context });
+    }
+
+    put<T>(
+        url: string,
+        body: any,
+        options?: {
+            showErrors?: boolean;
+            showSpinner?: boolean;
+            passJWT?: boolean;
+        }
+    ): Observable<T> {
+        const context = this.manageContext(options);
+        return this.http.put<T>(url, body, { context });
+    }
+
+    patch<T>(
+        url: string,
+        body: any,
+        options?: {
+            showErrors?: boolean;
+            showSpinner?: boolean;
+            passJWT?: boolean;
+        }
+    ): Observable<T> {
+        const context = this.manageContext(options);
+        return this.http.patch<T>(url, body, { context });
+    }
+
+    delete<T>(
+        url: string,
+        options?: {
+            showErrors?: boolean;
+            showSpinner?: boolean;
+            passJWT?: boolean;
+        }
+    ): Observable<T> {
+        const context = this.manageContext(options);
+        return this.http.delete<T>(url, { context });
+    }
+}
+"
+
+@fill {nomeProgetto}/src/app/common/services/user.service.ts
+"
+import { Injectable } from '@angular/core';
+import {
+    BehaviorSubject,
+    Observable,
+    Subject
+} from 'rxjs';
+
+
+@Injectable({
+    providedIn: 'root',
+})
+export class UserService {
+    currentProfiloUtente$: Subject<unknown> = new Subject<unknown>();
+    private JWTToken: BehaviorSubject<string> = new BehaviorSubject<string>('');
+    JWTToken$: Observable<string> = this.JWTToken.asObservable();
+    private user$!: Observable<unknown>;
+
+    constructor() { }
+
+    getCurrentUser(): Observable<unknown> {
+        return this.user$;
+    }
+}
+"
+
+@fill {nomeProgetto}/src/app/common/functions/regex.ts
+"
+export abstract class Regex {
+    public static readonly CF_OR_PIVA =
+        /^(?:(?:[A-Z][AEIOU][AEIOUX]|[AEIOU]X{2}|[B-DF-HJ-NP-TV-Z]{2}[A-Z]){2}(?:[\dLMNP-V]{2}(?:[A-EHLMPR-T](?:[04LQ][1-9MNP-V]|[15MR][\dLMNP-V]|[26NS][0-8LMNP-U])|[DHPS][37PT][0L]|[ACELMRT][37PT][01LM]|[AC-EHLMPR-T][26NS][9V])|(?:[02468LNQSU][048LQU]|[13579MPRTV][26NS])B[26NS][9V])(?:[A-MZ][1-9MNP-V][\dLMNP-V]{2}|[A-M][0L](?:[1-9MNP-V][\dLMNP-V]|[0L][1-9MNP-V]))[A-Z])|(?:\d{11})$/i;
+    public static readonly CF =
+        /^(?:[A-Z][AEIOU][AEIOUX]|[AEIOU]X{2}|[B-DF-HJ-NP-TV-Z]{2}[A-Z]){2}(?:[\dLMNP-V]{2}(?:[A-EHLMPR-T](?:[04LQ][1-9MNP-V]|[15MR][\dLMNP-V]|[26NS][0-8LMNP-U])|[DHPS][37PT][0L]|[ACELMRT][37PT][01LM]|[AC-EHLMPR-T][26NS][9V])|(?:[02468LNQSU][048LQU]|[13579MPRTV][26NS])B[26NS][9V])(?:[A-MZ][1-9MNP-V][\dLMNP-V]{2}|[A-M][0L](?:[1-9MNP-V][\dLMNP-V]|[0L][1-9MNP-V]))[A-Z]$/i;
+    public static readonly EMAIL = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
+    public static readonly CAP = /^[0-9]{5}$/;
+    public static readonly CAP_STRANIERO = /^[a-zA-Z0-9]{1,15}$/;
+    public static readonly CELL = /^(?:\+39)?\d{8,10}$/;
+    public static readonly IBAN = /^(?:IT|SM)\d{2}[A-Z]\d{10}[A-Z0-9]{12}$/i;
+    public static readonly YEAR = /^(?:(?:19|20)[0-9]{2})*$/;
+    public static readonly CF_ENTE = /(^\d{9})|(^\d{3}-\d{2}-\d{4}$)|(^[1-9]\d?-\d{7}$)/;
+    public static readonly LETTER_NUMBERS_SPECIAL =
+        /^[a-zA-Z0-9@àèìòùÀÈÌÒÙáéíóúýÁÉÍÓÚÝâêîôûÂÊÎÔÛãñõÃÑÕäëïöüÿÄËÏÖÜŸçÇßØøÅåÆæœ. ()_,\\\/\'\-]*$/;
+}
+
+"
+@fill {nomeProgetto}/src/app/common/interceptors/error.interceptor.ts
+"
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from "@angular/common/http";
+import { Observable, catchError, throwError } from "rxjs";
+import { SHOW_ERRORS } from "../services/api.service";
+
+export const ErrorInterceptor: HttpInterceptorFn = (
+    request: HttpRequest<any>,
+    next: HttpHandlerFn
+): Observable<HttpEvent<any>> => {
+
+    // const toastSrv = inject(ToastService);
+    // TODO: const userService = inject(UserService);
+
+    return next(request).pipe(
+        catchError((error: HttpErrorResponse) => {
+            if (request.context.get(SHOW_ERRORS)) {
+                handleError(error);
+            }
+            // Propagate the error as an observable
+            return throwError(() => error);
+        })
+    );
+};
+
+function handleError(error: HttpErrorResponse) {
+    const errorMessage = error.message;
+    const formatMsg = error.error?.message || error.error?.error_description || error.error?.error || error.message || null;
+    if (error.status === 400) {
+        // toastSrv.error('Error 400: Bad Request!', errorMessage);
+    }
+    throw new Error(formatMsg || errorMessage);
+}
+"
+@fill {nomeProgetto}/src/app/common/interceptors/http-interceptor.ts
+"
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import {
+  combineLatest,
+  mergeMap,
+  of,
+} from 'rxjs';
+
+import { UserService } from '../services/user.service';
+import { PASS_JWT } from '../services/api.service';
+
+export const HttpHeaderInterceptor: HttpInterceptorFn = (request, next) => {
+  return combineLatest([
+    of(request.context.get(PASS_JWT)),
+    inject(UserService).JWTToken$
+  ]).pipe(
+    mergeMap(([PASS_JWT, jwt]) => {
+      if (PASS_JWT) {
+        return next(request.clone({
+          setHeaders: {
+            Authorization: `Bearer ${jwt}`,
+            ...(request.method === 'POST' ? { 'Content-type': 'application/json' } : null),
+          },
+        }));
+      } else {
+        return next(request);
+      }
+    })
+  );
+};
+
+"
+@fill {nomeProgetto}/src/app/common/interceptors/spinner-interceptor.ts
+"
+import { HttpInterceptorFn } from '@angular/common/http';
+import { GlobalSpinnerService } from '../services/spinner.service';
+import { SHOW_SPINNER } from '../services/api.service';
+import { inject } from "@angular/core";
+import { finalize } from 'rxjs';
+
+export const SpinnerInterceptor: HttpInterceptorFn = (req, next) => {
+  const spinnerService = inject(GlobalSpinnerService);
+  const showSpinner = req.context.get(SHOW_SPINNER);
+  if (showSpinner) {
+    spinnerService.showSpinner();
+  }
+  return next(req).pipe(
+    finalize(() => {
+      if (showSpinner) {
+        spinnerService.hideSpinner();
+      }
+    })
+  );
+};
+"
+
+@fill {nomeProgetto}/src/app/app.ts
+"
+import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
+import { GlobalSpinnerService } from './common/services/spinner.service';
+import { LayoutComponent } from './common/layout/layout.component';
+
+@Component({
+  selector: 'app-root',
+  imports: [
+    CommonModule,
+    LayoutComponent
+  ],
+  template:"<base-layout />",
+  styles:[]
+})
+export class App implements OnInit {
+
+  private spinnerService = inject(GlobalSpinnerService);
+
+  ngOnInit(): void {
+    this.spinnerService.showSpinner()
+  }
+}
+"
+@fill {nomeProgetto}/src/app/common/enums/api-endpoints.ts
+"
+export enum ApiEndpoints {
+    'version' = 'version',
+    // AUTH
+    'signIn' = 'users/sign-in',
+    'getUser' = 'users/current'
+}
+"
+@fill {nomeProgetto}/src/app/common/enums/routes-paths.ts
+"
+export enum AppRoutes {
+    home = "",
+    login = "login",
+}  
+"
+@fill {nomeProgetto}/src/app/common/components/global-spinner.ts
+"
+import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { GlobalSpinnerService } from '../services/spinner.service';
+
+@Component({
+    selector: 'app-global-spinner',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CommonModule],
+    template: `
+    @if (isVisible()) {
+      <div class="spinner-overlay">
+        <div class="spinner-container">
+          <div class="spinner"></div>
+          <p class="loading-text">Loading...</p>
+        </div>
+      </div>
+    }
+  `,
+    styles: [`
+    .spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(2px);
+    }
+
+    .spinner-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 2rem;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: white;
+      text-align: center;
+    }
+  `]
+})
+export class GlobalSpinnerComponent {
+    private spinnerService = inject(GlobalSpinnerService);
+    isVisible = signal(false);
+
+    constructor() {
+        this.spinnerService.spinner$.subscribe(isLoading => {
+            this.isVisible.set(isLoading);
+        });
+    }
+}
+"
+
+@fill  {nomeProgetto}/src/app/features/home/home.component.ts
+"
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+@Component({
+  selector: 'app-home',
+  imports: [],
+  template: `<p>home works!</p>`,
+  styles: `
+    :host {
+      display: block;
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class HomeComponent { }
+"
+
+> npm pkg set name="{nomeProgetto}" 
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+
+@log Start coding...
+> code .

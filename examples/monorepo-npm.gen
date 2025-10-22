@@ -1,0 +1,186 @@
+# Monorepo with npm workspaces
+# V. 0.0.1 21/10/25 
+
+@log Monorepo with npm workspaces
+@set nomeProgetto= @input Nome del progetto?
+@set author = Lorenzo Corbella
+
+> md {nomeProgetto}
+> cd {nomeProgetto}
+@fill package.json
+"
+{
+  "name": "my-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces --if-present"
+  }
+}
+"
+@log Git init...
+> git init
+> git branch -m master main
+
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
+
+@log Setting env
+@fill .env
+"
+key=value
+"
+
+> md packages
+> cd packages
+> md shared
+> cd shared
+@fill package.json
+"
+{
+  "name": "@my-monorepo/shared",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
+"
+@fill tsconfig.json
+"
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+"
+
+@fill src/index.ts
+"
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export type UserResponse = ApiResponse<User>;
+"
+@log Backend with Hono
+> cd ..
+> md backend
+> cd backend
+@fill package.json
+"
+{
+  "name": "@my-monorepo/backend",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "hono": "*",
+    "ai":"*",
+    "@ai-sdk/google":"*",
+    "@hono/node-server": "*",
+    "@my-monorepo/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "@types/node": "^20.0.0"
+  }
+}
+"
+@fill tsconfig.json
+"
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+"
+@fill src/index.ts
+"
+import { google } from '@ai-sdk/google';
+import { serve } from '@hono/node-server';
+import { streamText } from 'ai';
+import { Hono } from 'hono';
+
+const app = new Hono();
+
+app.post('/', async c => {
+  const result = streamText({
+    model: google('gpt-4o'),
+    prompt: 'Invent a new holiday and describe its traditions.',
+  });
+  return result.toUIMessageStreamResponse();
+});
+
+serve({ fetch: app.fetch, port: 8080 });
+"
+@log Frontend Angular
+> cd ..
+> npx @angular/cli@20 new frontend --directory=frontend --skip-git=true --routing=true --style=css --zoneless=false --ssr=false --ai-config=copilot
+> cd frontend
+> npm pkg set scripts.name="@my-monorepo/frontend"
+
+> cd .. 
+> cd .. 
+
+@log Setting scripts in package.json....
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+> npm pkg set scripts.dev:fe="npm run dev -w @my-monorepo/frontend"
+> npm pkg set scripts.dev:be="npm run dev -w @my-monorepo/backend"
+> npm pkg set scripts.build_lib="npm run build -w @my-monorepo/shared"
+> npm pkg set scripts.clean= "rm -rf packages/*/dist packages/*/node_modules node_modules"
+
+@log Install monorepo dependancies
+> npm install
+
+@log Start coding...
+> code .
