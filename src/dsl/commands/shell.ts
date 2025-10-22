@@ -1,11 +1,10 @@
 import chalk from "chalk";
-/* import { ChildProcessWithoutNullStreams, spawn } from "child_process"; */
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { AstNode } from "../parser.js";
 import { CommandContext } from "./types.js";
-/* import os from "os";
-import { randomUUID } from "crypto"; */
+import { randomUUID } from "crypto";
 
-/* export interface ShellResult {
+export interface ShellResult {
   stdout: string;
   stderr: string;
   code: number;
@@ -73,10 +72,7 @@ export class ShellSession {
     this.pendingId = id;
 
     return new Promise((resolve) => {
-      this.resolvers.push(async (result) => {
-        await this.updatePwd();
-        resolve(result);
-      });
+      this.resolvers.push(resolve);
 
       const marker =
         process.platform === "win32"
@@ -97,101 +93,7 @@ export class ShellSession {
     console.log(chalk.gray('[SHELL] Closing global shell'));
     this.shell.stdin.end();
   }
-
-  private async updatePwd() {
-    const result = await this._runInternal(process.platform === "win32" ? "cd" : "pwd");
-    const newPwd = result.stdout.trim();
-    if (newPwd) this.pwd = newPwd;
-  }
-
-  private _runInternal(cmd: string): Promise<ShellResult> {
-    const id = randomUUID();
-    this.pendingId = id;
-
-    return new Promise((resolve) => {
-      this.resolvers.push(resolve);
-
-      const marker =
-        process.platform === "win32"
-          ? `echo __CMD_DONE__:${id}:%errorlevel%`
-          : `echo __CMD_DONE__:${id}:$?`;
-
-      const fullCommand =
-        process.platform === "win32"
-          ? `${cmd} & ${marker}`
-          : `${cmd}; ${marker}`;
-
-      this.shell.stdin.write(fullCommand + "\n");
-    });
-  }
-} */
-
-  import { exec } from "child_process";
-import { promisify } from "util";
-import path from "path";
-
-const execAsync = promisify(exec);
-
-export interface ShellResult {
-  stdout: string;
-  stderr: string;
-  code: number;
 }
-
-/**
- * Shell persistente ma non interattiva.
- * Ogni comando viene eseguito nella directory corrente (`pwd`),
- * e i comandi `cd` aggiornano lo stato interno.
- */
-export class ShellSession {
-  /** Directory corrente della sessione */
-  pwd: string;
-
-  constructor(outputDir:string){
-    this.pwd = outputDir || process.cwd();
-  }
-  /**
-   * Esegue un comando shell nella directory corrente.
-   */
-  async run(cmd: string): Promise<ShellResult> {
-    // Comando completo con cd implicito
-    const fullCommand = process.platform === "win32"
-      ? `cd /d "${this.pwd}" && ${cmd}`
-      : `cd "${this.pwd}" && ${cmd}`;
-
-    try {
-      // Aggiorna la directory corrente se il comando è un "cd"
-      this.updatePwdIfNeeded(cmd);
-      const { stdout, stderr } = await execAsync(fullCommand);
-
-
-      return {
-        stdout: stdout.trim(),
-        stderr: stderr.trim(),
-        code: 0,
-      };
-    } catch (err: any) {
-      return {
-        stdout: (err.stdout || "").trim(),
-        stderr: (err.stderr || err.message || "").trim(),
-        code: err.code ?? 1,
-      };
-    }
-  }
-
-  /**
-   * Aggiorna lo stato interno della directory corrente
-   * se il comando è un "cd" o "cd .." o simile.
-   */
-  private updatePwdIfNeeded(cmd: string) {
-    const cdMatch = cmd.match(/^\s*cd\s+(.+)/i);
-    if (cdMatch) {
-      const newPath = cdMatch[1].trim().replace(/^['"]|['"]$/g, "");
-      this.pwd = path.resolve(this.pwd, newPath);
-    }
-  }
-}
-
 
 export async function handleShell(node: AstNode, ctx: CommandContext): Promise<void> {
   const command = ctx.context.interpolate(node.payload);

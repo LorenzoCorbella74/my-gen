@@ -220,6 +220,6 @@ export class Executor {
    * Cleanup resources (like global shell) when executor is done
    */
    cleanup(): void {
-    // this.globalShell.close();
+    this.globalShell.close();
   }
 }
