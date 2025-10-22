@@ -3,6 +3,8 @@ import { spawn } from "child_process";
 import { AstNode } from "../parser.js";
 import { CommandContext } from "./types.js";
 import os from "os";
+import path from "path";
+import fs from "fs";
 
 function getShellCommand(): { shell: string; args: string[] } {
   if (process.env.SHELL) {
@@ -14,27 +16,140 @@ function getShellCommand(): { shell: string; args: string[] } {
 }
 
 function initGlobalShell(ctx: CommandContext): void {
-  if (ctx.globalShell.process) return; // Already initialized
+  // For the new approach, we only need to initialize the working directory
+  if (!ctx.globalShell.cwd) {
+    ctx.globalShell.cwd = ctx.outputDir;
+  }
+  
+  console.log(chalk.gray(`[SHELL] Using deterministic shell execution in: ${ctx.globalShell.cwd}`));
+}
 
-  const { shell, args } = getShellCommand();
-  console.log(chalk.gray(`[SHELL] Initializing global shell: ${shell}`));
+async function handleCdCommand(command: string, ctx: CommandContext, isVerbose: boolean): Promise<void> {
+  const cdMatch = command.match(/^cd\s+(.*)$/i);
+  if (!cdMatch) {
+    throw new Error('Invalid cd command');
+  }
+  
+  let targetDir = cdMatch[1].trim();
+  let newCwd: string;
+  
+  // Handle quoted paths (remove quotes)
+  if ((targetDir.startsWith('"') && targetDir.endsWith('"')) || 
+      (targetDir.startsWith("'") && targetDir.endsWith("'"))) {
+    targetDir = targetDir.slice(1, -1);
+  }
+  
+  // Handle special cases
+  if (targetDir === '' || targetDir === '~') {
+    // Empty cd or ~ goes to home directory
+    newCwd = os.homedir();
+  } else if (targetDir === '.') {
+    // Current directory - no change needed
+    newCwd = ctx.globalShell.cwd;
+  } else if (path.isAbsolute(targetDir)) {
+    // Absolute path
+    newCwd = path.normalize(targetDir);
+  } else {
+    // Relative path - let path.resolve handle all the .. combinations
+    newCwd = path.resolve(ctx.globalShell.cwd, targetDir);
+  }
+  
+  // Normalize the path to handle edge cases
+  newCwd = path.normalize(newCwd);
+  
+  // Verify directory exists
+  if (!fs.existsSync(newCwd)) {
+    throw new Error(`Directory does not exist: ${newCwd}`);
+  }
+  
+  // Verify it's actually a directory
+  const stats = fs.statSync(newCwd);
+  if (!stats.isDirectory()) {
+    throw new Error(`Path is not a directory: ${newCwd}`);
+  }
+  
+  ctx.globalShell.cwd = newCwd;
+  
+  if (isVerbose) {
+    console.log(chalk.gray(`[SHELL-DEBUG] Changed directory from: ${ctx.globalShell.cwd}`));
+    console.log(chalk.gray(`[SHELL-DEBUG] Changed directory to: ${newCwd}`));
+  }
+}
 
-  const shellProcess = spawn(shell, args, {
-    cwd: ctx.outputDir,
-    stdio: ['pipe', 'pipe', 'pipe']
-  });
-
-  ctx.globalShell.process = shellProcess;
-  ctx.globalShell.cwd = ctx.outputDir;
-
-  // Handle shell errors
-  shellProcess.on('error', (error) => {
-    console.log(chalk.red(`[SHELL-ERROR] ${error.message}`));
-  });
-
-  shellProcess.on('exit', (code) => {
-    console.log(chalk.yellow(`[SHELL] Global shell exited with code ${code}`));
-    ctx.globalShell.process = undefined;
+async function executeCommandDeterministic(command: string, ctx: CommandContext, isVerbose: boolean): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const { shell, args } = getShellCommand();
+    
+    // Create command array based on platform
+    let cmdArgs: string[];
+    if (os.platform() === "win32") {
+      cmdArgs = ['/c', command]; // Use /c for single command execution
+    } else {
+      cmdArgs = ['-c', command];
+    }
+    
+    if (isVerbose) {
+      console.log(chalk.gray(`[SHELL-DEBUG] Executing: ${shell} ${cmdArgs.join(' ')}`));
+      console.log(chalk.gray(`[SHELL-DEBUG] Working directory: ${ctx.globalShell.cwd}`));
+    }
+    
+    const childProcess = spawn(shell, cmdArgs, {
+      cwd: ctx.globalShell.cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    childProcess.stdout?.on('data', (data) => {
+      const output = data.toString();
+      stdout += output;
+      if (isVerbose && output.trim()) {
+        console.log(chalk.gray(`[SHELL-OUTPUT] ${output.trim()}`));
+      }
+    });
+    
+    childProcess.stderr?.on('data', (data) => {
+      const error = data.toString();
+      stderr += error;
+      if (isVerbose && error.trim()) {
+        console.log(chalk.red(`[SHELL-ERROR] ${error.trim()}`));
+      }
+    });
+    
+    childProcess.on('close', (code) => {
+      if (isVerbose) {
+        console.log(chalk.gray(`[SHELL-DEBUG] Command completed with exit code: ${code}`));
+      }
+      
+      if (stderr.trim() && code !== 0) {
+        console.log(chalk.red(`[CMD-ERROR] ${stderr.trim()}`));
+      }
+      
+      // Always resolve to continue execution even on error
+      resolve();
+    });
+    
+    childProcess.on('error', (error) => {
+      if (isVerbose) {
+        console.log(chalk.red(`[SHELL-DEBUG] Process error: ${error.message}`));
+      }
+      reject(error);
+    });
+    
+    // Set timeout for long-running commands
+    const timeout = setTimeout(() => {
+      if (isVerbose) {
+        console.log(chalk.red(`[SHELL-TIMEOUT] Command timed out after 60 seconds: ${command}`));
+      }
+      childProcess.kill('SIGTERM');
+      resolve(); // Resolve even on timeout
+    }, 60000); // 60 seconds timeout
+    
+    childProcess.on('close', () => {
+      clearTimeout(timeout);
+    });
   });
 }
 
@@ -49,117 +164,24 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
     console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
     console.log(chalk.gray(`[SHELL-DEBUG] OutputDir: ${ctx.outputDir}`));
-    console.log(chalk.gray(`[SHELL-DEBUG] Global shell exists: ${!!ctx.globalShell.process}`));
+    console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
   }
 
-  // Initialize global shell if needed
+  // Initialize shell context if needed
   initGlobalShell(ctx);
 
-  const shellProcess = ctx.globalShell.process;
-  if (!shellProcess || !shellProcess.stdin || !shellProcess.stdout || !shellProcess.stderr) {
-    throw new Error('Global shell not available');
+  // For cd commands, handle them specially to update context
+  if (command.trim().toLowerCase().startsWith('cd ')) {
+    return handleCdCommand(command, ctx, isVerbose);
   }
 
-  return new Promise((resolve, reject) => {
-    let output = '';
-    let errorOutput = '';
-    
-    // Generate unique marker for this command
-    const marker = `COMMAND_END_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Determine echo command based on platform
-    const echoCommand = os.platform() === "win32" 
-      ? `echo ${marker}` 
-      : `echo "${marker}"`;
-
-    const onData = (data: Buffer) => {
-      const dataStr = data.toString();
-      output += dataStr;
-      
-      if (isVerbose) {
-        console.log(chalk.gray(`[SHELL-DEBUG] Received chunk: ${JSON.stringify(dataStr)}`));
-      }
-      
-      // Check if marker is present in output (more aggressive detection)
-      if (output.includes(marker) || dataStr.includes(marker)) {
-        // Command completed, cleanup and resolve
-        shellProcess.stdout!.removeListener('data', onData);
-        shellProcess.stderr!.removeListener('data', onError);
-        clearTimeout(timeout);
-        
-        // Remove marker from output and clean up
-        const cleanOutput = output.replace(new RegExp(`.*${marker}.*\n?`, 'g'), '').trim();
-        
-        if (errorOutput.trim()) {
-          console.log(chalk.red(`[CMD-ERROR] ${errorOutput.trim()}`));
-        }
-        
-        // Only log cleanOutput if VERBOSE is enabled
-        if (cleanOutput && isVerbose) {
-          console.log(chalk.gray(`[SHELL-OUTPUT] ${cleanOutput}`));
-        }
-        
-        if (isVerbose) {
-          console.log(chalk.gray(`[SHELL-DEBUG] Marker detected, command completed`));
-        }
-        
-        resolve();
-      }
-    };
-
-    const onError = (data: Buffer) => {
-      errorOutput += data.toString();
-    };
-
-    // Set up error timeout as fallback (reduce to 10 seconds for faster feedback)
-    const timeout = setTimeout(() => {
-      shellProcess.stdout!.removeListener('data', onData);
-      shellProcess.stderr!.removeListener('data', onError);
-      if (isVerbose) {
-        console.log(chalk.red(`[CMD-TIMEOUT] Command timed out after 10 seconds`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Command was: ${command}`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Marker was: ${marker}`));
-        console.log(chalk.red(`[CMD-TIMEOUT] Output so far: ${JSON.stringify(output)}`));
-      }
-      if (output && isVerbose) {
-        console.log(output);
-      }
-      // Don't throw error on timeout, just resolve
-      resolve();
-    }, 10000); // Reduced from 30 seconds to 10 seconds
-
-    shellProcess.stdout!.on('data', onData);
-    shellProcess.stderr!.on('data', onError);
-
-    // Send command followed by marker
-    if (isVerbose) {
-      console.log(chalk.gray(`[SHELL-DEBUG] Sending command: "${command}"`));
-      console.log(chalk.gray(`[SHELL-DEBUG] Sending marker command: "${echoCommand}"`));
-    }
-    
-    // Send the actual command
-    shellProcess.stdin!.write(`${command}\n`);
-    
-    // Wait a bit then send marker - this helps with command sequencing
-    setTimeout(() => {
-      shellProcess.stdin!.write(`${echoCommand}\n`);
-      if (isVerbose) {
-        console.log(chalk.gray(`[SHELL-DEBUG] Marker command sent`));
-      }
-    }, 100);
-    
-    // Clear timeout when command completes normally
-    shellProcess.stdout!.on('removeListener', () => {
-      clearTimeout(timeout);
-    });
-  });
+  // For other commands, use deterministic execution
+  return executeCommandDeterministic(command, ctx, isVerbose);
 }
 
 // Helper function to cleanup global shell
 export function cleanupGlobalShell(ctx: CommandContext): void {
-  if (ctx.globalShell.process) {
-    console.log(chalk.gray('[SHELL] Closing global shell'));
-    ctx.globalShell.process.kill();
-    ctx.globalShell.process = undefined;
-  }
+  // For deterministic approach, just reset the working directory
+  ctx.globalShell.cwd = ctx.outputDir;
+  console.log(chalk.gray('[SHELL] Reset shell context'));
 }

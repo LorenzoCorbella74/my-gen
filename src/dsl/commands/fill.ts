@@ -22,7 +22,21 @@ export async function handleFill(node: AstNode, ctx: CommandContext): Promise<vo
         const content = fillNode.content.join('\n');
         const interpolatedContent = ctx.context.interpolate(content);
 
+        // @fill file according to globalshell.pwd
         const finalPath = ctx.resolvePath(filePath);
+
+        // Check if the target path is already a directory
+        try {
+            const stats = await fs.stat(finalPath);
+            if (stats.isDirectory()) {
+                throw new Error(`Cannot write to '${finalPath}': path is a directory`);
+            }
+        } catch (err: any) {
+            // If file doesn't exist, that's expected - continue
+            if (err.code !== 'ENOENT') {
+                throw err;
+            }
+        }
 
         // Create directory if it doesn't exist
         const dir = path.dirname(finalPath);

@@ -1,0 +1,21 @@
+# Test shell directory navigation with DSL commands integration
+@log Starting shell directory navigation test
+
+# Test 1: Basic directory creation and navigation
+@log Test 1: Creating and navigating directories
+> md test_dir_1
+> cd test_dir_1
+> echo "I'm in test_dir_1" > location.txt
+> npm init -y
+> npm install ai
+> md test_dir_nested
+> cd test_dir_nested
+> echo "pippo" > pippo.txt
+@fill src/index.ts
+"
+console.log(src/index.ts in test_dir_nested);
+"
+@write "console.log(src/save.ts in test_dir_nested);" to src/save.ts
+> cd ../..
+> echo "Back in root directory" > root.txt
+

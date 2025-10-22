@@ -4,7 +4,7 @@ import { GlobalContext } from "../global.js";
 import { ChildProcess } from "child_process";
 
 export interface GlobalShell {
-    process?: ChildProcess;
+    process?: ChildProcess; // Kept for backward compatibility but not used in deterministic approach
     cwd: string;
 }
 

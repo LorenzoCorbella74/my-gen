@@ -56,7 +56,9 @@ export class Executor {
     if (path.isAbsolute(p)) {
       return p;
     }
-    return path.resolve(this.outputDir, p);
+    // Use globalShell.cwd instead of outputDir to respect current directory changes from shell commands
+    const basePath = this.globalShell.cwd || this.outputDir;
+    return path.resolve(basePath, p);
   }
 
   private registerCommands() {

@@ -190,6 +190,20 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test shell",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        "./test/shell_test.gen",
+        "--output",
+        "../test-output"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }
