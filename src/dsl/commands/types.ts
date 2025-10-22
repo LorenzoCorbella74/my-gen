@@ -1,18 +1,13 @@
 import { AstNode } from "../parser.js";
 import { Context } from "../context.js";
 import { GlobalContext } from "../global.js";
-import { ChildProcess } from "child_process";
-
-export interface GlobalShell {
-    process?: ChildProcess;
-    cwd: string;
-}
+import { ShellSession } from "./shell.js";
 
 export interface CommandContext {
     context: Context;
     outputDir: string;
     globalContext: GlobalContext;
-    globalShell: GlobalShell;
+    globalShell: ShellSession;
     resolvePath: (p: string) => string;
     execute: (nodes: AstNode[]) => Promise<void>;
     executeNodes: (nodes: AstNode[]) => Promise<void>;

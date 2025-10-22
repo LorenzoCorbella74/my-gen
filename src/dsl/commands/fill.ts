@@ -25,7 +25,7 @@ export async function handleFill(node: AstNode, ctx: CommandContext): Promise<vo
         // Resolve path relative to global shell's current working directory
         const finalPath = path.isAbsolute(filePath) 
             ? filePath 
-            : path.resolve(ctx.globalShell.cwd, filePath);
+            : path.resolve(ctx.globalShell.pwd, filePath);
 
         // Create directory if it doesn't exist
         const dir = path.dirname(finalPath);

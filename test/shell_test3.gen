@@ -4,6 +4,7 @@
 > mkdir test_dir
 
 @log Step 2: Change to test directory
+> md test_dir
 > cd test_dir
 
 @log Step 3: Create a file in test_dir

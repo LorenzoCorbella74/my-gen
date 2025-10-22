@@ -13,6 +13,7 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
   }
 
   const [, , literalContent, variableName, filePath] = match;
+  const interpolatedPath = ctx.resolvePath(ctx.context.interpolate(filePath));
 
   let contentToWrite: string;
   if (literalContent) {
@@ -27,7 +28,12 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
   }
 
   try {
-    const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
+    // Resolve path relative to global shell's current working directory
+    const finalPath = path.isAbsolute(interpolatedPath)
+      ? interpolatedPath
+      : path.resolve(ctx.globalShell.pwd, interpolatedPath);
+
+
     // Create directory if it doesn't exist
     const dir = path.dirname(finalPath);
     await fs.mkdir(dir, { recursive: true });

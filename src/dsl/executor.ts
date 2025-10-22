@@ -22,10 +22,8 @@ import {
   handleForeach,
   handleImport,
   handleTask,
-  cleanupGlobalShell,
-  type CommandHandler,
+  ShellSession,
   type CommandContext,
-  type GlobalShell
 } from "./commands/index.js";
 
 export class Executor {
@@ -33,15 +31,14 @@ export class Executor {
   private commands: Map<string, (node: AstNode) => Promise<void>> = new Map();
   private outputDir: string;
   private globalContext: GlobalContext;
-  private globalShell: GlobalShell;
+  private globalShell:ShellSession;
 
   constructor(context: Context, outputDir: string) {
     this.context = context;
     this.outputDir = outputDir;
     this.globalContext = new GlobalContext();
-    this.globalShell = { cwd: outputDir };
+    this.globalShell = new ShellSession( outputDir )
     this.registerCommands();
-    // Note: initializeGlobalVariables will be called explicitly before execute
   }
 
   /**
@@ -56,8 +53,8 @@ export class Executor {
     if (path.isAbsolute(p)) {
       return p;
     }
-    // Use global shell's current working directory if available, fallback to outputDir
-    const baseDir = this.globalShell.cwd || this.outputDir;
+    // Use outputDir as base directory for relative paths
+    const baseDir = this.globalShell.pwd || this.outputDir;
 
     return path.resolve(baseDir, p);
   }
@@ -222,7 +219,7 @@ export class Executor {
   /**
    * Cleanup resources (like global shell) when executor is done
    */
-  public cleanup(): void {
-    cleanupGlobalShell(this.createCommandContext());
+   cleanup(): void {
+    // this.globalShell.close();
   }
 }
