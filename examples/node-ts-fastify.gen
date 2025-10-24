@@ -3,7 +3,7 @@
 
 @log Creating Fastify + Typescript project...
 @set nomeProgetto= input: Nome del progetto?
-@set author = Lorenzo Corbella
+@set author = LorenzoCorbella74
 
 > pnpm init
 > echo # {nomeProgetto} > README.md

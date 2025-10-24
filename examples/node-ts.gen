@@ -1,17 +1,27 @@
 # Simple Typescript project (WIN) V. 0.0.1
-@log Creating Simple typescript template....
-@set nomeProgetto= @input Nome del progetto?
-@set author = Lorenzo Corbella
 
-> pnpm init
+# Usage:
+# gen --file=C:/GEN/node-ts.gen
+@log Creating Simple typescript template....
+@set nomeProgetto= @input Nome cartella di progetto?
+@set author = LorenzoCorbella74
+
+> md {nomeProgetto}
+> cd {nomeProgetto}
+> npm init -y
 > echo "# {nomeProgetto}" > README.md
 
-@log init Git
+@log Init Git
 > git init
-> echo node_modules > .gitignore
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
 
 @log Getting dependencies...
-> pnpm i -D typescript tsx @types/node
+> npm i -D typescript tsx @types/node
 
 @log Creating files....
 >md src
@@ -48,11 +58,11 @@ console.log("Code here...");
 "
 
 @log Setting scripts in package.json....
-> pnpm pkg set version="0.0.1" 
-> pnpm pkg set author="{author}" 
-> pnpm pkg set main="src/index.js" 
-> pnpm pkg set scripts.dev="tsx --watch src/index.ts"
-> pnpm pkg set scripts.build="tsc -p tsconfig.json"
+> npm pkg set version=0.0.1
+> npm pkg set author={author} 
+> npm pkg set main="src/index.js"
+> npm pkg set scripts.dev="tsx watch src/index.ts"
+> npm pkg set scripts.build="tsc -p tsconfig.json"
 
 @fill .vscode/launch.json
 "
@@ -71,6 +81,10 @@ console.log("Code here...");
     ]
 }
 "
+
+@log First commit
+> git add --all
+> git commit -m "First commit"
 
 @log Start coding...
 > code .

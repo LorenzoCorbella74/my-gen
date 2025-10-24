@@ -1,7 +1,7 @@
 # Hono REAT API project (WIN) V. 0.0.1
 @log Creating Hono REAT API template....
 @set nomeProgetto= @input Nome del progetto?
-@set author = Lorenzo Corbella
+@set author = LorenzoCorbella74
 
 > npm init -y
 > echo "# {nomeProgetto}" > README.md

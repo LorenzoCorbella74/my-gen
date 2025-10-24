@@ -1,18 +1,27 @@
 # Inizializzazione di progetti con AI SDK V5 con WIN
+
+# Usage:
+# gen --file=C:/GEN/node-ts-ai.gen
 @log Progett0 con AI SDK
 @set nomeProgetto=input: Nome del progetto?
-@set author = Lorenzo Corbella
-
-> pnpm init
+@set author = LorenzoCorbella74
+> md {nomeProgetto}
+> cd {nomeProgetto}
+> npm init -y
 > echo "# {nomeProgetto}" > README.md
 
 @log init Git
 > git init
-> echo node_modules > .gitignore
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
 
 @log Istallazione dipendenze
-> pnpm install ai @ai-sdk/google zod dotenv ollama-ai-provider-v2
-> pnpm i -D typescript tsx @types/node
+> npm install ai @ai-sdk/google zod dotenv ollama-ai-provider-v2
+> npm i -D typescript tsx @types/node
 
 @log Creating files....
 >md src
@@ -80,13 +89,17 @@ console.log(text, usage);
 "
 
 @log Setting scripts in package.json....
-> pnpm pkg set name="{nomeProgetto}"
+> npm pkg set name="{nomeProgetto}"
 > npm pkg set type="module"
-> pnpm pkg set version="0.0.1" 
-> pnpm pkg set author="{author}" 
-> pnpm pkg set main="src/index.js" 
-> pnpm pkg set scripts.dev="tsx --env-file=.env --watch src/index.ts"
-> pnpm pkg set scripts.build="tsc -p tsconfig.json"
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+> npm pkg set main="src/index.js" 
+> npm pkg set scripts.dev="tsx --env-file=.env --watch src/index.ts"
+> npm pkg set scripts.build="tsc -p tsconfig.json"
+
+@log First commit
+> git add --all
+> git commit -m "First commit"
 
 @log Start coding...
 > code .

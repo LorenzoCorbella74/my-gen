@@ -1,11 +1,17 @@
 # Simple Typescript project for CLI with INK V. 0.0.1
+
+# Links:
 # https://github.com/vadimdemedes/ink
 # https://azukiazusa.dev/blog/ink-cli-app/
-# 
+
+# Usage:
+# gen --file=C:/GEN/ink-ts.gen 
 @log Creating Ink + Typescript template!
 @set nomeProgetto= input: Nome del progetto?
-@set author = Lorenzo Corbella
+@set author = LorenzoCorbella74
 
+> md {nomeProgetto}
+> cd {nomeProgetto} 
 > npm init -y
 > echo "# {nomeProgetto}" > README.md
 
@@ -31,7 +37,7 @@ key=value
 
 @log Creating files....
 >md src
-@fill src/cli.ts
+@fill src/cli.tsx
 "
 import React, { useEffect, useState } from "react";
 import { render, Text } from "ink";
@@ -110,9 +116,11 @@ render(<App />);
 > npm pkg set author="{author}" 
 > npm pkg set type="module" 
 > npm pkg set main="src/cli.js" 
-> npm pkg set scripts.dev="tsx --watch src/cli.tsx"
+> npm pkg set scripts.dev="tsx src/cli.tsx"
+> npm pkg set scripts.watch="tsx --watch src/cli.tsx"
 > npm pkg set scripts.build="tsc src/cli.tsx -p tsconfig.json"
 > npm pkg set scripts.start="node dist/cli.js"
 
+@log Start Dev server with: npm run dev
 @log Start coding...
 > code .

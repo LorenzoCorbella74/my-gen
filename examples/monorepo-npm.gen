@@ -3,7 +3,7 @@
 
 @log Monorepo with npm workspaces
 @set nomeProgetto= @input Nome del progetto?
-@set author = Lorenzo Corbella
+@set author = LorenzoCorbella74
 
 > md {nomeProgetto}
 > cd {nomeProgetto}

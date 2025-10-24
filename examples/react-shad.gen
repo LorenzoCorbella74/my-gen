@@ -1,0 +1,285 @@
+# Template React + ShadCN
+
+# Requirements:
+# - Node 22
+# - create-vite https://github.com/vitejs/vite/tree/main/packages/create-vite
+
+# Links
+# https://ui.shadcn.com/docs/installation/vite
+
+# Usage:
+# gen --file=C:/GEN/react-shadcn.gen
+
+@log Template React + ShadCN
+@set nomeProgetto= @input Nome del progetto?
+@set author = LorenzoCorbella74
+> md {nomeProgetto}
+# Al momento vite chiede Use rolldown-vite (Experimental)?: per saltare usare echo...
+> echo "Yes" | npm create vite@latest {nomeProgetto} -- --template react-ts
+> cd {nomeProgetto}
+> npm install tailwindcss @tailwindcss/vite lucide-react
+> npm install
+
+@fill src/index.css
+"
+@import "tailwindcss";
+"
+
+@fill tsconfig.json
+"
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+"
+
+@fill tsconfig.app.json
+"
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": ["src"]
+}
+"
+
+@fill vite.config.ts
+"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from "path"
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+})
+"
+
+@log Installing ShadCN
+> npx shadcn@latest init -d -y --src-dir
+> npx shadcn@latest add button
+> npx shadcn@latest add card
+> npx shadcn@latest add input
+> npx shadcn@latest add badge
+> npx shadcn@latest add alert
+
+
+@log Creating Dashboard
+@fill src/App.tsx
+"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Home, Settings, Mail, User, Check, AlertCircle } from "lucide-react"
+
+function App() {
+  return (
+    <div className="min-h-screen bg-slate-50 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header con icone */}
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Home className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold">Dashboard Esempio</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon">
+              <Settings className="w-5 h-5" />
+            </Button>
+            <Button variant="outline" size="icon">
+              <User className="w-5 h-5" />
+            </Button>
+          </div>
+        </header>
+
+        {/* Alert con icona */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Benvenuto!</AlertTitle>
+          <AlertDescription>
+            Questa è un'applicazione di esempio che utilizza shadcn/ui e Lucide Icons.
+          </AlertDescription>
+        </Alert>
+
+        {/* Grid di Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Profilo Utente</CardTitle>
+                <User className="w-5 h-5 text-gray-500" />
+              </div>
+              <CardDescription>Gestisci il tuo profilo personale</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Input placeholder="Nome" />
+                <Input placeholder="Email" type="email" />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full">
+                <Check className="w-4 h-4 mr-2" />
+                Salva Modifiche
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Messaggi</CardTitle>
+                <Mail className="w-5 h-5 text-gray-500" />
+              </div>
+              <CardDescription>Hai 3 nuovi messaggi</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-slate-100 rounded">
+                  <span>Messaggio da Mario</span>
+                  <Badge>Nuovo</Badge>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-slate-100 rounded">
+                  <span>Messaggio da Laura</span>
+                  <Badge>Nuovo</Badge>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-slate-100 rounded">
+                  <span>Messaggio da Paolo</span>
+                  <Badge variant="secondary">Letto</Badge>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full">
+                Visualizza Tutti
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Impostazioni</CardTitle>
+                <Settings className="w-5 h-5 text-gray-500" />
+              </div>
+              <CardDescription>Configura la tua applicazione</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span>Notifiche</span>
+                  <Button variant="ghost" size="sm">Attiva</Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Tema Scuro</span>
+                  <Button variant="ghost" size="sm">Disattiva</Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Privacy</span>
+                  <Button variant="ghost" size="sm">Gestisci</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sezione con vari bottoni */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Varianti dei Bottoni</CardTitle>
+            <CardDescription>Esempi di diversi stili di bottoni con icone</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <Button>
+                <Check className="w-4 h-4 mr-2" />
+                Default
+              </Button>
+              <Button variant="destructive">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Destructive
+              </Button>
+              <Button variant="outline">
+                <Mail className="w-4 h-4 mr-2" />
+                Outline
+              </Button>
+              <Button variant="secondary">
+                <Settings className="w-4 h-4 mr-2" />
+                Secondary
+              </Button>
+              <Button variant="ghost">
+                <User className="w-4 h-4 mr-2" />
+                Ghost
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+export default App
+"
+
+@log Updating package.json
+> npm pkg set name={nomeProgetto} 
+> npm pkg set version=0.0.1 
+> npm pkg set author={author} 
+
+@log First commit
+> git add --all
+> git commit -m "First commit"
+
+@log Start the Dev server with: npm run dev
+@log Start coding...
+> code .

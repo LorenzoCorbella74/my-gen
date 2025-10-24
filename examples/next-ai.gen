@@ -1,38 +1,24 @@
 # Inizializzazione di template Next + AI SDK
-#
+
+# Usage:
 # gen --file=C:/GEN/next-ai.gen 
 
 @log Template Next + AI SDK
 @set nomeProgetto= @input Nome del progetto?
-@set author = Lorenzo Corbella
-> npx create-next-app@latest {nomeProgetto} --typescript --tailwind --eslint --src-dir --app --import-alias --yes
+> npx create-next-app@latest {nomeProgetto} --typescript --tailwind --react-compiler --turbopack false --eslint --src-dir --app --import-alias @/*
 > cd {nomeProgetto}
-@log Setting scripts in package.json....
-> npm pkg set version="0.0.1" 
-> npm pkg set author="{author}" 
-> echo "# {nomeProgetto}" > README.md
-
-@log Git init...
-> git init
-> git branch -m master main
-@fill .gitignore
-"
-node_modules
-dist
-.env
-"
 
 @log Setting env
 @fill .env
 "
-key=value
+GOOGLE_GENERATIVE_AI_API_KEY=value
 "
 
 @log Installing dependancies
 > npm install
-> npm install ai @ai-sdk/gemini @ai-sdk/react zod
+> npm install ai @ai-sdk/google @ai-sdk/react zod
 
-@fill src/app/ui/chat/page.tsx
+@fill src/app/chat/page.tsx
 "
 "use client";
 
@@ -121,14 +107,14 @@ export default function ChatPage() {
 @fill src/app/api/chat/route.ts
 "
 import { streamText, UIMessage, convertToModelMessages } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 
 export async function POST(req: Request) {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
     const result = streamText({
-      model: openai("gpt-5-nano"),
+      model: google("gemini-2.5-flash"),
       messages: [
         {
           role: "system",
@@ -156,5 +142,10 @@ export async function POST(req: Request) {
 }
 "
 
+@log First commit
+> git add --all
+> git commit -m "First commit"
+
+@log run Dev server with: npm run dev
 @log Start coding...
 > code .

@@ -1,12 +1,16 @@
 
 # Inizializzazione di template progetti  Angular e DaisyUI 
 # https://angular.dev/cli/new
-# 
+
+# Requirements:
+# Angular cli 20
+
+# Usage:
 # gen --file=C:/GEN/angular-base.gen
 
 @log Template Angular BASE
 @set nomeProgetto= @input Nome del progetto?
-@set author = Lorenzo Corbella
+@set author = LorenzoCorbella74
 > ng new {nomeProgetto} --routing=true --style=scss --zoneless=false --ssr=false --ai-config=copilot
 > echo "# {nomeProgetto}" > README.md
 
@@ -553,6 +557,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 export class HomeComponent { }
 "
 
+@log Updating package.json
 > npm pkg set name="{nomeProgetto}" 
 > npm pkg set version="0.0.1" 
 > npm pkg set author="{author}" 
