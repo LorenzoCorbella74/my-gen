@@ -6,6 +6,142 @@ import os from "os";
 import path from "path";
 import fs from "fs";
 
+// Import cross-spawn for better cross-platform support
+let crossSpawn: any;
+try {
+  crossSpawn = require('cross-spawn');
+} catch (error) {
+  console.log(chalk.yellow('[SHELL] cross-spawn not available, falling back to standard spawn'));
+  crossSpawn = null;
+}
+
+function shouldUseCrossSpawn(command: string): boolean {
+  // Only use cross-spawn if it's available
+  if (!crossSpawn) return false;
+  
+  // Commands that benefit from cross-spawn
+  const externalCommands = /^(npm|node|git|python|pip|java|gcc|make|curl|wget|yarn|pnpm)\s/i;
+  
+  // Commands that need shell interpretation
+  const shellCommands = /[&|><]|&&|\|\||;|`|\$\(/; // pipes, redirections, chaining, command substitution
+  
+  const trimmedCommand = command.trim();
+  return externalCommands.test(trimmedCommand) && !shellCommands.test(trimmedCommand);
+}
+
+function parseSimpleCommand(command: string): { cmd: string; args: string[] } | null {
+  const trimmedCommand = command.trim();
+  
+  // Simple regex to split command and arguments
+  // This handles basic quoted arguments but not complex shell escaping
+  const parts: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let quoteChar = '';
+  
+  for (let i = 0; i < trimmedCommand.length; i++) {
+    const char = trimmedCommand[i];
+    
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true;
+      quoteChar = char;
+    } else if (inQuotes && char === quoteChar) {
+      inQuotes = false;
+      quoteChar = '';
+    } else if (!inQuotes && char === ' ') {
+      if (current) {
+        parts.push(current);
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+  
+  if (current) {
+    parts.push(current);
+  }
+  
+  if (parts.length === 0) return null;
+  
+  const [cmd, ...args] = parts;
+  return { cmd, args };
+}
+
+async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVerbose: boolean): Promise<void> {
+  const parsed = parseSimpleCommand(command);
+  
+  if (!parsed) {
+    throw new Error(`Failed to parse command: ${command}`);
+  }
+  
+  if (isVerbose) {
+    console.log(chalk.cyan(`[CROSS-SPAWN] Executing: ${parsed.cmd} ${parsed.args.join(' ')}`));
+    console.log(chalk.gray(`[CROSS-SPAWN] Working directory: ${ctx.globalShell.cwd}`));
+  }
+  
+  return new Promise((resolve, reject) => {
+    const childProcess = crossSpawn(parsed.cmd, parsed.args, {
+      cwd: ctx.globalShell.cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: process.env,
+      windowsHide: true
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    childProcess.stdout?.on('data', (data: Buffer) => {
+      const output = data.toString();
+      stdout += output;
+      if (isVerbose && output.trim()) {
+        console.log(chalk.gray(`[CROSS-SPAWN-OUTPUT] ${output.trim()}`));
+      }
+    });
+    
+    childProcess.stderr?.on('data', (data: Buffer) => {
+      const error = data.toString();
+      stderr += error;
+      if (isVerbose && error.trim()) {
+        console.log(chalk.red(`[CROSS-SPAWN-ERROR] ${error.trim()}`));
+      }
+    });
+    
+    childProcess.on('close', (code: number) => {
+      if (isVerbose) {
+        console.log(chalk.cyan(`[CROSS-SPAWN] Command completed with exit code: ${code}`));
+      }
+      
+      if (stderr.trim() && code !== 0) {
+        console.log(chalk.red(`[CMD-ERROR] ${stderr.trim()}`));
+      }
+      
+      // Always resolve to continue execution even on error
+      resolve();
+    });
+    
+    childProcess.on('error', (error: Error) => {
+      if (isVerbose) {
+        console.log(chalk.red(`[CROSS-SPAWN] Process error: ${error.message}`));
+      }
+      reject(error);
+    });
+    
+    // Set timeout for long-running commands
+    const timeout = setTimeout(() => {
+      if (isVerbose) {
+        console.log(chalk.red(`[CROSS-SPAWN-TIMEOUT] Command timed out after 60 seconds: ${command}`));
+      }
+      childProcess.kill('SIGTERM');
+      resolve(); // Resolve even on timeout
+    }, 60000); // 60 seconds timeout
+    
+    childProcess.on('close', () => {
+      clearTimeout(timeout);
+    });
+  });
+}
+
 function getShellCommand(): { shell: string; args: string[] } {
   if (process.env.SHELL) {
     return { shell: process.env.SHELL, args: ["-i"] }; // interactive shell
@@ -77,6 +213,19 @@ async function handleCdCommand(command: string, ctx: CommandContext, isVerbose: 
 }
 
 async function executeCommandDeterministic(command: string, ctx: CommandContext, isVerbose: boolean): Promise<void> {
+  // Check if we should use cross-spawn for this command
+  if (shouldUseCrossSpawn(command)) {
+    if (isVerbose) {
+      console.log(chalk.cyan(`[HYBRID] Using cross-spawn for: ${command}`));
+    }
+    return executeWithCrossSpawn(command, ctx, isVerbose);
+  }
+  
+  // Fall back to current shell-based approach
+  if (isVerbose) {
+    console.log(chalk.gray(`[HYBRID] Using shell approach for: ${command}`));
+  }
+  
   return new Promise((resolve, reject) => {
     const { shell, args } = getShellCommand();
     
@@ -96,6 +245,7 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
     const childProcess = spawn(shell, cmdArgs, {
       cwd: ctx.globalShell.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: process.env,
       windowsHide: true
     });
     
@@ -165,6 +315,13 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
     console.log(chalk.gray(`[SHELL-DEBUG] OutputDir: ${ctx.outputDir}`));
     console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
+    
+    // Show hybrid decision
+    if (shouldUseCrossSpawn(command)) {
+      console.log(chalk.cyan(`[SHELL-DEBUG] Will use cross-spawn for this command`));
+    } else {
+      console.log(chalk.yellow(`[SHELL-DEBUG] Will use shell approach for this command`));
+    }
   }
 
   // Initialize shell context if needed
@@ -175,7 +332,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     return handleCdCommand(command, ctx, isVerbose);
   }
 
-  // For other commands, use deterministic execution
+  // For other commands, use hybrid deterministic execution
   return executeCommandDeterministic(command, ctx, isVerbose);
 }
 

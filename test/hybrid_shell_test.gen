@@ -1,0 +1,49 @@
+# Test hybrid shell approach with cross-spawn
+@log Testing hybrid shell approach (cross-spawn + shell)
+
+# Test 1: Commands that should use cross-spawn
+@log Test 1: Cross-spawn commands (npm, git, node)
+> npm --version
+> git --version  
+> node --version
+
+# Test 2: Commands that should use shell approach
+@log Test 2: Shell commands (built-ins, pipes, redirection)
+> echo "Testing shell commands" > shell_test.txt
+> echo "Line 2" >> shell_test.txt
+> type shell_test.txt
+
+# Test 3: Complex shell commands with chaining
+@log Test 3: Command chaining (should use shell)
+> mkdir hybrid_test && cd hybrid_test
+> echo "Inside hybrid test" > location.txt && echo "Command chaining works" >> location.txt
+
+# Test 4: Mix of cross-spawn and shell commands
+@log Test 4: Mixed commands
+> npm init -y
+> echo "package.json created" > creation_log.txt
+> git init
+> echo "Git initialized" >> creation_log.txt
+
+# Test 5: Directory navigation (shell) + npm commands (cross-spawn)
+@log Test 5: Directory navigation with npm
+> cd ..
+> mkdir npm_cross_spawn_test
+> cd npm_cross_spawn_test
+> npm init -y
+> npm install --save-dev typescript
+> echo "TypeScript dev dependency installed" > install_log.txt
+
+# Test 6: Error handling with both approaches
+@log Test 6: Error handling
+> npm run nonexistent-script
+> echo "This should still execute after npm error" > after_error.txt
+
+# Test 7: Verification
+@log Test 7: Final verification
+> cd ..
+> dir hybrid_test
+> dir npm_cross_spawn_test
+
+@log Hybrid approach test completed
+@log Check console output to see which commands used cross-spawn vs shell
