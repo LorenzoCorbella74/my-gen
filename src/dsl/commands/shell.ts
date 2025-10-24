@@ -8,16 +8,27 @@ import fs from "fs";
 
 // Import cross-spawn for better cross-platform support
 let crossSpawn: any;
-try {
-  crossSpawn = require('cross-spawn');
-} catch (error) {
-  console.log(chalk.yellow('[SHELL] cross-spawn not available, falling back to standard spawn'));
-  crossSpawn = null;
+
+async function loadCrossSpawn(): Promise<any> {
+  if (crossSpawn !== undefined) {
+    return crossSpawn;
+  }
+  
+  try {
+    const crossSpawnModule = await import('cross-spawn');
+    crossSpawn = crossSpawnModule.default || crossSpawnModule;
+    return crossSpawn;
+  } catch (error) {
+    console.log(chalk.yellow('[SHELL] cross-spawn not available, falling back to standard spawn'));
+    crossSpawn = null;
+    return null;
+  }
 }
 
-function shouldUseCrossSpawn(command: string): boolean {
-  // Only use cross-spawn if it's available
-  if (!crossSpawn) return false;
+async function shouldUseCrossSpawn(command: string): Promise<boolean> {
+  // Load cross-spawn if not already loaded
+  const crossSpawnModule = await loadCrossSpawn();
+  if (!crossSpawnModule) return false;
   
   // Commands that benefit from cross-spawn
   const externalCommands = /^(npm|node|git|python|pip|java|gcc|make|curl|wget|yarn|pnpm)\s/i;
@@ -75,13 +86,19 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
     throw new Error(`Failed to parse command: ${command}`);
   }
   
+  // Load cross-spawn module
+  const crossSpawnModule = await loadCrossSpawn();
+  if (!crossSpawnModule) {
+    throw new Error('Cross-spawn not available');
+  }
+  
   if (isVerbose) {
     console.log(chalk.cyan(`[CROSS-SPAWN] Executing: ${parsed.cmd} ${parsed.args.join(' ')}`));
     console.log(chalk.gray(`[CROSS-SPAWN] Working directory: ${ctx.globalShell.cwd}`));
   }
   
   return new Promise((resolve, reject) => {
-    const childProcess = crossSpawn(parsed.cmd, parsed.args, {
+    const childProcess = crossSpawnModule(parsed.cmd, parsed.args, {
       cwd: ctx.globalShell.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
       env: process.env,
@@ -214,7 +231,7 @@ async function handleCdCommand(command: string, ctx: CommandContext, isVerbose: 
 
 async function executeCommandDeterministic(command: string, ctx: CommandContext, isVerbose: boolean): Promise<void> {
   // Check if we should use cross-spawn for this command
-  if (shouldUseCrossSpawn(command)) {
+  if (await shouldUseCrossSpawn(command)) {
     if (isVerbose) {
       console.log(chalk.cyan(`[HYBRID] Using cross-spawn for: ${command}`));
     }
@@ -317,7 +334,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<v
     console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
     
     // Show hybrid decision
-    if (shouldUseCrossSpawn(command)) {
+    if (await shouldUseCrossSpawn(command)) {
       console.log(chalk.cyan(`[SHELL-DEBUG] Will use cross-spawn for this command`));
     } else {
       console.log(chalk.yellow(`[SHELL-DEBUG] Will use shell approach for this command`));

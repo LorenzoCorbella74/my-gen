@@ -24,10 +24,27 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
     "@types/inquirer": "^9.0.9",
     "@types/node": "^20.19.17",
     "@types/yargs": "^17.0.32",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5"
-  }
+  },
+  "directories": {
+    "doc": "doc",
+    "example": "examples",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LorenzoCorbella74/my-cli-generator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LorenzoCorbella74/my-cli-generator/issues"
+  },
+  "homepage": "https://github.com/LorenzoCorbella74/my-cli-generator#readme"
 }
