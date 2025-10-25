@@ -13,6 +13,7 @@ import { parseContent } from "./dsl/parser.js";
 import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
 import { generateDocumentation } from './dsl/documentor.js';
+import { listTemplates as fetchTemplates, downloadAndExecuteTemplate, displayTemplates } from './dsl/templateManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,6 +50,15 @@ const argv = yargs(hideBin(process.argv))
     description: 'Convert .gen file to markdown documentation',
     default: false
   })
+  .option('list', {
+    type: 'boolean',
+    description: 'List available templates from the repository',
+    default: false
+  })
+  .option('template', {
+    type: 'string',
+    description: 'Download and execute a template from the repository (e.g., --template=fastify)'
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
@@ -58,6 +68,8 @@ const configFile = argv.config;
 const parsedFolder = argv.parse;
 const verbose = argv.verbose;
 const generateDoc = argv.doc;
+const listTemplates = argv.list;
+const templateName = argv.template;
 
 
 
@@ -119,6 +131,68 @@ async function main() {
         console.error(chalk.red(`Error generating documentation: ${error.message}`));
       } else {
         console.error(chalk.red(`Error generating documentation: ${String(error)}`));
+      }
+      process.exit(1);
+    }
+  }
+
+  // If --list is provided, list available templates
+  if (listTemplates) {
+    try {
+      const templates = await fetchTemplates();
+      displayTemplates(templates);
+      process.exit(0);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(chalk.red(`Error fetching templates: ${error.message}`));
+      } else {
+        console.error(chalk.red(`Error fetching templates: ${String(error)}`));
+      }
+      process.exit(1);
+    }
+  }
+
+  // If --template is provided, download and execute template
+  if (templateName) {
+    try {
+      // Initialize context and executor for template execution
+      let initialContext = {};
+      if (configFile) {
+        try {
+          const configContent = await fs.readFile(configFile, 'utf-8');
+          initialContext = JSON.parse(configContent);
+        } catch (error) {
+          if (error instanceof Error) {
+            console.error(chalk.red(`Error reading or parsing config file: ${error.message}`));
+          } else {
+            console.error(chalk.red(`Error reading or parsing config file: ${String(error)}`));
+          }
+          process.exit(1);
+        }
+      }
+      
+      // Add verbose flag to initial context
+      initialContext = { ...initialContext, VERBOSE: verbose };
+      
+      const context = new Context(initialContext);
+      const executor = new Executor(context, outputDir);
+      
+      // Initialize global variables before execution
+      await executor.initializeGlobalVariables();
+      
+      // Download and execute template
+      await downloadAndExecuteTemplate(templateName, outputDir, executor, context);
+      
+      // Cleanup resources
+      executor.cleanup();
+      
+      console.log(chalk.blueBright("\nTemplate execution completed."));
+      process.exit(0);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(chalk.red(`Error executing template: ${error.message}`));
+      } else {
+        console.error(chalk.red(`Error executing template: ${String(error)}`));
       }
       process.exit(1);
     }

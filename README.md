@@ -26,6 +26,8 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--verbose`: Optional path to enable verbose logging.
 - `--doc`: Convert the `.gen` file to markdown documentation.
+- `--list`: List available templates from the repository.
+- `--template=<name>`: Download and execute a template from the repository.
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 
@@ -58,6 +60,50 @@ The `--doc` flag allows you to convert `.gen` files into readable markdown docum
 gen --file=path/to/your/script.gen --doc
 ```
 
+## Template Management
+
+The tool provides built-in access to pre-made templates from the repository, making it easy to bootstrap new projects quickly.
+
+### List Available Templates
+View all available templates with descriptions:
+```bash
+gen --list
+```
+
+This command fetches the latest templates from the GitHub repository and displays them with their descriptions (extracted from the first comment in each `.gen` file).
+
+### Execute Templates
+Download and execute a template directly:
+```bash
+# Basic usage
+gen --template=fastify --output=./my-api
+
+# With custom configuration
+gen --template=node-ts --config=myconfig.json --output=./my-project
+
+# Using verbose logging
+gen --template=react-shad --output=./my-app --verbose
+```
+
+**Template execution workflow:**
+1. Downloads the specified template from `LorenzoCorbella74/my-gen/templates`
+2. Executes it immediately in the specified output directory
+3. Supports all standard options (`--config`, `--output`, `--verbose`)
+4. Automatically cleans up temporary files after execution
+
+**Error handling:**
+- If template doesn't exist, shows available templates
+- Network errors are handled gracefully
+- Templates are downloaded to temporary directories and cleaned up automatically
+
+### Available Templates
+Use `gen --list` to see the current list of available templates, including:
+- **node-ts**: Simple TypeScript project setup
+- **fastify**: Fastify + TypeScript API project
+- **react-shad**: React project with ShadCN UI
+- **ink-ts**: CLI application with Ink framework
+- And many more...
+
 ## Parse Folder to produce Template!
 It is possibile **to transform a folder to a .gen template** thanks to the `--parse <folder>` option. It will create a `template.gen` file in the current working directory excluding some common folders like `node_modules`, `dist`, `.git`. Do you want to parse a project folder created with vite and then customised and transform it to a `.gen` template? Just run:
 ```bash
@@ -67,12 +113,35 @@ gen --parse C:/DEV/template_vanilla_ts/vite-project
 ## Syntax Highlights VSCode Extension for .gen files
 You can get the extension from [gen-vsc-extension](https://github.com/LorenzoCorbella74/gen-vsc-extension) and install it in your VSCode extension panel by choosing "Install from VSIX..." and selecting the downloaded `gen-vsc-extension-0.0.1.vsix` file.
 
-## AI-Powered .gen File Creation
+### Using with GitHub Copilot
+When working in VS Code with GitHub Copilot:
+1. Open the `AGENTS.md` file in your workspace
+2. Reference it in your prompts: *"Using the AGENTS.md guide, create a .gen script for a React TypeScript project with testing setup"*
+3. Copilot will use the DSL documentation to generate appropriate `.gen` scripts
+4. You can also reference existing templates: *"Create a template similar to the fastify template but for Express"*
 
-The project includes an `AGENTS.md` file specifically designed to help AI coding assistants understand and create `.gen` files based on user requirements. This comprehensive guide enables AI agents to generate complex project scaffolding scripts efficiently.
+### Using with Gemini CLI
+For command-line AI assistance:
+```bash
+# Include the agents guide in your prompt
+gemini "Based on the AGENTS.md file in this project, create a .gen script that sets up a Node.js Express API with MongoDB integration"
+
+# Reference existing templates
+gemini "Look at the available templates with 'gen --list' and create a new template for Vue.js projects"
+```
+
+### Using with Other AI Tools
+The `AGENTS.md` file can be used as context with any AI coding assistant:
+- **Claude**: Upload the file as an attachment for comprehensive DSL understanding
+- **ChatGPT**: Copy relevant sections into your conversation for script generation
+- **Cursor**: Reference the file for intelligent `.gen` script completions
+
+You can also use `gen --list` to show AI assistants the available templates as examples for creating new ones.
+
+This approach ensures consistent, well-structured `.gen` files that follow DSL best practices and leverage all available commands effectively.
 
 ## Examples
-Look inside the folder [examples](./examples/) for ready-to-use `.gen` scripts and templates.
+Look inside the folder [templates](./templates/) for ready-to-use `.gen` scripts and templates.
 
 # Future Plans
 - [x] reorganize the STDOUT and STDERR with ink.js(Terminal-Kit or Neo-Blessed or Charsm...) / console interattiva

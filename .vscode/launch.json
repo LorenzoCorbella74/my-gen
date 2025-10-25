@@ -184,7 +184,7 @@
       "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "--file",
-        "./examples/node-ts-hono.gen",
+        "./templates/node-ts-hono.gen",
         "--output",
         "../test-hono"
       ],

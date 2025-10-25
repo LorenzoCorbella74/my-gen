@@ -1,0 +1,33 @@
+# Test Cross-Platform Template
+@log Creating cross-platform test project...
+@set projectName = @input Project name?
+
+> mkdir {projectName}
+> cd {projectName}
+
+@fill README.md
+"
+# {projectName}
+
+This is a test project created with the gen template system.
+
+## Features
+- Cross-platform compatible
+- Uses standard mkdir command
+- Works on Windows, macOS, and Linux
+"
+
+@fill package.json
+"
+{
+  "name": "{projectName}",
+  "version": "1.0.0",
+  "description": "Test project generated from gen template",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
+"
+
+@log Project {projectName} created successfully! 🎉
