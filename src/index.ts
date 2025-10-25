@@ -59,19 +59,25 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Download and execute a template from the repository (e.g., --template=fastify)'
   })
+  .option('refresh', {
+    type: 'boolean',
+    description: 'Force refresh of template cache (use with --list)',
+    default: false
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
 
-const genFile = argv.file;
-const configFile = argv.config;
-const parsedFolder = argv.parse;
-const verbose = argv.verbose;
-const generateDoc = argv.doc;
-const listTemplates = argv.list;
-const templateName = argv.template;
-
-
+const {
+  file: genFile,
+  config: configFile,
+  parse: parsedFolder,
+  verbose,
+  doc: generateDoc,
+  list: listTemplates,
+  template: templateName,
+  refresh: refreshCache
+} = argv;
 
 // overwise, run the generator
 const outputDir = argv.output ? path.resolve(argv.output) : process.cwd();
@@ -139,7 +145,7 @@ async function main() {
   // If --list is provided, list available templates
   if (listTemplates) {
     try {
-      const templates = await fetchTemplates();
+      const templates = await fetchTemplates(refreshCache);
       displayTemplates(templates);
       process.exit(0);
     } catch (error) {
@@ -170,22 +176,22 @@ async function main() {
           process.exit(1);
         }
       }
-      
+
       // Add verbose flag to initial context
       initialContext = { ...initialContext, VERBOSE: verbose };
-      
+
       const context = new Context(initialContext);
       const executor = new Executor(context, outputDir);
-      
+
       // Initialize global variables before execution
       await executor.initializeGlobalVariables();
-      
+
       // Download and execute template
       await downloadAndExecuteTemplate(templateName, outputDir, executor, context);
-      
+
       // Cleanup resources
       executor.cleanup();
-      
+
       console.log(chalk.blueBright("\nTemplate execution completed."));
       process.exit(0);
     } catch (error) {
@@ -214,12 +220,12 @@ async function main() {
 
   // si recupera il global contest e si mergia nel contesto 
   const executor = new Executor(context, outputDir);
-  
+
   // Initialize global variables before execution
   await executor.initializeGlobalVariables();
-  
+
   await executor.execute(ast);
-  
+
   // Cleanup resources like global shell
   executor.cleanup();
 

@@ -28,6 +28,7 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--doc`: Convert the `.gen` file to markdown documentation.
 - `--list`: List available templates from the repository.
 - `--template=<name>`: Download and execute a template from the repository.
+- `--refresh`: Force refresh of template cache (use with `--list`).
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 
@@ -42,8 +43,8 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 | [`@global`](doc/commands/global.md) | `@global name = value`<br>`@global x = @input Prompt`   | Same as @set but saves variables permanently |
 | [`@ai`](doc/commands/ai.md)         | `@set reply = @ai What is Node.js?`            | Send a prompt to Ollama AI and get a response (configurable via global variables)          |
 | [`>`](doc/commands/shell.md)   | `> echo Hello`                                 | Run a shell command                                                                         |
-| [`@write`](doc/commands/write.md)   | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file                                                 |
-| [`@fill`](doc/commands/fill.md)     | `@fill path/to/file.txt`<br>`"`<br>`content here`<br>`"` | Write multi-line content to a file using quote delimiters                                   |
+| [`@write`](doc/commands/write.md)   | `@write "content" to path`<br>`@write var to path` | Write literal or variable content to a file (relative paths are considered from the pwd)         |
+| [`@fill`](doc/commands/fill.md)     | `@fill path/to/file.txt`<br>`"`<br>`content here`<br>`"` | Write multi-line content to a file using quote delimiters  (relative paths are considered from the pwd)                                 |
 | [`@if`](doc/commands/if.md)         | `@if exists path`<br>`@if var is "value"`<br>`@if var isnot "value"` | Conditionally execute child commands based on file existence or variable comparison           |
 | [`@loop`](doc/commands/loop.md)     | `@loop item in listVar`                        | Iterate over an array variable, setting `item` and executing child commands                 |
 | [`@import`](doc/commands/import.md) | `@import ./other.gen`                           | Import and execute commands from another .gen file at that point in the script              |
@@ -62,15 +63,29 @@ gen --file=path/to/your/script.gen --doc
 
 ## Template Management
 
-The tool provides built-in access to pre-made templates from the repository, making it easy to bootstrap new projects quickly.
+The tool provides built-in access to pre-made templates from the repository with an intelligent caching system, making it fast and efficient to bootstrap new projects.
 
 ### List Available Templates
 View all available templates with descriptions:
 ```bash
+# First time: downloads and caches templates
 gen --list
+
+# Subsequent calls: reads from local cache (instant)
+gen --list
+
+# Force refresh cache from repository
+gen --list --refresh
 ```
 
-This command fetches the latest templates from the GitHub repository and displays them with their descriptions (extracted from the first comment in each `.gen` file).
+**Caching System:**
+- Templates are cached locally at `~/.gen/templates/` for 24 hours
+- First `--list` command downloads all templates once
+- Subsequent calls use local cache for instant results
+- Cache automatically refreshes after 24 hours
+- Use `--refresh` flag to force immediate cache update
+
+This command fetches templates from the GitHub repository and displays them with their descriptions (extracted from the first comment in each `.gen` file).
 
 ### Execute Templates
 Download and execute a template directly:
@@ -86,15 +101,16 @@ gen --template=react-shad --output=./my-app --verbose
 ```
 
 **Template execution workflow:**
-1. Downloads the specified template from `LorenzoCorbella74/my-gen/templates`
-2. Executes it immediately in the specified output directory
-3. Supports all standard options (`--config`, `--output`, `--verbose`)
-4. Automatically cleans up temporary files after execution
+1. Checks local cache first for faster execution
+2. Downloads from `LorenzoCorbella74/my-gen/templates` if not cached
+3. Executes immediately in the specified output directory
+4. Supports all standard options (`--config`, `--output`, `--verbose`)
+5. Automatically manages cache and cleanup
 
 **Error handling:**
-- If template doesn't exist, shows available templates
-- Network errors are handled gracefully
-- Templates are downloaded to temporary directories and cleaned up automatically
+- If template doesn't exist, shows available templates with `gen --list`
+- Network errors fallback to cached versions when available
+- Clear error messages for missing templates or network issues
 
 ### Available Templates
 Use `gen --list` to see the current list of available templates, including:
@@ -126,8 +142,8 @@ For command-line AI assistance:
 # Include the agents guide in your prompt
 gemini "Based on the AGENTS.md file in this project, create a .gen script that sets up a Node.js Express API with MongoDB integration"
 
-# Reference existing templates
-gemini "Look at the available templates with 'gen --list' and create a new template for Vue.js projects"
+# Reference existing templates with fresh cache
+gemini "Use 'gen --list --refresh' to get the latest templates and create a new template for Vue.js projects"
 ```
 
 ### Using with Other AI Tools
@@ -136,7 +152,7 @@ The `AGENTS.md` file can be used as context with any AI coding assistant:
 - **ChatGPT**: Copy relevant sections into your conversation for script generation
 - **Cursor**: Reference the file for intelligent `.gen` script completions
 
-You can also use `gen --list` to show AI assistants the available templates as examples for creating new ones.
+You can also use `gen --list` to show AI assistants the available templates as examples for creating new ones. The cache system ensures consistent template listings across AI interactions.
 
 This approach ensures consistent, well-structured `.gen` files that follow DSL best practices and leverage all available commands effectively.
 

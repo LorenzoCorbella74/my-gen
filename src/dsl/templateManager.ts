@@ -9,61 +9,175 @@ const REPO_NAME = 'my-gen';
 const BRANCH = 'main';
 const TEMPLATES_PATH = 'templates';
 
+// Cache configuration
+const CACHE_DIR = path.join(os.homedir(), '.gen', 'templates');
+const CACHE_INFO_FILE = path.join(CACHE_DIR, '.cache-info.json');
+const CACHE_VALIDITY_HOURS = 24; // Cache validity period
+
 interface TemplateInfo {
   name: string;
   filename: string;
   description?: string;
 }
 
+interface CacheInfo {
+  lastUpdated: string;
+  repoPath: string;
+  branch: string;
+  templateCount: number;
+}
+
 /**
- * Fetches the list of templates from the GitHub repository
+ * Checks if cache exists and is valid
  */
-export async function listTemplates(): Promise<TemplateInfo[]> {
-  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${TEMPLATES_PATH}?ref=${BRANCH}`;
+async function isCacheValid(): Promise<boolean> {
+  try {
+    const cacheInfo = await fs.readFile(CACHE_INFO_FILE, 'utf-8');
+    const info: CacheInfo = JSON.parse(cacheInfo);
+    
+    const lastUpdated = new Date(info.lastUpdated);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60);
+    
+    return hoursDiff < CACHE_VALIDITY_HOURS;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Ensures cache directory exists
+ */
+async function ensureCacheDir(): Promise<void> {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  } catch (error) {
+    throw new Error(`Failed to create cache directory: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Downloads templates using degit and updates cache
+ */
+async function updateCache(): Promise<void> {
+  await ensureCacheDir();
+  
+  console.log(chalk.blue('🔄 Updating template cache...'));
   
   try {
-    console.log(chalk.blue('📋 Fetching available templates...'));
+    // Use degit to download templates folder
+    const repoPath = `${REPO_OWNER}/${REPO_NAME}/${TEMPLATES_PATH}#${BRANCH}`;
+    const emitter = degit(repoPath);
     
-    const response = await fetch(apiUrl);
+    // Create temporary directory for download
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gen-cache-'));
     
-    if (!response.ok) {
-      throw new Error(`GitHub API request failed: ${response.status} ${response.statusText}`);
+    try {
+      await emitter.clone(tempDir);
+      
+      // Clear existing cache
+      try {
+        const files = await fs.readdir(CACHE_DIR);
+        for (const file of files) {
+          if (file !== '.cache-info.json') {
+            await fs.rm(path.join(CACHE_DIR, file), { force: true });
+          }
+        }
+      } catch (error) {
+        // Cache directory might be empty, that's fine
+      }
+      
+      // Copy templates to cache
+      const tempFiles = await fs.readdir(tempDir);
+      const templateFiles = tempFiles.filter(file => file.endsWith('.gen'));
+      
+      for (const file of templateFiles) {
+        const sourcePath = path.join(tempDir, file);
+        const destPath = path.join(CACHE_DIR, file);
+        await fs.copyFile(sourcePath, destPath);
+      }
+      
+      // Update cache info
+      const cacheInfo: CacheInfo = {
+        lastUpdated: new Date().toISOString(),
+        repoPath,
+        branch: BRANCH,
+        templateCount: templateFiles.length
+      };
+      
+      await fs.writeFile(CACHE_INFO_FILE, JSON.stringify(cacheInfo, null, 2));
+      
+      console.log(chalk.green(`✅ Cache updated with ${templateFiles.length} templates`));
+      
+    } finally {
+      // Cleanup temp directory
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch (error) {
+        console.warn(chalk.yellow(`Warning: Could not clean up temp directory: ${tempDir}`));
+      }
     }
     
-    const files = await response.json() as Array<{
-      name: string;
-      download_url: string;
-      type: string;
-    }>;
-    
-    // Filter only .gen files
-    const genFiles = files.filter(file => 
-      file.type === 'file' && file.name.endsWith('.gen')
-    );
+  } catch (error) {
+    throw new Error(`Failed to update cache: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Reads templates from local cache
+ */
+async function readTemplatesFromCache(): Promise<TemplateInfo[]> {
+  try {
+    const files = await fs.readdir(CACHE_DIR);
+    const templateFiles = files.filter(file => file.endsWith('.gen'));
     
     const templates: TemplateInfo[] = [];
     
-    // Fetch descriptions from the first comment of each file
-    for (const file of genFiles) {
+    for (const filename of templateFiles) {
       try {
-        const contentResponse = await fetch(file.download_url);
-        if (contentResponse.ok) {
-          const content = await contentResponse.text();
-          const description = extractDescription(content);
-          
-          templates.push({
-            name: file.name.replace('.gen', ''), // Remove .gen extension
-            filename: file.name,
-            description
-          });
-        }
-      } catch (error) {
-        // If we can't fetch the description, still include the template
+        const filePath = path.join(CACHE_DIR, filename);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const description = extractDescription(content);
+        
         templates.push({
-          name: file.name.replace('.gen', ''),
-          filename: file.name
+          name: filename.replace('.gen', ''),
+          filename,
+          description
+        });
+      } catch (error) {
+        // If we can't read a file, still include it without description
+        templates.push({
+          name: filename.replace('.gen', ''),
+          filename
         });
       }
+    }
+    
+    return templates;
+  } catch (error) {
+    throw new Error(`Failed to read templates from cache: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Fetches the list of templates using cache when possible
+ */
+export async function listTemplates(forceRefresh: boolean = false): Promise<TemplateInfo[]> {
+  try {
+    // Check if we need to update cache
+    if (forceRefresh || !(await isCacheValid())) {
+      await updateCache();
+    } else {
+      console.log(chalk.blue('📋 Reading templates from cache...'));
+    }
+    
+    // Read templates from cache
+    const templates = await readTemplatesFromCache();
+    
+    if (templates.length === 0) {
+      console.log(chalk.yellow('No templates found in cache. Trying to refresh...'));
+      await updateCache();
+      return await readTemplatesFromCache();
     }
     
     return templates;
@@ -101,7 +215,7 @@ function extractDescription(content: string): string | undefined {
 }
 
 /**
- * Downloads and executes a template from the repository
+ * Downloads and executes a template, using cache when available
  */
 export async function downloadAndExecuteTemplate(
   templateName: string,
@@ -109,35 +223,59 @@ export async function downloadAndExecuteTemplate(
   executor: any, // Will be properly typed later
   context: any   // Will be properly typed later
 ): Promise<void> {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gen-template-'));
+  // Add .gen extension if not present
+  const filename = templateName.endsWith('.gen') ? templateName : `${templateName}.gen`;
   
   try {
-    console.log(chalk.blue(`📦 Downloading template: ${templateName}...`));
+    // First, try to use cached template
+    const cachedTemplatePath = path.join(CACHE_DIR, filename);
     
-    // Add .gen extension if not present
-    const filename = templateName.endsWith('.gen') ? templateName : `${templateName}.gen`;
-    
-    // Use degit to download the specific file from templates folder
-    const repoPath = `${REPO_OWNER}/${REPO_NAME}/${TEMPLATES_PATH}#${BRANCH}`;
-    const emitter = degit(repoPath);
-    
-    await emitter.clone(tempDir);
-    
-    // Check if the template file exists
-    const templatePath = path.join(tempDir, filename);
+    let templateContent: string;
     
     try {
-      await fs.access(templatePath);
+      // Check if template exists in cache
+      await fs.access(cachedTemplatePath);
+      console.log(chalk.blue(`📦 Using cached template: ${templateName}...`));
+      templateContent = await fs.readFile(cachedTemplatePath, 'utf-8');
     } catch (error) {
-      throw new Error(`Template '${templateName}' not found. Use --list to see available templates.`);
+      // Template not in cache, download it
+      console.log(chalk.blue(`📦 Downloading template: ${templateName}...`));
+      
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gen-template-'));
+      
+      try {
+        // Use degit to download the templates folder
+        const repoPath = `${REPO_OWNER}/${REPO_NAME}/${TEMPLATES_PATH}#${BRANCH}`;
+        const emitter = degit(repoPath);
+        
+        await emitter.clone(tempDir);
+        
+        // Check if the template file exists
+        const templatePath = path.join(tempDir, filename);
+        
+        try {
+          await fs.access(templatePath);
+        } catch (error) {
+          throw new Error(`Template '${templateName}' not found. Use --list to see available templates.`);
+        }
+        
+        templateContent = await fs.readFile(templatePath, 'utf-8');
+        console.log(chalk.green(`✅ Template downloaded successfully`));
+        
+      } finally {
+        // Cleanup: remove temporary directory
+        try {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        } catch (cleanupError) {
+          console.warn(chalk.yellow(`Warning: Could not clean up temporary directory: ${tempDir}`));
+        }
+      }
     }
     
-    console.log(chalk.green(`✅ Template downloaded successfully`));
     console.log(chalk.blue(`🚀 Executing template: ${filename}...`));
     
-    // Read and parse the template content
+    // Parse and execute the template
     const { parseContent } = await import('./parser.js');
-    const templateContent = await fs.readFile(templatePath, 'utf-8');
     const ast = parseContent(templateContent);
     
     // Execute the template
@@ -150,13 +288,6 @@ export async function downloadAndExecuteTemplate(
       throw new Error(`Failed to download/execute template: ${error.message}`);
     } else {
       throw new Error(`Failed to download/execute template: ${String(error)}`);
-    }
-  } finally {
-    // Cleanup: remove temporary directory
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (cleanupError) {
-      console.warn(chalk.yellow(`Warning: Could not clean up temporary directory: ${tempDir}`));
     }
   }
 }
