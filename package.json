@@ -1,6 +1,6 @@
 {
   "name": "my-gen",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "description": "A CLI to run commands reading a simple DSL.",
   "type": "module",
   "main": "dist/src/index.js",
