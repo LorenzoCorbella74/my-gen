@@ -40,13 +40,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LorenzoCorbella74/my-cli-generator.git"
+    "url": "git+https://github.com/LorenzoCorbella74/my-gen.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "LorenzoCorbella74",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/LorenzoCorbella74/my-cli-generator/issues"
+    "url": "https://github.com/LorenzoCorbella74/my-gen/issues"
   },
-  "homepage": "https://github.com/LorenzoCorbella74/my-cli-generator#readme"
+  "homepage": "https://github.com/LorenzoCorbella74/my-gen#readme"
 }
