@@ -335,7 +335,7 @@ export function displayTemplates(templates: TemplateInfo[]): void {
     return;
   }
   
-  console.log(chalk.green(`\n📋 Available templates (${templates.length}):\n`));
+  console.log(chalk.green(`📋 Available templates (${templates.length}):\n`));
   
   // Find the longest name for formatting
   const maxNameLength = Math.max(...templates.map(t => t.name.length));
@@ -345,25 +345,6 @@ export function displayTemplates(templates: TemplateInfo[]): void {
     const description = template.description || 'No description available';
     
     console.log(`  ${chalk.cyan(nameFormatted)} - ${chalk.gray(description)}`);
-    
-    // Show additional metadata if available
-    if (template.version) {
-      console.log(`    ${chalk.dim(`v${template.version}`)}`);
-    }
-    
-    if (template.author) {
-      console.log(`    ${chalk.dim(`by ${template.author}`)}`);
-    }
-    
-    if (template.tags && template.tags.length > 0) {
-      console.log(`    ${chalk.dim(`tags: ${template.tags.join(', ')}`)}`);
-    }
-    
-    if (template.requires && template.requires.length > 0) {
-      console.log(`    ${chalk.yellow(`requires: ${template.requires.join(', ')}`)}`);
-    }
-    
-    console.log(''); // Empty line between templates
   }
   
   console.log(chalk.blue(`Usage: gen --template=<template-name> --output=<output-directory>`));
