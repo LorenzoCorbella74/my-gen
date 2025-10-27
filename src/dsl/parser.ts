@@ -72,6 +72,25 @@ export interface TaskNode extends BaseAstNode {
   children: AstNode[]; // Commands to execute for this task
 }
 
+// Metadata interface for Front Matter
+export interface Metadata {
+  author?: string;
+  version?: string;
+  description?: string;
+  tags?: string[];
+  requires?: {
+    node?: string;
+    tools?: string[];
+  };
+  links?: string[];
+}
+
+// Result type for parsing, includes metadata and AST
+export interface ParseResult {
+  metadata: Metadata;
+  ast: AstNode[];
+}
+
 // Union type for all possible AST nodes
 export type AstNode =
   | LogNode
@@ -112,8 +131,90 @@ export type BlockNode = IfNode | ForeachNode | TaskNode;
  * @param content - The raw string content of the DSL file to parse.
  * @returns An array of `AstNode` objects representing the root-level nodes of the parsed AST.
  */
-export function parseContent(content: string): AstNode[] {
-  const lines = content.split('\n');
+export function parseContent(content: string): ParseResult {
+  const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
+  const match = content.match(frontMatterRegex);
+  
+  let metadata: Metadata = {};
+  let cleanContent = content;
+
+  if (match) {
+    const [, frontMatterText, remainingContent] = match;
+    
+    try {
+      const lines = frontMatterText.split('\n');
+      let currentKey = '';
+      let inArray = false;
+      let inObject = false;
+      let objectKey = '';
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+        
+        if (trimmedLine.endsWith(':')) {
+          // Start of object or array
+          currentKey = trimmedLine.slice(0, -1).trim();
+          if (trimmedLine.includes('[')) {
+            inArray = true;
+            const arrayContent = trimmedLine.substring(trimmedLine.indexOf('[') + 1);
+            if (arrayContent.includes(']')) {
+              // Single line array
+              const content = arrayContent.substring(0, arrayContent.indexOf(']'));
+              (metadata as any)[currentKey] = content.split(',').map(s => s.trim().replace(/['"]/g, ''));
+              inArray = false;
+            } else {
+              (metadata as any)[currentKey] = [];
+            }
+          } else {
+            inObject = true;
+            (metadata as any)[currentKey] = {};
+          }
+        } else if (inArray && trimmedLine.includes(']')) {
+          // End of array
+          const content = trimmedLine.substring(0, trimmedLine.indexOf(']'));
+          if (content.trim()) {
+            ((metadata as any)[currentKey] as string[]).push(...content.split(',').map(s => s.trim().replace(/['"]/g, '')));
+          }
+          inArray = false;
+        } else if (inArray) {
+          // Array item
+          const items = trimmedLine.split(',').map(s => s.trim().replace(/['"]/g, ''));
+          ((metadata as any)[currentKey] as string[]).push(...items);
+        } else if (inObject && trimmedLine.includes(':')) {
+          // Object property
+          const [key, value] = trimmedLine.split(':').map(s => s.trim());
+          if (key && value) {
+            if (value.startsWith('[') && value.endsWith(']')) {
+              // Array value in object
+              const arrayContent = value.slice(1, -1);
+              ((metadata as any)[currentKey] as any)[key] = arrayContent.split(',').map(s => s.trim().replace(/['"]/g, ''));
+            } else {
+              ((metadata as any)[currentKey] as any)[key] = value.replace(/['"]/g, '');
+            }
+          }
+        } else if (!inObject && !inArray && trimmedLine.includes(':')) {
+          // Simple key-value pair
+          const [key, value] = trimmedLine.split(':').map(s => s.trim());
+          if (key && value) {
+            if (value.startsWith('[') && value.endsWith(']')) {
+              // Array value
+              const arrayContent = value.slice(1, -1);
+              (metadata as any)[key] = arrayContent.split(',').map(s => s.trim().replace(/['"]/g, ''));
+            } else {
+              (metadata as any)[key] = value.replace(/['"]/g, '');
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Warning: Failed to parse front matter metadata');
+    }
+    
+    cleanContent = match[2]; // The content after the front matter
+  }
+
+  const lines = cleanContent.split('\n');
   const mainAst: AstNode[] = [];
   const stack: AstNode[][] = [mainAst]; // Stack to manage nested blocks
   let currentAst = mainAst;
@@ -283,7 +384,7 @@ export function parseContent(content: string): AstNode[] {
     }
   }
 
-  return mainAst;
+  return { metadata, ast: mainAst };
 }
 
 /**

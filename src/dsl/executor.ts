@@ -6,7 +6,7 @@ import process from "node:process";
 import chalk from "chalk";
 import * as path from "path";
 import { select } from '@inquirer/prompts';
-import { AstNode, isTaskNode } from "./parser.js";
+import { AstNode, isTaskNode, Metadata, ParseResult } from "./parser.js";
 import { Context } from "./context.js";
 import { GlobalContext } from "./global.js";
 import { SimpleSpinner } from "../utils/spinner.js";
@@ -128,7 +128,59 @@ export class Executor {
     };
   }
 
-  public async execute(nodes: AstNode[]) {
+  /**
+   * Log metadata information at the start of execution
+   */
+  private logMetadata(metadata: Metadata): void {
+    if (Object.keys(metadata).length === 0) return;
+    
+    console.log(chalk.cyan('\n📋 Script Metadata:'));
+    
+    if (metadata.description) {
+      console.log(chalk.white(`   Description: ${metadata.description}`));
+    }
+    
+    if (metadata.author) {
+      console.log(chalk.gray(`   Author: ${metadata.author}`));
+    }
+    
+    if (metadata.version) {
+      console.log(chalk.gray(`   Version: ${metadata.version}`));
+    }
+    
+    if (metadata.tags && metadata.tags.length > 0) {
+      console.log(chalk.gray(`   Tags: ${metadata.tags.join(', ')}`));
+    }
+    
+    if (metadata.requires) {
+      if (metadata.requires.node) {
+        console.log(chalk.yellow(`   Requires Node: ${metadata.requires.node}`));
+      }
+      if (metadata.requires.tools && metadata.requires.tools.length > 0) {
+        console.log(chalk.yellow(`   Requires Tools: ${metadata.requires.tools.join(', ')}`));
+      }
+    }
+    
+    if (metadata.links && metadata.links.length > 0) {
+      console.log(chalk.blue(`   Links: ${metadata.links.join(', ')}`));
+    }
+    
+    console.log(''); // Empty line for spacing
+  }
+
+  public async execute(parseResult: ParseResult | AstNode[]) {
+    let nodes: AstNode[];
+    let metadata: Metadata = {};
+    
+    // Handle both old and new formats for backward compatibility
+    if (Array.isArray(parseResult)) {
+      nodes = parseResult;
+    } else {
+      nodes = parseResult.ast;
+      metadata = parseResult.metadata;
+      this.logMetadata(metadata);
+    }
+
     // Check if there are any tasks in the nodes
     const tasks = this.findTasks(nodes);
     

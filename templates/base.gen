@@ -1,5 +1,13 @@
-# Basic .gen Template
-@log Starting new project setup...
+---
+author: Lorenzo Corbella
+version: 0.0.0
+description: Base template
+tags: []
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm]
+links: []
+---
 
 # Get basic project information
 @set projectName = @input Enter project name?

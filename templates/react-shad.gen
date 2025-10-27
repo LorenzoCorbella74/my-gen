@@ -1,16 +1,17 @@
-# Template React + ShadCN
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: React TypeScript project with ShadCN UI component library
+tags: [react, typescript, shadcn, tailwind, vite, ui]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm]
+links: [
+    https://ui.shadcn.com/docs/installation/vite
+]
+---
 
-# Requirements:
-# - Node 22
-# - create-vite https://github.com/vitejs/vite/tree/main/packages/create-vite
-
-# Links
-# https://ui.shadcn.com/docs/installation/vite
-
-# Usage:
-# gen --file=C:/GEN/react-shadcn.gen
-
-@log Template React + ShadCN
+@log Creating React + ShadCN UI project...
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
 > md {nomeProgetto}

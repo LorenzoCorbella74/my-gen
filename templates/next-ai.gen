@@ -1,3 +1,18 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Next.js TypeScript project with AI SDK chat interface
+tags: [nextjs, typescript, ai, chat, google-gemini, tailwind]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm, npx]
+links: [
+    https://nextjs.org/,
+    https://sdk.vercel.ai/,
+    https://tailwindcss.com/
+]
+---
+
 # Inizializzazione di template Next + AI SDK
 
 # Usage:

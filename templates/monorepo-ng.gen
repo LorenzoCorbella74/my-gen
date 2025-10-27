@@ -1,4 +1,17 @@
-# Monorepo con Angular NG (WINDOWS)
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Angular CLI monorepo with multiple applications and libraries
+tags: [monorepo, angular, cli, libraries, typescript]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm, ng]
+links: [
+    https://angular.dev/tools/cli/libraries,
+    https://angular.dev/guide/creating-libraries
+]
+---
+
 > ng new angular-monorepo --create-application=false --ai-config copilot
 > cd angular-monorepo
 

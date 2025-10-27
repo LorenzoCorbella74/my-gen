@@ -1,8 +1,19 @@
-# Fastify + Typescript Project (WIN) 
-# V. 0.0.1 - 03/10/25
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Fastify TypeScript API with authentication and SQLite database
+tags: [fastify, typescript, authentication, sqlite, jwt, api]
+requires:
+  node: ">=18.0.0"
+  tools: [git, pnpm]
+links: [
+    https://www.fastify.io/,
+    https://github.com/WiseLibs/better-sqlite3,
+    https://github.com/fastify/fastify-jwt
+]
 
 @log Creating Fastify + Typescript project...
-@set nomeProgetto= input: Nome del progetto?
+@set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
 
 > pnpm init

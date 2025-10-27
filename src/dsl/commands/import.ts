@@ -5,16 +5,26 @@ import { CommandContext } from "./types.js";
 import { parseContent } from "../parser.js";
 
 export async function handleImport(node: AstNode, ctx: CommandContext): Promise<void> {
-  const importPath = ctx.context.interpolate(node.payload.trim());
-  if (!importPath) {
-    throw new Error("@import requires a file path");
-  }
+  const importPath = ctx.context.interpolate(node.payload);
+  const resolvedPath = ctx.resolvePath(importPath);
+
+  console.log(chalk.gray(`[IMPORT] Loading script from ${resolvedPath}`));
+
   try {
-    const fileContent = await fs.readFile(importPath, "utf-8");
-    const importedAst = parseContent(fileContent);
-    await ctx.execute(importedAst);
-    console.log(chalk.green(`[IMPORT] Imported and executed commands from ${importPath}`));
+    const content = await fs.readFile(resolvedPath, "utf-8");
+    const parseResult = parseContent(content);
+
+    // Log metadata if present in imported file
+    if (parseResult.metadata && Object.keys(parseResult.metadata).length > 0) {
+      console.log(chalk.cyan(`[IMPORT] Script metadata: ${parseResult.metadata.description || "No description"}`));
+    }
+
+    await ctx.executeNodes(parseResult.ast);
   } catch (error) {
-    throw new Error(`Failed to import ${importPath}: ${error}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to import script: ${error.message}`);
+    } else {
+      throw new Error(`Failed to import script: ${String(error)}`);
+    }
   }
 }

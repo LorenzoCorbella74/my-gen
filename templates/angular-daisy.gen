@@ -1,17 +1,18 @@
-
-# Inizializzazione di template progetti  Angular e DaisyUI 
-
-# Requirements
-# Angular 20
- 
-# Links:
-# https://angular.dev/cli/new
-# https://daisyui.com/docs/install/angular/
-# https://lucide.dev/guide/packages/lucide-angular
-# https://ng-bootstrap.github.io/
-
-# USAGE:
-# gen --file=C:/GEN/angular-daisy.gen --output=./angular-daisy
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Angular project with DaisyUI or Bootstrap UI framework
+tags: [angular, daisyui, bootstrap, tailwind, typescript]
+requires:
+  angular: ">=20.0.0"
+  tools: [git, npm, ng]
+links: [
+    https://angular.dev/cli/new,
+    https://daisyui.com/docs/install/angular/,
+    https://lucide.dev/guide/packages/lucide-angular,
+    https://ng-bootstrap.github.io/
+]
+---
 
 @log Template Angular + DaisyUI
 @set nomeProgetto= @input Nome del progetto?

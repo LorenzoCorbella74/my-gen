@@ -230,7 +230,7 @@ async function main() {
     process.exit(1);
   }
 
-  const ast = parseContent(genContent);
+  const parseResult = parseContent(genContent);
 
   // si recupera il global contest e si mergia nel contesto 
   const executor = new Executor(context, outputDir);
@@ -238,7 +238,7 @@ async function main() {
   // Initialize global variables before execution
   await executor.initializeGlobalVariables();
 
-  await executor.execute(ast);
+  await executor.execute(parseResult);
 
   // Cleanup resources like global shell
   executor.cleanup();

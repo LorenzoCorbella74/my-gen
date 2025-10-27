@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import chalk from 'chalk';
 import degit from 'degit';
+import { parseContent } from './parser.js';
 
 const REPO_OWNER = 'LorenzoCorbella74';
 const REPO_NAME = 'my-gen';
@@ -18,6 +19,14 @@ interface TemplateInfo {
   name: string;
   filename: string;
   description?: string;
+  author?: string;
+  version?: string;
+  tags?: string[];
+  requires?: {
+    node?: string;
+    tools?: string[];
+  };
+  links?: string[];
 }
 
 interface CacheInfo {
@@ -137,18 +146,15 @@ async function readTemplatesFromCache(): Promise<TemplateInfo[]> {
       try {
         const filePath = path.join(CACHE_DIR, filename);
         const content = await fs.readFile(filePath, 'utf-8');
-        const description = extractDescription(content);
+        const templateInfo = extractTemplateInfoFromContent(content, filename);
         
+        templates.push(templateInfo);
+      } catch (error) {
+        // If we can't read a file, still include it without metadata
         templates.push({
           name: filename.replace('.gen', ''),
           filename,
-          description
-        });
-      } catch (error) {
-        // If we can't read a file, still include it without description
-        templates.push({
-          name: filename.replace('.gen', ''),
-          filename
+          description: 'Error reading template metadata'
         });
       }
     }
@@ -192,26 +198,55 @@ export async function listTemplates(forceRefresh: boolean = false): Promise<Temp
 }
 
 /**
- * Extracts description from the first comment line of a .gen file
+ * Extracts comprehensive template information from content using Front Matter metadata
  */
-function extractDescription(content: string): string | undefined {
-  const lines = content.split('\n');
+function extractTemplateInfoFromContent(content: string, filename: string): TemplateInfo {
+  const name = filename.replace('.gen', '');
   
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('#')) {
-      // Remove # and leading/trailing whitespace
-      const description = trimmed.substring(1).trim();
-      if (description) {
-        return description;
-      }
-    } else if (trimmed && !trimmed.startsWith('#')) {
-      // Stop at first non-comment, non-empty line
-      break;
+  try {
+    const parseResult = parseContent(content);
+    
+    // Use metadata if available
+    if (parseResult.metadata && Object.keys(parseResult.metadata).length > 0) {
+      const metadata = parseResult.metadata;
+      
+      return {
+        name,
+        filename,
+        description: metadata.description || 'No description available',
+        author: metadata.author,
+        version: metadata.version,
+        tags: metadata.tags,
+        requires: metadata.requires,
+        links: metadata.links
+      };
     }
+    
+    // Fallback to first comment line for backward compatibility
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('#') && !trimmed.startsWith('#!/')) {
+        return {
+          name,
+          filename,
+          description: trimmed.substring(1).trim()
+        };
+      }
+    }
+    
+    return {
+      name,
+      filename,
+      description: 'No description available'
+    };
+  } catch (error) {
+    return {
+      name,
+      filename,
+      description: 'Error parsing template metadata'
+    };
   }
-  
-  return undefined;
 }
 
 /**
@@ -275,11 +310,10 @@ export async function downloadAndExecuteTemplate(
     console.log(chalk.blue(`🚀 Executing template: ${filename}...`));
     
     // Parse and execute the template
-    const { parseContent } = await import('./parser.js');
-    const ast = parseContent(templateContent);
+    const parseResult = parseContent(templateContent);
     
-    // Execute the template
-    await executor.execute(ast);
+    // Execute the template with new ParseResult structure
+    await executor.execute(parseResult);
     
     console.log(chalk.green(`✅ Template executed successfully`));
     
@@ -293,7 +327,7 @@ export async function downloadAndExecuteTemplate(
 }
 
 /**
- * Displays the list of templates in a formatted way
+ * Displays the list of templates in a formatted way with enhanced metadata
  */
 export function displayTemplates(templates: TemplateInfo[]): void {
   if (templates.length === 0) {
@@ -301,8 +335,7 @@ export function displayTemplates(templates: TemplateInfo[]): void {
     return;
   }
   
-  console.log(chalk.green(`\\n📋 Available templates (${templates.length}):
-`));
+  console.log(chalk.green(`\n📋 Available templates (${templates.length}):\n`));
   
   // Find the longest name for formatting
   const maxNameLength = Math.max(...templates.map(t => t.name.length));
@@ -312,7 +345,35 @@ export function displayTemplates(templates: TemplateInfo[]): void {
     const description = template.description || 'No description available';
     
     console.log(`  ${chalk.cyan(nameFormatted)} - ${chalk.gray(description)}`);
+    
+    // Show additional metadata if available
+    if (template.version) {
+      console.log(`    ${chalk.dim(`v${template.version}`)}`);
+    }
+    
+    if (template.author) {
+      console.log(`    ${chalk.dim(`by ${template.author}`)}`);
+    }
+    
+    if (template.tags && template.tags.length > 0) {
+      console.log(`    ${chalk.dim(`tags: ${template.tags.join(', ')}`)}`);
+    }
+    
+    if (template.requires) {
+      const requirements = [];
+      if (template.requires.node) {
+        requirements.push(`Node ${template.requires.node}`);
+      }
+      if (template.requires.tools && template.requires.tools.length > 0) {
+        requirements.push(`tools: ${template.requires.tools.join(', ')}`);
+      }
+      if (requirements.length > 0) {
+        console.log(`    ${chalk.yellow(`requires: ${requirements.join(', ')}`)}`);
+      }
+    }
+    
+    console.log(''); // Empty line between templates
   }
   
-  console.log(chalk.blue(`\\nUsage: gen --template=<template-name> --output=<output-directory>`));
+  console.log(chalk.blue(`Usage: gen --template=<template-name> --output=<output-directory>`));
 }

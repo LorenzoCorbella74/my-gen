@@ -1,3 +1,18 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Node.js TypeScript project with AI SDK v5 integration
+tags: [nodejs, typescript, ai, google-gemini, ollama]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm]
+links: [
+    https://sdk.vercel.ai/,
+    https://ai.google.dev/,
+    https://ollama.ai/
+]
+---
+
 # Inizializzazione di progetti con AI SDK V5 con WIN
 
 # Usage:

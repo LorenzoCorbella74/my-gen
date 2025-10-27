@@ -1,5 +1,17 @@
-# Monorepo with npm workspaces
-# V. 0.0.1 21/10/25 
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: NPM workspaces monorepo with shared packages and Angular frontend
+tags: [monorepo, npm-workspaces, angular, hono, typescript]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm, npx]
+links: [
+    https://docs.npmjs.com/cli/v7/using-npm/workspaces,
+    https://angular.dev/,
+    https://hono.dev/
+]
+---
 
 @log Monorepo with npm workspaces
 @set nomeProgetto= @input Nome del progetto?

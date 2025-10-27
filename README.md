@@ -47,6 +47,39 @@ This command creates a `template.gen` file with example commands and comments to
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 
 ![gen-syntax](./doc/gen.png)
 
+## Front Matter Metadata
+
+.gen files support Front Matter metadata at the beginning of the file to provide structured information about the script:
+
+```yaml
+---
+author: LorenzoCorbella74
+version: 1.2.0
+description: React + TypeScript starter with modern tooling
+tags: [react, typescript, vite]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm, code]
+links: [
+    https://vitejs.dev/,
+    https://react.dev/
+]
+---
+```
+
+### Metadata Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `author` | string | Author name or organization |
+| `version` | string | Template version (semantic versioning recommended) |
+| `description` | string | Brief description of what the template does |
+| `tags` | array | Keywords to categorize the template |
+| `requires.node` | string | Minimum Node.js version required |
+| `requires.tools` | array | Required tools/commands (git, npm, docker, etc.) |
+| `links` | array | Relevant documentation or resource links |
+
+
 ## Supported Commands
 
 | Command    | Syntax Example                                 | Description                                                                                 |

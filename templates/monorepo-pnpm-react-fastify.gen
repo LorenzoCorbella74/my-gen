@@ -1,4 +1,17 @@
-# Monorepo for Backend with Fastify and Frontend with React (for WINDOWS)
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: PNPM monorepo with React frontend and Fastify backend
+tags: [monorepo, pnpm, react, fastify, typescript]
+requires:
+  node: ">=18.0.0"
+  tools: [git, pnpm]
+links: [
+    https://pnpm.io/workspaces,
+    https://react.dev/,
+    https://www.fastify.io/
+]
+---
 
 @set author = input:Author?
 @log Monorepo Frontend + Backend

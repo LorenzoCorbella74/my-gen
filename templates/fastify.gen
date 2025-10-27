@@ -1,349 +1,121 @@
-# Fastify + Typescript Project (WIN) 
-# V. 0.0.1 - 03/10/25
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Fastify TypeScript API server with modern development tooling
+tags: [fastify, typescript, api, server, nodejs]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm]
+links: [
+    https://www.fastify.io/,
+    https://www.typescriptlang.org/,
+    https://nodejs.org/
+]
+---
 
-@log Creating Fastify + Typescript project...
-@set nomeProgetto= input: Nome del progetto?
-@set author = Lorenzo Corbella
+@log Creating Fastify API template...
+@set projectName = @input Enter project name?
+@set author = @input Enter author name?
 
-> pnpm init
-> echo # {nomeProgetto} > README.md
+> mkdir {projectName}
+> cd {projectName}
+> npm init -y
 
-@log Git
+@log Setting up Git...
 > git init
-> git branch -m master main
 @fill .gitignore
 "
 node_modules
 dist
 .env
+*.log
+coverage
+.nyc_output
 "
 
-@log Setting env
-@fill .env
+@log Installing dependencies...
+> npm install fastify @fastify/cors @fastify/helmet
+> npm install -D typescript tsx @types/node nodemon
+
+@log Creating project structure...
+> mkdir src
+> mkdir src/routes
+> mkdir src/plugins
+
+@fill src/app.ts
 "
-JWT_SECRET=your-super-secret-jwt-key-here
-DB_PATH=./database.db
-BCRYPT_SALT_ROUNDS=12
-PORT=3000
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+
+export function buildApp(opts = {}) {
+  const app = Fastify(opts);
+
+  // Register plugins
+  app.register(cors);
+  app.register(helmet);
+
+  // Health check route
+  app.get('/health', async (request, reply) => {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  });
+
+  return app;
+}
 "
 
-@log Getting dependencies...
-> pnpm i npm install fastify @fastify/jwt @fastify/sensible @fastify/env bcrypt better-sqlite3
-> pnpm i -D typescript tsx @types/node @types/bcrypt @types/better-sqlite3
-
-@log Creating files....
->mkdir src
-@fill src/index.ts
+@fill src/server.ts
 "
-import Fastify, { FastifyInstance} from 'fastify'
-import fastifyJwt from '@fastify/jwt'
-import fastifySensible from '@fastify/sensible'
-import fastifyEnv from '@fastify/env'
+import { buildApp } from './app.js';
 
-import Database from 'better-sqlite3'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+const start = async () => {
+  const app = buildApp({ logger: true });
 
-import Auth from './routes/auth.js'
-
-// Ricreare __dirname per ES modules
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const fastify: FastifyInstance = Fastify({ logger: true })
-
-// Schema per le variabili di ambiente
-const envSchema = {
-  type: 'object',
-  required: ['JWT_SECRET'],
-  properties: {
-    JWT_SECRET: { type: 'string' },
-    DB_PATH: { type: 'string', default: './auth.db' },
-    BCRYPT_SALT_ROUNDS: { type: 'integer', default: 12 },
-    PORT: { type: 'integer', default: 3000 }
-  }
-} as const
-
-// Plugin per le variabili di ambiente
-await fastify.register(fastifyEnv, {
-  schema: envSchema,
-  dotenv: true
-})
-// Plugin per la gestione degli errori
-await fastify.register(fastifySensible)
-// Setup database e JWT dopo il caricamento delle env vars
-await fastify.register(async function (fastify: FastifyInstance) {
-  // Connessione database SQLite
-  const db = new Database(fastify.config.DB_PATH)
-  
-  // Creazione tabella users
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `)
-  
-  // Decoratore per il database
-  fastify.decorate('db', db)
-  
-  // Registrazione plugin JWT
-  await fastify.register(fastifyJwt, {
-    secret: fastify.config.JWT_SECRET
-  })
-
-  // rotte autenticazione
-  await fastify.register(Auth)
-  
-  // Hook per chiudere il database
-  fastify.addHook('onClose', (instance, done) => {
-    db.close()
-    done()
-  })
-})
-
-// Avvio del server
-const start = async (): Promise<void> => {
   try {
-    await fastify.listen({ 
-      port: fastify.config.PORT,
-      host: '0.0.0.0'
-    })
-    console.log(`Server running on port ${fastify.config.PORT}`)
+    await app.listen({ port: 3000, host: '0.0.0.0' });
+    console.log('🚀 Server running on http://localhost:3000');
   } catch (err) {
-    fastify.log.error(err)
-    process.exit(1)
+    app.log.error(err);
+    process.exit(1);
   }
-}
+};
 
-start()
-"
-
->mkdir src\routes
-@fill src/routes/auth.ts
-"
-import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from "fastify"
-import bcrypt from 'bcrypt'
-
-interface User {
-    id: number
-    username: string
-    password_hash: string
-    created_at: string
-}
-
-interface UserData {
-    username: string
-    password: string
-}
-
-export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
-
-    // Route di register
-    fastify.post<{ Body: UserData }>('/register', async (
-        request: FastifyRequest<{ Body: UserData }>,
-        reply: FastifyReply
-    ) => {
-        const { username, password } = request.body
-
-        // Validazione input
-        fastify.assert(username, 400, 'Username is required')
-        fastify.assert(password, 400, 'Password is required')
-        fastify.assert(password.length >= 6, 400, 'Password must be at least 6 characters')
-
-        try {
-            // Hash della password
-            const saltRounds = fastify.config.BCRYPT_SALT_ROUNDS
-            const passwordHash = await bcrypt.hash(password, saltRounds)
-
-            // Inserimento nel database
-            const insertUser = fastify.db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-            const result = insertUser.run(username, passwordHash)
-
-            reply.code(201).send({
-                message: 'User registered successfully',
-                userId: result.lastInsertRowid
-            })
-        } catch (error: any) {
-            if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-                throw fastify.httpErrors.conflict('Username already exists')
-            }
-            throw fastify.httpErrors.internalServerError('Registration failed')
-        }
-    })
-
-    // Route di login
-    fastify.post<{ Body: UserData }>('/login', async (
-        request: FastifyRequest<{ Body: UserData }>,
-        reply: FastifyReply
-    ) => {
-        const { username, password } = request.body
-
-        // Validazione input
-        fastify.assert(username, 400, 'Username is required')
-        fastify.assert(password, 400, 'Password is required')
-
-        // Ricerca utente nel database
-        const getUser = fastify.db.prepare('SELECT * FROM users WHERE username = ?')
-        const user = getUser.get(username) as User | undefined
-
-        if (!user) {
-            throw fastify.httpErrors.unauthorized('Invalid credentials')
-        }
-
-        // Verifica password
-        const isValidPassword = await bcrypt.compare(password, user.password_hash)
-
-        if (!isValidPassword) {
-            throw fastify.httpErrors.unauthorized('Invalid credentials')
-        }
-
-        // Generazione token JWT
-        const token = await fastify.jwt.sign({
-            userId: user.id,
-            username: user.username
-        })
-
-        reply.send({ token, username: user.username })
-    })
-
-    // Route protetta di esempio
-    fastify.get('/profile', {
-        preHandler: [async (request: FastifyRequest, reply: FastifyReply) => {
-            try {
-                await request.jwtVerify()
-            } catch (err) {
-                throw fastify.httpErrors.unauthorized('Invalid token')
-            }
-        }]
-    }, async (request: FastifyRequest, reply: FastifyReply) => {
-        // Recupera dati utente dal database
-        const getUser = fastify.db.prepare('SELECT id, username, created_at FROM users WHERE id = ?')
-        const user = getUser.get(request.user.userId) as Omit<User, 'password_hash'> | undefined
-
-        if (!user) {
-            throw fastify.httpErrors.notFound('User not found')
-        }
-
-        reply.send({ user })
-    })
-}
-"
->mkdir src\types
-@fill src/types/fastify.d.ts
-"
-import '@fastify/jwt'
-
-declare module '@fastify/jwt' {
-  interface FastifyJWT {
-    payload: { userId: number; username: string }
-    user: {
-      userId: number
-      username: string
-    }
-  }
-}
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    db: import('better-sqlite3').Database
-    config: {
-      JWT_SECRET: string
-      DB_PATH: string
-      BCRYPT_SALT_ROUNDS: number
-      PORT: number
-    }
-  }
-}
-"
-
-> mkdir .vscode
-@fill .vscode/launch.json
-"
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Application",
-            "runtimeExecutable": "cmd",
-            "runtimeArgs": ["/c", "pnpm", "run", "dev"],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "skipFiles": ["<node_internals>/**"]
-        }
-    ]
-}
+start();
 "
 
 @fill tsconfig.json
 "
 {
-  "compilerOptions": {
-    "module": "nodenext",
-    "target": "esnext",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true
+  \"compilerOptions\": {
+    \"target\": \"ES2022\",
+    \"module\": \"NodeNext\",
+    \"moduleResolution\": \"NodeNext\",
+    \"outDir\": \"./dist\",
+    \"rootDir\": \"./src\",
+    \"strict\": true,
+    \"esModuleInterop\": true,
+    \"skipLibCheck\": true,
+    \"forceConsistentCasingInFileNames\": true,
+    \"resolveJsonModule\": true,
+    \"allowSyntheticDefaultImports\": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  \"include\": [\"src/**/*\"],
+  \"exclude\": [\"node_modules\", \"dist\"]
 }
 "
 
-@fill auth.http
-"
-@base_url=http://127.0.0.1:3000
+@log Setting up package.json scripts...
+> npm pkg set scripts.dev="tsx --watch src/server.ts"
+> npm pkg set scripts.build="tsc"
+> npm pkg set scripts.start="node dist/server.js"
+> npm pkg set author="{author}"
+> npm pkg set main="dist/server.js"
+> npm pkg set type="module"
 
-### register
-POST  {{base_url}}/register
-Content-Type: application/json
-Accept: application/json
+@log First commit...
+> git add .
+> git commit -m "Initial Fastify project setup"
 
-{
-  "username": "Lorenzo",
-  "password": "doe@doe.it"
-}
-
-### login
-POST  {{base_url}}/login
-Content-Type: application/json
-Accept: application/json
-
-{
-  "username": "Lorenzo",
-  "password": "doe@doe.it"
-}
-
-### get profile
-GET  {{base_url}}/profile
-Content-Type: application/json
-Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiTG9yZW
-"
-
-@log Setting scripts in package.json....
-> pnpm pkg set version="0.0.1" 
-> pnpm pkg set author="{author}" 
-> pnpm pkg set main="src/index.js" 
-> pnpm pkg set type="module" 
-> pnpm pkg set scripts.dev="tsx --watch src/index.ts"
-> pnpm pkg set scripts.build="tsc -p tsconfig.json"
-
-@log Start coding...
+@log Opening in VS Code...
 > code .
 

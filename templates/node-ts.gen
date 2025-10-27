@@ -1,7 +1,17 @@
-# Simple Typescript project (WIN) V. 0.0.1
+---
+author: Lorenzo Corbella
+version: 1.2.0
+description: Simple TypeScript project setup with development tools
+tags: [typescript, nodejs, development]
+requires:
+  node: ">=18.0.0"
+  tools: [git, npm]
+links: [
+    https://www.typescriptlang.org/,
+    https://nodejs.org/
+]
+---
 
-# Usage:
-# gen --file=C:/GEN/node-ts.gen
 @log Creating Simple typescript template....
 @set nomeProgetto= @input Nome cartella di progetto?
 @set author = LorenzoCorbella74
