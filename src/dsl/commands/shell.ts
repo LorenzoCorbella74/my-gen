@@ -31,7 +31,7 @@ async function shouldUseCrossSpawn(command: string): Promise<boolean> {
   if (!crossSpawnModule) return false;
   
   // Commands that benefit from cross-spawn
-  const externalCommands = /^(npm|node|git|python|pip|java|gcc|make|curl|wget|yarn|pnpm)\s/i;
+  const externalCommands = /^(npm|node|git|python|pip|wget|yarn|pnpm|nx|npx|ng)\s/i;
   
   // Commands that need shell interpretation
   const shellCommands = /[&|><]|&&|\|\||;|`|\$\(/; // pipes, redirections, chaining, command substitution

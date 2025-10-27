@@ -29,6 +29,19 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--list`: List available templates from the repository.
 - `--template=<name>`: Download and execute a template from the repository.
 - `--refresh`: Force refresh of template cache (use with `--list`).
+- `--init`: Create a basic `.gen` file to start your automation.
+
+## Getting Started
+
+### Creating Your First .gen Script
+
+If you're new to gen, start by creating a basic template:
+```bash
+# Create a starter .gen file in the current directory
+gen --init
+```
+
+This command creates a `template.gen` file with example commands and comments to help you understand the DSL syntax. You can then customize this file for your specific automation needs.
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 

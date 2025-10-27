@@ -14,6 +14,7 @@ import { Executor } from "./dsl/executor.js";
 import { loadFolderAsObject } from './dsl/parseFolder.js';
 import { generateDocumentation } from './dsl/documentor.js';
 import { listTemplates as fetchTemplates, downloadAndExecuteTemplate, displayTemplates } from './dsl/templateManager.js';
+import { initCommand } from './dsl/commands/init.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +65,11 @@ const argv = yargs(hideBin(process.argv))
     description: 'Force refresh of template cache (use with --list)',
     default: false
   })
+  .option('init', {
+    type: 'boolean',
+    description: 'Create a base .gen to start your automation',
+    default: false
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
@@ -76,7 +82,8 @@ const {
   doc: generateDoc,
   list: listTemplates,
   template: templateName,
-  refresh: refreshCache
+  refresh: refreshCache,
+  init
 } = argv;
 
 // overwise, run the generator
@@ -89,6 +96,13 @@ if (configFile) {
 console.log(`Output directory: ${outputDir}`);
 
 async function main() {
+
+  // create basic .gen
+  if(init){
+    await initCommand()
+    return 
+  }
+
   try {
     await fs.mkdir(outputDir, { recursive: true });
   } catch (error) {

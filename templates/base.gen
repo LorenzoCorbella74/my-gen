@@ -1,0 +1,39 @@
+# Basic .gen Template
+@log Starting new project setup...
+
+# Get basic project information
+@set projectName = @input Enter project name?
+@set description = @input Enter project description?
+@set author = @input Enter author name?
+
+# Create basic project structure
+> mkdir {projectName}
+> cd {projectName}
+
+@log Creating basic files...
+
+# Create README
+@fill README.md
+"
+# {projectName}
+
+{description}
+
+## Author
+{author}
+
+## Getting Started
+
+Add your project setup instructions here.
+"
+
+# Create basic .gitignore
+@fill .gitignore
+"
+node_modules/
+dist/
+.env
+.DS_Store
+"
+
+@log Project {projectName} created successfully!

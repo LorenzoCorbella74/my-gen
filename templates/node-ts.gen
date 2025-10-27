@@ -61,7 +61,7 @@ console.log("Code here...");
 > npm pkg set version=0.0.1
 > npm pkg set author={author} 
 > npm pkg set main="src/index.js"
-> npm pkg set scripts.dev="tsx watch src/index.ts"
+> npm pkg set scripts.dev="tsx --watch src/index.ts"
 > npm pkg set scripts.build="tsc -p tsconfig.json"
 
 @fill .vscode/launch.json
