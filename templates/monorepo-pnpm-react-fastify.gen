@@ -13,7 +13,7 @@ links: [
 ]
 ---
 
-@set author = input:Author?
+@set author = @input Author?
 @log Monorepo Frontend + Backend
 > pnpm init
 echo "#PNPM monorepo" > README.md

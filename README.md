@@ -75,9 +75,10 @@ links: [
 | `version` | string | Template version (semantic versioning recommended) |
 | `description` | string | Brief description of what the template does |
 | `tags` | array | Keywords to categorize the template |
-| `requires.node` | string | Minimum Node.js version required |
+| `requires` | string | Minimum Runtime/Framework (Angular/Node.js) version required |
 | `requires.tools` | array | Required tools/commands (git, npm, docker, etc.) |
 | `links` | array | Relevant documentation or resource links |
+| `usage` | string | example line to use .gen file |
 
 
 ## Supported Commands

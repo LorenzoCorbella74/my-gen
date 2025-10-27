@@ -12,15 +12,8 @@ links: [
     https://lucide.dev/guide/packages/lucide-angular,
     https://ng-bootstrap.github.io/
 ]
+usage: gen --file=C:/GEN/angular-base.gen
 ---
-# Inizializzazione di template progetti  Angular e DaisyUI 
-# https://angular.dev/cli/new
-
-# Requirements:
-# Angular cli 20
-
-# Usage:
-# gen --file=C:/GEN/angular-base.gen
 
 @log Template Angular BASE
 @set nomeProgetto= @input Nome del progetto?

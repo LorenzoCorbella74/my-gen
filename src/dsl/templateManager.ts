@@ -27,6 +27,9 @@ interface TemplateInfo {
     tools?: string[];
   };
   links?: string[];
+  usage?:string;
+  platform?:string; // WIN, MAC
+  status?: 'stable'| "not_stable"
 }
 
 interface CacheInfo {

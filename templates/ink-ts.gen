@@ -10,10 +10,9 @@ links: [
     https://github.com/vadimdemedes/ink,
     https://azukiazusa.dev/blog/ink-cli-app/
 ]
+usage: gen --file=C:/GEN/ink-ts.gen
 ---
 
-# Usage:
-# gen --file=C:/GEN/ink-ts.gen 
 @log Creating Ink + Typescript template!
 @set nomeProgetto= input: Nome del progetto?
 @set author = LorenzoCorbella74
