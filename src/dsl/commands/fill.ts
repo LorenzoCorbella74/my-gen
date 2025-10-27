@@ -45,7 +45,7 @@ export async function handleFill(node: AstNode, ctx: CommandContext): Promise<vo
         // Write the content to the file
         await fs.writeFile(finalPath, interpolatedContent, 'utf-8');
 
-        console.log(chalk.green(`[FILL] Content written to ${finalPath} (${interpolatedContent.length} characters)`));
+        console.log(chalk.gray(`[FILL] Content written to ${finalPath} (${interpolatedContent.length} characters)`));
     } catch (error) {
         if (error instanceof Error) {
             throw new Error(`Failed to write content: ${error.message}`);

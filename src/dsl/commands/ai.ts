@@ -63,7 +63,7 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
 export async function handleAiCommand(node: AstNode, ctx: CommandContext): Promise<void> {
   try {
     const result = await handleAi(node, ctx);
-    console.log(chalk.green(`\n[AI]: ${result}`));
+    console.log(chalk.green(`[AI]: ${result}`));
   } catch (error) {
     throw error;
   }

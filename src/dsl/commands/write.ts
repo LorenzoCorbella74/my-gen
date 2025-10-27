@@ -28,7 +28,7 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
 
   try {
     const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
-    console.log('Saving to :', finalPath);
+    // console.log('Saving to :', finalPath);
     
     // Check if the target path is already a directory
     try {
@@ -49,7 +49,7 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<v
     
     // Write the file
     await fs.writeFile(finalPath, String(contentToWrite));
-    console.log(chalk.green(`[WRITE] Content written to ${finalPath}`));
+    console.log(chalk.gray(`[WRITE] Content written to ${finalPath}`));
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to write content: ${error.message}`);
