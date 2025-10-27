@@ -22,14 +22,11 @@ interface TemplateInfo {
   author?: string;
   version?: string;
   tags?: string[];
-  requires?: {
-    node?: string;
-    tools?: string[];
-  };
+  requires?: string[];
   links?: string[];
-  usage?:string;
-  platform?:string; // WIN, MAC
-  status?: 'stable'| "not_stable"
+  usage?: string;
+  platform?: string; // WIN, MAC
+  status?: 'stable' | "not_stable"
 }
 
 interface CacheInfo {
@@ -362,17 +359,8 @@ export function displayTemplates(templates: TemplateInfo[]): void {
       console.log(`    ${chalk.dim(`tags: ${template.tags.join(', ')}`)}`);
     }
     
-    if (template.requires) {
-      const requirements = [];
-      if (template.requires.node) {
-        requirements.push(`Node ${template.requires.node}`);
-      }
-      if (template.requires.tools && template.requires.tools.length > 0) {
-        requirements.push(`tools: ${template.requires.tools.join(', ')}`);
-      }
-      if (requirements.length > 0) {
-        console.log(`    ${chalk.yellow(`requires: ${requirements.join(', ')}`)}`);
-      }
+    if (template.requires && template.requires.length > 0) {
+      console.log(`    ${chalk.yellow(`requires: ${template.requires.join(', ')}`)}`);
     }
     
     console.log(''); // Empty line between templates

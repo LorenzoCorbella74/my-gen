@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 0.0.0
 description: Base template
 tags: []
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm]
+requires:[npm]
 links: []
 ---
 

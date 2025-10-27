@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Angular CLI monorepo with multiple applications and libraries
 tags: [monorepo, angular, cli, libraries, typescript]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm, ng]
+requires: [node>18, git, npm]
 links: [
     https://angular.dev/tools/cli/libraries,
     https://angular.dev/guide/creating-libraries

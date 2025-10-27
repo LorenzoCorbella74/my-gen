@@ -78,10 +78,7 @@ export interface Metadata {
   version?: string;
   description?: string;
   tags?: string[];
-  requires?: {
-    node?: string;
-    tools?: string[];
-  };
+  requires?: string[];
   links?: string[];
 }
 
@@ -464,4 +461,77 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
       // This should never happen due to mapCommandToType check
       throw new Error(`Unsupported node type: ${type}`);
   }
+}
+
+/**
+ * Parses the front matter metadata from the content
+ */
+function parseFrontMatter(content: string): { metadata: Metadata; content: string } {
+  const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
+  const match = content.match(frontMatterRegex);
+  
+  if (!match) {
+    return { metadata: {}, content };
+  }
+  
+  const [, frontMatterText, remainingContent] = match;
+  const metadata: Metadata = {};
+  
+  try {
+    const lines = frontMatterText.split('\n');
+    let currentKey = '';
+    let inArray = false;
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+      
+      if (trimmedLine.endsWith(':')) {
+        // Start of array
+        currentKey = trimmedLine.slice(0, -1).trim();
+        if (trimmedLine.includes('[')) {
+          inArray = true;
+          const arrayContent = trimmedLine.substring(trimmedLine.indexOf('[') + 1);
+          if (arrayContent.includes(']')) {
+            // Single line array
+            const content = arrayContent.substring(0, arrayContent.indexOf(']'));
+            (metadata as any)[currentKey] = content.split(',').map(s => s.trim().replace(/['"]/g, ''));
+            inArray = false;
+          } else {
+            (metadata as any)[currentKey] = [];
+          }
+        } else {
+          // Simple property, will be handled in the else if below
+          inArray = false;
+        }
+      } else if (inArray && trimmedLine.includes(']')) {
+        // End of array
+        const content = trimmedLine.substring(0, trimmedLine.indexOf(']'));
+        if (content.trim()) {
+          ((metadata as any)[currentKey] as string[]).push(...content.split(',').map(s => s.trim().replace(/['"]/g, '')));
+        }
+        inArray = false;
+      } else if (inArray) {
+        // Array item
+        const items = trimmedLine.split(',').map(s => s.trim().replace(/['"]/g, ''));
+        ((metadata as any)[currentKey] as string[]).push(...items);
+      } else if (!inArray && trimmedLine.includes(':')) {
+        // Simple key-value pair
+        const [key, value] = trimmedLine.split(':').map(s => s.trim());
+        if (key && value) {
+          if (value.startsWith('[') && value.endsWith(']')) {
+            // Array value
+            const arrayContent = value.slice(1, -1);
+            (metadata as any)[key] = arrayContent.split(',').map(s => s.trim().replace(/['"]/g, ''));
+          } else {
+            (metadata as any)[key] = value.replace(/['"]/g, '');
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Warning: Failed to parse front matter metadata');
+  }
+  
+  return { metadata, content: remainingContent };
 }

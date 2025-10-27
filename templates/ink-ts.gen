@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: CLI application built with Ink and TypeScript
 tags: [ink, typescript, cli, react, terminal]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm]
+requires: [node>18, git, npm]
 links: [
     https://github.com/vadimdemedes/ink,
     https://azukiazusa.dev/blog/ink-cli-app/

@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: NPM workspaces monorepo with shared packages and Angular frontend
 tags: [monorepo, npm-workspaces, angular, hono, typescript]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm, npx]
+requires: [node>18, git, npm]
 links: [
     https://docs.npmjs.com/cli/v7/using-npm/workspaces,
     https://angular.dev/,

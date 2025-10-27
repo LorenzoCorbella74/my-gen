@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Angular project with DaisyUI or Bootstrap UI framework
 tags: [angular, daisyui, bootstrap, tailwind, typescript]
-requires:
-  angular: ">=20.0.0"
-  tools: [git, npm, ng]
+requires:requires:[angular20, git, npm, ng]
 links: [
     https://angular.dev/cli/new,
     https://daisyui.com/docs/install/angular/,

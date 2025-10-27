@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: PNPM monorepo with React frontend and Fastify backend
 tags: [monorepo, pnpm, react, fastify, typescript]
-requires:
-  node: ">=18.0.0"
-  tools: [git, pnpm]
+requires: [node>18, git, npm]
 links: [
     https://pnpm.io/workspaces,
     https://react.dev/,

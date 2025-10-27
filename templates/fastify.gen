@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Fastify TypeScript API server with modern development tooling
 tags: [fastify, typescript, api, server, nodejs]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm]
+requires: [node>=18.0.0, git, npm]
 links: [
     https://www.fastify.io/,
     https://www.typescriptlang.org/,

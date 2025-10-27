@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Angular TypeScript project with base architecture and services
 tags: [angular, typescript, architecture, services, interceptors]
-requires:
-  angular: ">=20.0.0"
-  tools: [git, npm, ng]
+requires:[angular20, git, npm, ng]
 links: [
     https://angular.dev/cli/new,
     https://daisyui.com/docs/install/angular/,

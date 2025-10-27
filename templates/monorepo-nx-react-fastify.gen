@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: NX monorepo with React frontend and Fastify backend
 tags: [monorepo, nx, react, fastify, typescript]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm, npx]
+requires: [node>18, git, npm]
 links: [
     https://nx.dev/,
     https://react.dev/,

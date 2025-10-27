@@ -22,8 +22,6 @@ import {
   handleForeach,
   handleImport,
   handleTask,
-  cleanupGlobalShell,
-  type CommandHandler,
   type CommandContext,
   type GlobalShell
 } from "./commands/index.js";
@@ -152,13 +150,8 @@ export class Executor {
       console.log(chalk.gray(`   Tags: ${metadata.tags.join(', ')}`));
     }
     
-    if (metadata.requires) {
-      if (metadata.requires.node) {
-        console.log(chalk.yellow(`   Requires Node: ${metadata.requires.node}`));
-      }
-      if (metadata.requires.tools && metadata.requires.tools.length > 0) {
-        console.log(chalk.yellow(`   Requires Tools: ${metadata.requires.tools.join(', ')}`));
-      }
+    if (metadata.requires && metadata.requires.length > 0) {
+      console.log(chalk.yellow(`   Requires: ${metadata.requires.join(', ')}`));
     }
     
     if (metadata.links && metadata.links.length > 0) {
@@ -268,12 +261,5 @@ export class Executor {
         process.exit(1);
       }
     }
-  }
-
-  /**
-   * Cleanup resources (like global shell) when executor is done
-   */
-  public cleanup(): void {
-    cleanupGlobalShell(this.createCommandContext());
   }
 }

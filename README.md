@@ -53,13 +53,11 @@ This command creates a `template.gen` file with example commands and comments to
 
 ```yaml
 ---
-author: LorenzoCorbella74
+author: Lorenzo Corbella
 version: 1.2.0
 description: React + TypeScript starter with modern tooling
-tags: [react, typescript, vite]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm, code]
+tags: [react, typescript, vite, testing]
+requires: [node>=18.0.0, git, npm, code]
 links: [
     https://vitejs.dev/,
     https://react.dev/
@@ -75,10 +73,30 @@ links: [
 | `version` | string | Template version (semantic versioning recommended) |
 | `description` | string | Brief description of what the template does |
 | `tags` | array | Keywords to categorize the template |
-| `requires` | string | Minimum Runtime/Framework (Angular/Node.js) version required |
-| `requires.tools` | array | Required tools/commands (git, npm, docker, etc.) |
+| `requires` | array | Required tools, runtimes, or dependencies (e.g., node>=18.0.0, git, npm, docker) |
 | `links` | array | Relevant documentation or resource links |
-| `usage` | string | example line to use .gen file |
+
+### Benefits of Metadata
+
+- **Better Discovery**: Template descriptions are used in `gen --list` output
+- **Version Tracking**: Keep track of template versions and updates
+- **Requirements**: Clearly specify dependencies and prerequisites in a single array
+- **Documentation**: Automatic logging of metadata when templates execute
+- **Organization**: Tags help categorize and find relevant templates
+
+### Metadata Display
+
+When executing a .gen file with metadata, the information is automatically displayed:
+
+```
+📋 Script Metadata:
+   Description: React + TypeScript starter with modern tooling
+   Author: Lorenzo Corbella
+   Version: 1.2.0
+   Tags: react, typescript, vite, testing
+   Requires: node>=18.0.0, git, npm, code
+   Links: https://vitejs.dev/, https://react.dev/
+```
 
 
 ## Supported Commands

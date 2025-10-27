@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Hono REST API with TypeScript, authentication and SQLite
 tags: [hono, typescript, rest-api, authentication, sqlite, jwt]
-requires:
-  node: ">=18.0.0"
-  tools: [git, npm]
+requires: [node>18, git, npm]
 links: [
     https://hono.dev/,
     https://github.com/WiseLibs/better-sqlite3,

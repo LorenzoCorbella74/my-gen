@@ -3,9 +3,7 @@ author: Lorenzo Corbella
 version: 1.0.0
 description: Fastify TypeScript API with authentication and SQLite database
 tags: [fastify, typescript, authentication, sqlite, jwt, api]
-requires:
-  node: ">=18.0.0"
-  tools: [git, pnpm]
+requires: [node>18, git, npm]
 links: [
     https://www.fastify.io/,
     https://github.com/WiseLibs/better-sqlite3,

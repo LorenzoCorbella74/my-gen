@@ -203,9 +203,6 @@ async function main() {
       // Download and execute template
       await downloadAndExecuteTemplate(templateName, outputDir, executor, context);
 
-      // Cleanup resources
-      executor.cleanup();
-
       console.log(chalk.blueBright("\nTemplate execution completed."));
       process.exit(0);
     } catch (error) {
@@ -239,9 +236,6 @@ async function main() {
   await executor.initializeGlobalVariables();
 
   await executor.execute(parseResult);
-
-  // Cleanup resources like global shell
-  executor.cleanup();
 
   console.log(chalk.blueBright("\nExecution completed."));
 }
