@@ -1,5 +1,5 @@
 import * as fs from "fs/promises";
-import { AstNode, IfNode, ElseIfBlock, isIfNode } from "../parser.js";
+import { AstNode, IfNode, ElseIfBlock, isIfNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 
 export async function handleIf(node: AstNode, ctx: CommandContext): Promise<CommandResult> {

@@ -28,7 +28,7 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--doc`: Convert the `.gen` file to markdown documentation.
 - `--list`: List available templates from the repository.
 - `--template=<name>`: Download and execute a template from the repository.
-- `--refresh`: Force refresh of template cache (use with `--list`).
+- `--force`: Force refresh of template cache (use with `--list`).
 - `--init`: Create a basic `.gen` file to start your automation.
 
 ## Getting Started
@@ -140,7 +140,7 @@ gen --list
 gen --list
 
 # Force refresh cache from repository
-gen --list --refresh
+gen --list --force
 ```
 
 **Caching System:**
@@ -148,7 +148,7 @@ gen --list --refresh
 - First `--list` command downloads all templates once
 - Subsequent calls use local cache for instant results
 - Cache automatically refreshes after 24 hours
-- Use `--refresh` flag to force immediate cache update
+- Use `--force` flag to force immediate cache update
 
 This command fetches templates from the GitHub repository and displays them with their descriptions (extracted from the first comment in each `.gen` file).
 
@@ -208,7 +208,7 @@ For command-line AI assistance:
 gemini "Based on the AGENTS.md file in this project, create a .gen script that sets up a Node.js Express API with MongoDB integration"
 
 # Reference existing templates with fresh cache
-gemini "Use 'gen --list --refresh' to get the latest templates and create a new template for Vue.js projects"
+gemini "Use 'gen --list --force' to get the latest templates and create a new template for Vue.js projects"
 ```
 
 ### Using with Other AI Tools

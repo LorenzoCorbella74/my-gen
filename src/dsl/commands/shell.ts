@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
-import { AstNode } from "../parser.js";
+import { AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 import os from "os";
 import path from "path";

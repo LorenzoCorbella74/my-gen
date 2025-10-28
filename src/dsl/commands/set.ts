@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import * as fs from "fs/promises";
 import { input, select, checkbox } from '@inquirer/prompts';
-import { AiNode, AstNode, SetNode } from "../parser.js";
+import { AiNode, AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 import { SimpleSpinner } from "../../utils/spinner.js";
 

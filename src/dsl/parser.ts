@@ -1,122 +1,15 @@
-// Base type for all AST nodes
-export interface BaseAstNode {
-  line: number;
-  children?: AstNode[];
-}
+import { 
+  ParseResult, 
+  AstNode, 
+  IfNode, 
+  ElseIfBlock, 
+  ForeachNode, 
+  TaskNode, 
+  ShellNode, 
+  FillNode, 
+  Metadata 
+} from "./commands/types.js";
 
-// Specific node types for each command
-export interface LogNode extends BaseAstNode {
-  type: '@LOG';
-  payload: string; // The message to log
-}
-
-export interface SetNode extends BaseAstNode {
-  type: '@SET';
-  payload: string; // The assignment expression (e.g., "name = value")
-}
-
-export interface GlobalNode extends BaseAstNode {
-  type: '@GLOBAL';
-  payload: string; // The assignment expression (e.g., "name = value") - saved to .global.json
-}
-
-export interface AiNode extends BaseAstNode {
-  type: '@AI';
-  payload: string; // The AI prompt to send to Ollama
-}
-
-export interface ShellNode extends BaseAstNode {
-  type: '>';
-  payload: string; // The shell command to execute
-}
-
-export interface WriteNode extends BaseAstNode {
-  type: '@WRITE' | '@SAVE';
-  payload: string; // The write expression (e.g., '"content" to path' or 'variable to path')
-}
-
-export interface IfNode extends BaseAstNode {
-  type: '@IF';
-  payload: string; // The condition (e.g., "exists path", "var is value", "var isnot value")
-  children: AstNode[]; // Always has children for IF blocks
-  elseifBlocks?: ElseIfBlock[]; // Optional elseif blocks
-  elseBlock?: AstNode[]; // Optional else block
-}
-
-export interface ElseIfBlock {
-  condition: string; // The elseif condition
-  children: AstNode[]; // Commands to execute if condition is true
-  line: number; // Line number for error reporting
-}
-
-export interface ForeachNode extends BaseAstNode {
-  type: '@LOOP';
-  payload: string; // The iteration expression (e.g., "item in listVar")
-  children: AstNode[]; // Always has children for LOOP blocks
-}
-
-export interface FillNode extends BaseAstNode {
-  type: '@FILL';
-  payload: string; // The file path to write to
-  content?: string[]; // Array containing the content lines
-}
-
-export interface ImportNode extends BaseAstNode {
-  type: '@IMPORT';
-  payload: string; // The file path to import
-}
-
-export interface TaskNode extends BaseAstNode {
-  type: '@TASK';
-  payload: string; // The task name
-  children: AstNode[]; // Commands to execute for this task
-}
-
-// Metadata interface for Front Matter
-export interface Metadata {
-  author?: string;
-  version?: string;
-  description?: string;
-  tags?: string[];
-  requires?: string[];
-  links?: string[];
-}
-
-// Result type for parsing, includes metadata and AST
-export interface ParseResult {
-  metadata: Metadata;
-  ast: AstNode[];
-}
-
-// Union type for all possible AST nodes
-export type AstNode =
-  | LogNode
-  | SetNode
-  | GlobalNode
-  | AiNode
-  | ShellNode
-  | WriteNode
-  | IfNode
-  | ForeachNode
-  | FillNode
-  | ImportNode
-  | TaskNode;
-
-// Type guards for runtime type checking
-export const isLogNode = (node: AstNode): node is LogNode => node.type === '@LOG';
-export const isSetNode = (node: AstNode): node is SetNode => node.type === '@SET';
-export const isGlobalNode = (node: AstNode): node is GlobalNode => node.type === '@GLOBAL';
-export const isAiNode = (node: AstNode): node is AiNode => node.type === '@AI';
-export const isShellNode = (node: AstNode): node is ShellNode => node.type === '>';
-export const isWriteNode = (node: AstNode): node is WriteNode => node.type === '@WRITE' || node.type === '@SAVE';
-export const isIfNode = (node: AstNode): node is IfNode => node.type === '@IF';
-export const isForeachNode = (node: AstNode): node is ForeachNode => node.type === '@LOOP';
-export const isFillNode = (node: AstNode): node is FillNode => node.type === '@FILL';
-export const isImportNode = (node: AstNode): node is ImportNode => node.type === '@IMPORT';
-export const isTaskNode = (node: AstNode): node is TaskNode => node.type === '@TASK';
-
-// Helper type for block commands that have children
-export type BlockNode = IfNode | ForeachNode | TaskNode;
 
 /**
  * Parses the content of a DSL (.gen) file into an Abstract Syntax Tree (AST).
@@ -129,87 +22,8 @@ export type BlockNode = IfNode | ForeachNode | TaskNode;
  * @returns An array of `AstNode` objects representing the root-level nodes of the parsed AST.
  */
 export function parseContent(content: string): ParseResult {
-  const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
-  const match = content.match(frontMatterRegex);
-  
-  let metadata: Metadata = {};
-  let cleanContent = content;
-
-  if (match) {
-    const [, frontMatterText, remainingContent] = match;
-    
-    try {
-      const lines = frontMatterText.split('\n');
-      let currentKey = '';
-      let inArray = false;
-      let inObject = false;
-      let objectKey = '';
-      
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
-        
-        if (trimmedLine.endsWith(':')) {
-          // Start of object or array
-          currentKey = trimmedLine.slice(0, -1).trim();
-          if (trimmedLine.includes('[')) {
-            inArray = true;
-            const arrayContent = trimmedLine.substring(trimmedLine.indexOf('[') + 1);
-            if (arrayContent.includes(']')) {
-              // Single line array
-              const content = arrayContent.substring(0, arrayContent.indexOf(']'));
-              (metadata as any)[currentKey] = content.split(',').map(s => s.trim().replace(/['"]/g, ''));
-              inArray = false;
-            } else {
-              (metadata as any)[currentKey] = [];
-            }
-          } else {
-            inObject = true;
-            (metadata as any)[currentKey] = {};
-          }
-        } else if (inArray && trimmedLine.includes(']')) {
-          // End of array
-          const content = trimmedLine.substring(0, trimmedLine.indexOf(']'));
-          if (content.trim()) {
-            ((metadata as any)[currentKey] as string[]).push(...content.split(',').map(s => s.trim().replace(/['"]/g, '')));
-          }
-          inArray = false;
-        } else if (inArray) {
-          // Array item
-          const items = trimmedLine.split(',').map(s => s.trim().replace(/['"]/g, ''));
-          ((metadata as any)[currentKey] as string[]).push(...items);
-        } else if (inObject && trimmedLine.includes(':')) {
-          // Object property
-          const [key, value] = trimmedLine.split(':').map(s => s.trim());
-          if (key && value) {
-            if (value.startsWith('[') && value.endsWith(']')) {
-              // Array value in object
-              const arrayContent = value.slice(1, -1);
-              ((metadata as any)[currentKey] as any)[key] = arrayContent.split(',').map(s => s.trim().replace(/['"]/g, ''));
-            } else {
-              ((metadata as any)[currentKey] as any)[key] = value.replace(/['"]/g, '');
-            }
-          }
-        } else if (!inObject && !inArray && trimmedLine.includes(':')) {
-          // Simple key-value pair
-          const [key, value] = trimmedLine.split(':').map(s => s.trim());
-          if (key && value) {
-            if (value.startsWith('[') && value.endsWith(']')) {
-              // Array value
-              const arrayContent = value.slice(1, -1);
-              (metadata as any)[key] = arrayContent.split(',').map(s => s.trim().replace(/['"]/g, ''));
-            } else {
-              (metadata as any)[key] = value.replace(/['"]/g, '');
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('Warning: Failed to parse front matter metadata');
-    }
-    
-    cleanContent = match[2]; // The content after the front matter
-  }
+  // Parse front matter metadata first
+  const { metadata, content: cleanContent } = parseFrontMatter(content);
 
   const lines = cleanContent.split('\n');
   const mainAst: AstNode[] = [];
@@ -220,6 +34,7 @@ export function parseContent(content: string): ParseResult {
     const line = lines[i].trim();
     const lineNumber = i + 1;
 
+    // comments and empty lines
     if (!line || line.startsWith('#')) {
       continue;
     }
@@ -229,12 +44,12 @@ export function parseContent(content: string): ParseResult {
 
     const upperCommand = command.toUpperCase();
 
-    if (upperCommand === '@IF' || upperCommand === 'IF') {
+    if (upperCommand === '@IF') {
       const newNode: IfNode = { type: '@IF', payload: payload, line: lineNumber, children: [], elseifBlocks: [] };
       currentAst.push(newNode);
       stack.push(newNode.children);
       currentAst = newNode.children;
-    } else if (upperCommand === '@ELSEIF' || upperCommand === 'ELSEIF') {
+    } else if (upperCommand === '@ELSEIF') {
       // Find the current IF node at the top of the stack
       if (stack.length < 2) {
         throw new Error(`@ELSEIF at line ${lineNumber} without corresponding @IF`);
@@ -264,12 +79,12 @@ export function parseContent(content: string): ParseResult {
       // Set current context to elseif children
       stack.push(elseifBlock.children);
       currentAst = elseifBlock.children;
-    } else if (upperCommand === '@LOOP' || upperCommand === 'LOOP' || upperCommand === 'FOREACH') {
+    } else if (upperCommand === '@LOOP') {
       const newNode: ForeachNode = { type: '@LOOP', payload: payload, line: lineNumber, children: [] };
       currentAst.push(newNode);
       stack.push(newNode.children);
       currentAst = newNode.children;
-    } else if (upperCommand === '@TASK' || upperCommand === 'TASK') {
+    } else if (upperCommand === '@TASK') {
       const taskNode: TaskNode = { type: '@TASK', payload: payload, line: lineNumber, children: [] };
       currentAst.push(taskNode);
       
@@ -305,9 +120,8 @@ export function parseContent(content: string): ParseResult {
           taskNode.children.push(shellNode);
         } else {
           // Handle other commands
-          const nodeType = mapCommandToType(taskUpperCommand);
-          if (nodeType) {
-            const node = createNodeByType(nodeType, taskPayload, taskLineNumber);
+          const node = createNodeByType(taskUpperCommand, taskPayload, taskLineNumber);
+          if (node) {
             taskNode.children.push(node);
           } else {
             console.warn(`Unknown command "${taskUpperCommand}" at line ${taskLineNumber} in task "${payload}"`);
@@ -319,7 +133,7 @@ export function parseContent(content: string): ParseResult {
       
       // Skip processed lines
       i = j - 1;
-    } else if (upperCommand === '@FILL' || upperCommand === 'FILL') {
+    } else if (upperCommand === '@FILL') {
       // Handle @fill command with multi-line content
       const fillNode: FillNode = { type: '@FILL', payload: payload, line: lineNumber, content: [] };
 
@@ -352,7 +166,7 @@ export function parseContent(content: string): ParseResult {
 
       // Skip processed lines
       i = j;
-    } else if (upperCommand === '@END' || upperCommand === 'END' || upperCommand === 'ENDIF' || upperCommand === 'ENDFOREACH' || upperCommand === '@ENDLOOP' || upperCommand === 'ENDLOOP') {
+    } else if (upperCommand === '@END' || upperCommand === '@ENDLOOP') {
       if (stack.length <= 1) {
         throw new Error(`${upperCommand} at line ${lineNumber} without corresponding opening block`);
       }
@@ -368,13 +182,11 @@ export function parseContent(content: string): ParseResult {
         };
         currentAst.push(shellNode);
       } else {
-        // Map command strings to specific node types
-        const nodeType = mapCommandToType(upperCommand);
-        if (nodeType) {
-          const node = createNodeByType(nodeType, payload, lineNumber);
+        // Handle specific command types directly
+        const node = createNodeByType(upperCommand, payload, lineNumber);
+        if (node) {
           currentAst.push(node);
         } else {
-          // Handle unknown commands - could throw error or create generic node
           console.warn(`Unknown command "${upperCommand}" at line ${lineNumber}`);
         }
       }
@@ -385,54 +197,10 @@ export function parseContent(content: string): ParseResult {
 }
 
 /**
- * Maps command strings to their corresponding node types
- */
-function mapCommandToType(command: string): AstNode['type'] | null {
-  switch (command) {
-    case '@LOG':
-    case 'LOG':
-      return '@LOG';
-    case '@SET':
-    case 'SET':
-      return '@SET';
-    case '@GLOBAL':
-    case 'GLOBAL':
-      return '@GLOBAL';
-    case '@AI':
-    case 'AI':
-      return '@AI';
-    case '@WRITE':
-    case 'WRITE':
-      return '@WRITE';
-    case '@SAVE':
-    case 'SAVE':
-      return '@SAVE';
-    case '@FILL':
-    case 'FILL':
-      return '@FILL';
-    case '@IMPORT':
-    case 'IMPORT':
-      return '@IMPORT';
-    case '@IF':
-    case 'IF':
-      return '@IF';
-    case '@LOOP':
-    case 'LOOP':
-    case 'FOREACH':
-      return '@LOOP';
-    case '@TASK':
-    case 'TASK':
-      return '@TASK';
-    default:
-      return null;
-  }
-}
-
-/**
  * Creates a node of the specified type with proper typing
  */
-function createNodeByType(type: AstNode['type'], payload: string, line: number): AstNode {
-  switch (type) {
+function createNodeByType(command: string, payload: string, line: number): AstNode | null {
+  switch (command) {
     case '@LOG':
       return { type: '@LOG', payload, line };
     case '@SET':
@@ -458,8 +226,7 @@ function createNodeByType(type: AstNode['type'], payload: string, line: number):
     case '>':
       return { type: '>', payload, line };
     default:
-      // This should never happen due to mapCommandToType check
-      throw new Error(`Unsupported node type: ${type}`);
+      return null;
   }
 }
 

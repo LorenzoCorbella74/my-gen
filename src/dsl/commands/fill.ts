@@ -1,8 +1,7 @@
 import chalk from "chalk";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { AstNode } from "../parser.js";
-import { CommandContext, CommandResult } from "./types.js";
+import { AstNode, CommandContext, CommandResult } from "./types.js";
 
 export async function handleFill(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
     try {

@@ -5,7 +5,7 @@ import process from "node:process";
 import chalk from "chalk";
 import * as path from "path";
 import { select } from '@inquirer/prompts';
-import { AstNode, isTaskNode, Metadata, ParseResult } from "./parser.js";
+import { AstNode, isTaskNode, Metadata, ParseResult } from "../dsl/commands/types.js";
 import { Context } from "./context.js";
 import { GlobalContext } from "./global.js";
 import { SimpleSpinner } from "../utils/spinner.js";

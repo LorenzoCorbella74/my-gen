@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { AstNode } from "../parser.js";
+import { AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 
 export async function handleLog(node: AstNode, ctx: CommandContext): Promise<CommandResult> {

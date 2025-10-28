@@ -62,7 +62,7 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Download and execute a template from the repository (e.g., --template=fastify)'
   })
-  .option('refresh', {
+  .option('force', {
     type: 'boolean',
     description: 'Force refresh of template cache (use with --list)',
     default: false
@@ -84,7 +84,7 @@ const {
   doc: generateDoc,
   list: listTemplates,
   template: templateName,
-  refresh: refreshCache,
+  force: forceRefresh,
   init
 } = argv;
 
@@ -161,7 +161,7 @@ async function main() {
   // If --list is provided, list available templates
   if (listTemplates) {
     try {
-      const templates = await fetchTemplates(refreshCache);
+      const templates = await fetchTemplates(forceRefresh);
       displayTemplates(templates);
       process.exit(0);
     } catch (error) {
@@ -205,7 +205,6 @@ async function main() {
       // Download and execute template
       await downloadAndExecuteTemplate(templateName, outputDir, executor, context);
 
-      console.log(chalk.blueBright("Template execution completed."));
       process.exit(0);
     } catch (error) {
       if (error instanceof Error) {

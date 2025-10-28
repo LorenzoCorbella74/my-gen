@@ -336,6 +336,7 @@ export function displayTemplates(templates: TemplateInfo[]): void {
   }
   
   console.log(chalk.green(`📋 Available templates (${templates.length}):\n`));
+  console.log(chalk.gray(`----------------------------------------------------------------------------------------------------`));
   
   // Find the longest name for formatting
   const maxNameLength = Math.max(...templates.map(t => t.name.length));
@@ -343,9 +344,8 @@ export function displayTemplates(templates: TemplateInfo[]): void {
   for (const template of templates) {
     const nameFormatted = template.name.padEnd(maxNameLength);
     const description = template.description || 'No description available';
-    
     console.log(`  ${chalk.cyan(nameFormatted)} - ${chalk.gray(description)}`);
   }
-  
-  console.log(chalk.blue(`\nUsage: gen --template=<template-name> --output=<output-directory>`));
+  console.log(chalk.gray(`----------------------------------------------------------------------------------------------------\n`));
+  console.log(chalk.blue(`Usage: gen --template=<template-name> --output=<output-directory>`));
 }

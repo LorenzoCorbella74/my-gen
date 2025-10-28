@@ -1,5 +1,5 @@
 import * as fs from "fs/promises";
-import { AstNode } from "../parser.js";
+import { AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 import { parseContent } from "../parser.js";
 
