@@ -4,12 +4,8 @@ version: 1.0.0
 description: Hono REST API with TypeScript, authentication and SQLite
 tags: [hono, typescript, rest-api, authentication, sqlite, jwt]
 requires: [node>18, git, npm]
-links: [
-    https://hono.dev/,
-    https://github.com/WiseLibs/better-sqlite3,
-    https://github.com/auth0/node-jsonwebtoken
-]
-
+links: [https://hono.dev/,https://github.com/WiseLibs/better-sqlite3,https://github.com/auth0/node-jsonwebtoken]
+---
 # Hono REAT API project (WIN) V. 0.0.1
 @log Creating Hono REAT API template....
 @set nomeProgetto= @input Nome del progetto?
