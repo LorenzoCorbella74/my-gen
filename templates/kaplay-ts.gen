@@ -1,7 +1,7 @@
 ---
 author: Lorenzo Corbella
 version: 0.0.0
-description: Base Kaplay.js template
+description: Base project with Kaplay.js and typescript for game dev!
 tags: [gamedev, kaplayjs]
 requires[git, npm]
 links: [https://kaplayjs.com/,https://github.com/kaplayjs/create-kaplay]
@@ -12,7 +12,6 @@ links: [https://kaplayjs.com/,https://github.com/kaplayjs/create-kaplay]
 @set author = LorenzoCorbella74
 
 @log Creating project directory...
-> md {projectName}
 > npx create-kaplay {projectName} --typescript 
 > cd {projectName}
 
@@ -23,19 +22,21 @@ links: [https://kaplayjs.com/,https://github.com/kaplayjs/create-kaplay]
 "
 # {projectName}
 
-
-## Getting Started
-
-Add your project setup instructions here.
 "
 
-# Create basic .gitignore
+@log Init Git
+> git init
 @fill .gitignore
 "
-node_modules/
-dist/
+node_modules
+dist
 .env
-.DS_Store
 "
 
+@log Setting scripts in package.json....
+> npm pkg set version=0.0.1
+> npm pkg set author={author} 
+
 @log Project {projectName} created successfully!
+@log Start coding...
+> code .

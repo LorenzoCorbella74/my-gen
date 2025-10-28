@@ -204,6 +204,20 @@
       ],
       "console": "integratedTerminal",
       "runtimeExecutable": "tsx"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test kaplay",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": [
+        "--file",
+        "./templates/kaplay-ts.gen",
+        "--output",
+        "../test-output"
+      ],
+      "console": "integratedTerminal",
+      "runtimeExecutable": "tsx"
     }
   ]
 }
