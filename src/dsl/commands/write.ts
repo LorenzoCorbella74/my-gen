@@ -17,6 +17,7 @@ export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<C
 
     const contentPart = payload.substring(0, toIndex).trim();
     const filePath = payload.substring(toIndex + 4).trim();
+    console.log(chalk.gray(`[WRITE] ${filePath}`));
 
     let content: string;
     if (contentPart.startsWith('"') && contentPart.endsWith('"')) {

@@ -210,7 +210,7 @@ export class Executor {
           }
           
           // Handle success result
-          if (result.success !== undefined && !result.silent) {
+          /* if (result.success !== undefined && !result.silent) {
             spinner?.succeed(`${node.type} completed`);
             if (typeof result.success === 'string' && result.success.trim()) {
               console.log(chalk.green(result.success));
@@ -219,8 +219,8 @@ export class Executor {
             spinner.succeed(`${node.type} completed`);
           } else if (spinner) {
             spinner.stop();
-          }
-          
+          } */
+          spinner?.stop();
         } catch (error) {
           spinner?.fail(`${node.type} failed`);
           

@@ -7,6 +7,7 @@ import { CommandContext, CommandResult } from "./types.js";
 export async function handleFill(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
     try {
         const filePath = ctx.context.interpolate(node.payload);
+        console.log(chalk.gray(`[Fill] ${filePath}`));
 
         if (!filePath) {
             throw new Error('Fill command requires a file path');
