@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { spawn } from "child_process";
 import { AstNode } from "../parser.js";
-import { CommandContext } from "./types.js";
+import { CommandContext, CommandResult } from "./types.js";
 import os from "os";
 import path from "path";
 import fs from "fs";
@@ -320,35 +320,41 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
   });
 }
 
-export async function handleShell(node: AstNode, ctx: CommandContext): Promise<void> {
-  const command = ctx.context.interpolate(node.payload);
-  console.log(chalk.gray(`[CMD] > ${command}`));
+export async function handleShell(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
+  try {
+    const command = ctx.context.interpolate(node.payload);
+    console.log(chalk.gray(`[CMD] > ${command}`));
 
-  // Debug logging (only in verbose mode)
-  const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
-  if (isVerbose) {
-    console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
-    console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
-    console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
-    console.log(chalk.gray(`[SHELL-DEBUG] OutputDir: ${ctx.outputDir}`));
-    console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
-
-    // Show hybrid decision
-    if (await shouldUseCrossSpawn(command)) {
-      console.log(chalk.cyan(`[SHELL-DEBUG] Will use cross-spawn for this command`));
-    } else {
-      console.log(chalk.yellow(`[SHELL-DEBUG] Will use shell approach for this command`));
+    const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
+    
+    if (isVerbose) {
+      console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
+      console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
+      console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
+      console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
     }
+
+    // Initialize shell context if needed
+    updateCWD(ctx, isVerbose);
+
+    // For cd commands, handle them specially to update context
+    if (command.trim().toLowerCase().startsWith('cd ')) {
+      await handleCdCommand(command, ctx, isVerbose);
+      return {
+        success: `Changed directory`
+      };
+    }
+
+    // For other commands, use hybrid deterministic execution
+    await executeCommandDeterministic(command, ctx, isVerbose);
+    
+    return {
+      success: `Command executed successfully`
+    };
+    
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
-
-  // Initialize shell context if needed
-  updateCWD(ctx, isVerbose);
-
-  // For cd commands, handle them specially to update context
-  if (command.trim().toLowerCase().startsWith('cd ')) {
-    return handleCdCommand(command, ctx, isVerbose);
-  }
-
-  // For other commands, use hybrid deterministic execution
-  return executeCommandDeterministic(command, ctx, isVerbose);
 }

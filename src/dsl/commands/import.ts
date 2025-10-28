@@ -1,30 +1,25 @@
 import * as fs from "fs/promises";
-import chalk from "chalk";
 import { AstNode } from "../parser.js";
-import { CommandContext } from "./types.js";
+import { CommandContext, CommandResult } from "./types.js";
 import { parseContent } from "../parser.js";
 
-export async function handleImport(node: AstNode, ctx: CommandContext): Promise<void> {
-  const importPath = ctx.context.interpolate(node.payload);
-  const resolvedPath = ctx.resolvePath(importPath);
-
-  console.log(chalk.gray(`[IMPORT] Loading script from ${resolvedPath}`));
-
+export async function handleImport(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
+    const importPath = ctx.context.interpolate(node.payload);
+    const resolvedPath = ctx.resolvePath(importPath);
+
     const content = await fs.readFile(resolvedPath, "utf-8");
     const parseResult = parseContent(content);
 
-    // Log metadata if present in imported file
-    if (parseResult.metadata && Object.keys(parseResult.metadata).length > 0) {
-      console.log(chalk.cyan(`[IMPORT] Script metadata: ${parseResult.metadata.description || "No description"}`));
-    }
-
+    // Execute the imported script
     await ctx.executeNodes(parseResult.ast);
+
+    return {
+      success: `Script imported and executed: ${importPath}`,
+    };
   } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to import script: ${error.message}`);
-    } else {
-      throw new Error(`Failed to import script: ${String(error)}`);
-    }
+    return {
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }

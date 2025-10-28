@@ -1,7 +1,6 @@
 // Command Executor
 // This file will contain the logic to execute the AST nodes.
 
-
 import process from "node:process";
 import chalk from "chalk";
 import * as path from "path";
@@ -22,13 +21,15 @@ import {
   handleForeach,
   handleImport,
   handleTask,
+  type CommandResult,
   type CommandContext,
-  type GlobalShell
+  type GlobalShell,
+  type CommandHandler
 } from "./commands/index.js";
 
 export class Executor {
   private context: Context;
-  private commands: Map<string, (node: AstNode) => Promise<void>> = new Map();
+  private commands: Map<string, CommandHandler> = new Map();
   private outputDir: string;
   private globalContext: GlobalContext;
   private globalShell: GlobalShell;
@@ -60,58 +61,18 @@ export class Executor {
   }
 
   private registerCommands() {
-    this.commands.set("@LOG", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleLog(node, ctx);
-    });
-    this.commands.set("@SET", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleSet(node, ctx);
-    });
-    this.commands.set("@GLOBAL", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleGlobal(node, ctx);
-    });
-    this.commands.set("@AI", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleAiCommand(node, ctx);
-    });
-    this.commands.set(">", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleShell(node, ctx);
-    });
-    this.commands.set("@WRITE", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleWrite(node, ctx);
-    });
-    this.commands.set("@SAVE", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleWrite(node, ctx);
-    });
-    this.commands.set("@FILL", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleFill(node, ctx);
-    });
-    this.commands.set("@IF", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleIf(node, ctx);
-    });
-    this.commands.set("@LOOP", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleForeach(node, ctx);
-    });
-    this.commands.set("FOREACH", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleForeach(node, ctx);
-    }); // Backward compatibility
-    this.commands.set("@IMPORT", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleImport(node, ctx);
-    });
-    this.commands.set("@TASK", async (node: AstNode) => {
-      const ctx = this.createCommandContext();
-      return handleTask(node, ctx);
-    });
+    this.commands.set("@LOG", handleLog);
+    this.commands.set("@SET", handleSet);
+    this.commands.set("@GLOBAL", handleGlobal);
+    this.commands.set("@AI", handleAiCommand);
+    this.commands.set(">", handleShell);
+    this.commands.set("@WRITE", handleWrite);
+    this.commands.set("@SAVE", handleWrite);
+    this.commands.set("@FILL", handleFill);
+    this.commands.set("@IF", handleIf);
+    this.commands.set("@LOOP", handleForeach);
+    this.commands.set("@IMPORT", handleImport);
+    this.commands.set("@TASK", handleTask);
   }
 
   private createCommandContext(): CommandContext {
@@ -161,7 +122,7 @@ export class Executor {
     console.log(''); // Empty line for spacing
   }
 
-  public async execute(parseResult: ParseResult | AstNode[]) {
+  public async execute(parseResult: ParseResult | AstNode[]): Promise<void> {
     let nodes: AstNode[];
     let metadata: Metadata = {};
     
@@ -216,37 +177,61 @@ export class Executor {
       choices
     });
     
-    console.log(chalk.blue(`Executing task: ${(selectedTask as any).payload}`));
+    console.log(chalk.blue(`Executing task: ${(selectedTask as AstNode).payload}`));
     await this.executeNodes([selectedTask as AstNode]);
   }
 
   /**
-   * Execute a list of nodes
+   * Execute a list of nodes with centralized logging and spinner management
    */
-  private async executeNodes(nodes: AstNode[]) {
+  public async executeNodes(nodes: AstNode[]): Promise<void> {
+    const ctx = this.createCommandContext();
+    
     for (const node of nodes) {
       const commandFn = this.commands.get(node.type.toUpperCase());
+      
       if (commandFn) {
-        let spinner
-        // Create spinner with command info
-        if (node.type !== "@SET" && node.type !== "@LOG" && node.type !== "@GLOBAL" && node.type !== "@IF" && node.type !== "@LOOP" && node.type !== "@TASK") {
-          spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line} `).start();
+        // Determine if this command should show spinner
+        const isSilentCommand = ['@SET', '@LOG', '@GLOBAL', '@IF', '@LOOP', '@TASK'].includes(node.type.toUpperCase());
+        
+        let spinner: SimpleSpinner | undefined;
+        if (!isSilentCommand) {
+          spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
         }
+        
         try {
-          await commandFn(node);
-          spinner && spinner.succeed(`${node.type} completed`);
-        } catch (error) {
-          spinner && spinner.fail(`${node.type} failed`);
+          const result: CommandResult = await commandFn(node, ctx);
           
-          // Centralized error handling with better formatting
+          // Handle error result
+          if (result.error) {
+            spinner?.fail(`${node.type} failed`);
+            console.error(chalk.red(`Error executing ${node.type} at line ${node.line}: ${result.error}`));
+            process.exit(1);
+          }
+          
+          // Handle success result
+          if (result.success !== undefined && !result.silent) {
+            spinner?.succeed(`${node.type} completed`);
+            if (typeof result.success === 'string' && result.success.trim()) {
+              console.log(chalk.green(result.success));
+            }
+          } else if (spinner && !result.silent) {
+            spinner.succeed(`${node.type} completed`);
+          } else if (spinner) {
+            spinner.stop();
+          }
+          
+        } catch (error) {
+          spinner?.fail(`${node.type} failed`);
+          
+          // Handle unexpected errors (fallback)
           let errorMessage = `Error executing ${node.type} command at line ${node.line}`;
           
           if (error && typeof error === "object" && "message" in error) {
             const originalMessage = (error as { message: string }).message;
-            // Remove redundant prefixes from error messages
             const cleanMessage = originalMessage
-              .replace(/^\[.*?\]\s*/, '') // Remove [TAG] prefixes
-              .replace(/^Error:\s*/, '') // Remove "Error:" prefix
+              .replace(/^\[.*?\]\s*/, '')
+              .replace(/^Error:\s*/, '')
               .trim();
             errorMessage += `: ${cleanMessage}`;
           } else {

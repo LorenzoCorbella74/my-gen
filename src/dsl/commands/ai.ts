@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { Ollama } from "ollama";
 import { AstNode } from "../parser.js";
-import { CommandContext } from "./types.js";
+import { CommandContext, CommandResult } from "./types.js";
 
 export async function handleAi(node: AstNode, ctx: CommandContext): Promise<string> {
   const prompt = ctx.context.interpolate(node.payload.trim());
@@ -60,11 +60,57 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
 }
 
 // Regular command handler wrapper for direct @AI usage
-export async function handleAiCommand(node: AstNode, ctx: CommandContext): Promise<void> {
+export async function handleAiCommand(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
-    const result = await handleAi(node, ctx);
-    console.log(chalk.green(`[AI]: ${result}`));
+    const prompt = ctx.context.interpolate(node.payload);
+    
+    // Get AI configuration from global context
+    const aiModel = ctx.context.get('AI_MODEL') || 'llama3.2-latest';
+    const aiTemperature = parseFloat(ctx.context.get('AI_TEMPERATURE') || '0.7');
+    const aiSystemPrompt = ctx.context.get('AI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
+    const ollamaUrl = ctx.context.get('OLLAMA_URL') || 'http://localhost:11434';
+
+    // Prepare request body
+    const requestBody = {
+      model: aiModel,
+      prompt: prompt,
+      temperature: aiTemperature,
+      system: aiSystemPrompt,
+      stream: false
+    };
+
+    const response = await fetch(`${ollamaUrl}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      return {
+        error: `AI request failed with status ${response.status}: ${response.statusText}`
+      };
+    }
+
+    const data = await response.json();
+    
+    if (!data.response) {
+      return {
+        error: 'AI response is empty or malformed'
+      };
+    }
+
+    // Set the AI response in context for potential use by other commands
+    ctx.context.set('AI_LAST_RESPONSE', data.response);
+
+    return {
+      success: `AI response: ${data.response.substring(0, 100)}${data.response.length > 100 ? '...' : ''}`
+    };
+
   } catch (error) {
-    throw error;
+    return {
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }

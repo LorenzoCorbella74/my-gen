@@ -29,7 +29,7 @@ export class SimpleSpinner {
     process.stdout.write(`\r${chalk.red('✗')} ${text || this.text}\n`);
   }
 
-  private stop(): void {
+  stop(): void {
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = undefined;

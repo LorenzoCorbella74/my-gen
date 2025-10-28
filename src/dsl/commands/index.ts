@@ -10,4 +10,4 @@ export { handleForeach } from "./foreach.js";
 export { handleImport } from "./import.js";
 export { handleTask } from "./task.js";
 
-export type { CommandHandler, CommandContext, GlobalShell } from "./types.js";
+export type { CommandResult, CommandHandler, CommandContext, GlobalShell } from "./types.js";

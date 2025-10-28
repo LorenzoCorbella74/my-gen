@@ -18,4 +18,11 @@ export interface CommandContext {
     executeNodes: (nodes: AstNode[]) => Promise<void>;
 }
 
-export type CommandHandler = (node: AstNode, ctx: CommandContext) => Promise<void>;
+// New result type for command handlers
+export interface CommandResult {
+  success?: string | any;  // Success message or data returned
+  error?: string;         // Error message
+  silent?: boolean;       // Flag to suppress spinner/log display
+}
+
+export type CommandHandler = (node: AstNode, ctx: CommandContext) => Promise<CommandResult>;

@@ -1,59 +1,48 @@
 import chalk from "chalk";
 import * as fs from "fs/promises";
 import { AstNode } from "../parser.js";
-import { CommandContext } from "./types.js";
+import { CommandContext, CommandResult } from "./types.js";
 import path from "path";
 
-export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<void> {
-  const payload = node.payload;
-  const match = payload.match(/^(?:("(.+?)")|(\w+))\s+to\s+(.+)$/);
-
-  if (!match) {
-    throw new Error(`Invalid syntax. Use: WRITE \"<content>\" to <path> OR WRITE <variable> to <path>`);
-  }
-
-  const [, , literalContent, variableName, filePath] = match;
-
-  let contentToWrite: string;
-  if (literalContent) {
-    contentToWrite = ctx.context.interpolate(literalContent);
-  } else if (variableName) {
-    contentToWrite = ctx.context.get(variableName);
-    if (contentToWrite === undefined) {
-      throw new Error(`Variable "${variableName}" is not defined.`);
-    }
-  } else {
-    throw new Error(`Invalid content specified.`);
-  }
-
+export async function handleWrite(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
-    const finalPath = ctx.resolvePath(ctx.context.interpolate(filePath));
-    // console.log('Saving to :', finalPath);
-    
-    // Check if the target path is already a directory
-    try {
-      const stats = await fs.stat(finalPath);
-      if (stats.isDirectory()) {
-        throw new Error(`Cannot write to '${finalPath}': path is a directory`);
-      }
-    } catch (err: any) {
-      // If file doesn't exist, that's expected - continue
-      if (err.code !== 'ENOENT') {
-        throw err;
-      }
+    const payload = ctx.context.interpolate(node.payload);
+    const toIndex = payload.toLowerCase().lastIndexOf(" to ");
+
+    if (toIndex === -1) {
+      return {
+        error: "Invalid write syntax. Expected: content to filepath",
+      };
     }
-    
-    // Extract directory path and create it if needed
-    const dirPath = path.dirname(finalPath);
-    await fs.mkdir(dirPath, { recursive: true });
-    
-    // Write the file
-    await fs.writeFile(finalPath, String(contentToWrite));
-    console.log(chalk.gray(`[WRITE] Content written to ${finalPath}`));
+
+    const contentPart = payload.substring(0, toIndex).trim();
+    const filePath = payload.substring(toIndex + 4).trim();
+
+    let content: string;
+    if (contentPart.startsWith('"') && contentPart.endsWith('"')) {
+      content = contentPart.slice(1, -1);
+    } else if (contentPart.startsWith("'") && contentPart.endsWith("'")) {
+      content = contentPart.slice(1, -1);
+    } else {
+      const variableValue = ctx.context.get(contentPart);
+      if (variableValue === undefined) {
+        return {
+          error: `Variable "${contentPart}" is not defined`,
+        };
+      }
+      content = String(variableValue);
+    }
+
+    const resolvedPath = ctx.resolvePath(filePath);
+    await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+    await fs.writeFile(resolvedPath, content, "utf-8");
+
+    return {
+      success: `File written: ${filePath}`,
+    };
   } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to write content: ${error.message}`);
-    }
-    throw error;
+    return {
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }

@@ -20,7 +20,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
-console.log(chalk.blueBright(`Gen v${pkg.version} - Your command runner`));
+console.log(chalk.blueBright(`--------------------------------------------------`));
+console.log(chalk.blueBright(`- 🚀 Gen v${pkg.version} - Your command runner! -`));
+console.log(chalk.blueBright(`--------------------------------------------------`));
 
 const argv = yargs(hideBin(process.argv))
   .option('file', {
@@ -203,7 +205,7 @@ async function main() {
       // Download and execute template
       await downloadAndExecuteTemplate(templateName, outputDir, executor, context);
 
-      console.log(chalk.blueBright("\nTemplate execution completed."));
+      console.log(chalk.blueBright("Template execution completed."));
       process.exit(0);
     } catch (error) {
       if (error instanceof Error) {

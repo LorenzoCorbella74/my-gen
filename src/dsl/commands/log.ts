@@ -1,8 +1,14 @@
 import chalk from "chalk";
 import { AstNode } from "../parser.js";
-import { CommandContext } from "./types.js";
+import { CommandContext, CommandResult } from "./types.js";
 
-export async function handleLog(node: AstNode, ctx: CommandContext): Promise<void> {
+export async function handleLog(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   const message = ctx.context.interpolate(node.payload);
-  console.log(chalk.blue(`[LOG] ${message}`));
+  
+  // Log the message directly (this command handles its own output)
+  console.log(chalk.blue(message));
+  
+  return {
+    silent: true // Don't show additional spinner/success messages
+  };
 }

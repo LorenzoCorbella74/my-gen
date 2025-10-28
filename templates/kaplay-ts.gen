@@ -1,0 +1,44 @@
+---
+author: Lorenzo Corbella
+version: 0.0.0
+description: Base Kaplay.js template
+tags: [gamedev, kaplayjs]
+requires[git, npm]
+links: [
+  "https://kaplayjs.com/",
+  "https://github.com/kaplayjs/create-kaplay"
+]
+---
+
+# Get basic project information
+@set projectName = @input Enter project name?@set description = @input Enter project description?
+@set author = LorenzoCorbella74
+
+@log Creating project directory...
+> mkdir {projectName}
+> npx create-kaplay --typescript {projectName}
+> cd {projectName}
+
+@log Creating basic files...
+
+# Create README
+@fill README.md
+"
+# {projectName}
+
+
+## Getting Started
+
+Add your project setup instructions here.
+"
+
+# Create basic .gitignore
+@fill .gitignore
+"
+node_modules/
+dist/
+.env
+.DS_Store
+"
+
+@log Project {projectName} created successfully!
