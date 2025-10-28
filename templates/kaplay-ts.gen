@@ -12,7 +12,8 @@ links: [https://kaplayjs.com/,https://github.com/kaplayjs/create-kaplay]
 @set author = LorenzoCorbella74
 
 @log Creating project directory...
-> npx create-kaplay --typescript {projectName}
+> md {projectName}
+> npx create-kaplay . --typescript 
 > cd {projectName}
 
 @log Creating basic files...
