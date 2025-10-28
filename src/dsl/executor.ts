@@ -107,15 +107,15 @@ export class Executor {
       console.log(chalk.gray(`   Version: ${metadata.version}`));
     }
     
-    if (metadata.tags && metadata.tags.length > 0) {
+    if (metadata.tags && Array.isArray(metadata.tags) && metadata.tags.length > 0) {
       console.log(chalk.gray(`   Tags: ${metadata.tags.join(', ')}`));
     }
     
-    if (metadata.requires && metadata.requires.length > 0) {
+    if (metadata.requires && Array.isArray(metadata.requires) && metadata.requires.length > 0) {
       console.log(chalk.yellow(`   Requires: ${metadata.requires.join(', ')}`));
     }
     
-    if (metadata.links && metadata.links.length > 0) {
+    if (metadata.links && Array.isArray(metadata.links) && metadata.links.length > 0) {
       console.log(chalk.blue(`   Links: ${metadata.links.join(', ')}`));
     }
     
