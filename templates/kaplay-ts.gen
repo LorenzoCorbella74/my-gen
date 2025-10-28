@@ -4,18 +4,14 @@ version: 0.0.0
 description: Base Kaplay.js template
 tags: [gamedev, kaplayjs]
 requires[git, npm]
-links: [
-  "https://kaplayjs.com/",
-  "https://github.com/kaplayjs/create-kaplay"
-]
+links: [https://kaplayjs.com/,https://github.com/kaplayjs/create-kaplay]
 ---
 
 # Get basic project information
-@set projectName = @input Enter project name?@set description = @input Enter project description?
+@set projectName = @input Enter project name?
 @set author = LorenzoCorbella74
 
 @log Creating project directory...
-> mkdir {projectName}
 > npx create-kaplay --typescript {projectName}
 > cd {projectName}
 

@@ -347,5 +347,5 @@ export function displayTemplates(templates: TemplateInfo[]): void {
     console.log(`  ${chalk.cyan(nameFormatted)} - ${chalk.gray(description)}`);
   }
   
-  console.log(chalk.blue(`Usage: gen --template=<template-name> --output=<output-directory>`));
+  console.log(chalk.blue(`\nUsage: gen --template=<template-name> --output=<output-directory>`));
 }
