@@ -56,12 +56,9 @@ This command creates a `template.gen` file with example commands and comments to
 author: Lorenzo Corbella
 version: 1.2.0
 description: React + TypeScript starter with modern tooling
-tags: [react, typescript, vite, testing]
+tags: [react, typescript, vite]
 requires: [node>=18.0.0, git, npm, code]
-links: [
-    https://vitejs.dev/,
-    https://react.dev/
-]
+links: [https://vitejs.dev/,https://react.dev/]
 ---
 ```
 

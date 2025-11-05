@@ -50,8 +50,7 @@ links: [
   <div class="hero-content text-center">
     <div class="max-w-md">
       <p class="py-6">
-        Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem
-        quasi. In deleniti eaque aut repudiandae et a id nisi.
+        Angular project with DaisyUI
         <lucide-angular [img]="FileIcon" class="my-icon"></lucide-angular>
         <lucide-icon [img]="FileIcon" class="my-icon"></lucide-icon>
         <i-lucide [img]="FileIcon" class="my-icon"></i-lucide>

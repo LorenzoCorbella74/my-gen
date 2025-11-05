@@ -1,0 +1,29 @@
+# my-gen (gen CLI)
+
+> A CLI tool and DSL for project scaffolding, automation, and scripting. Provides a custom language to automate file operations, variable management, shell commands, and conditional logic for Node.js and cross-platform environments.
+
+my-gen (also known as gen) enables developers to define project templates, automate repetitive tasks, and manage project setup using a simple, extensible Domain Specific Language. It supports interactive prompts, file generation, shell execution, and AI-powered code generation. The repository includes the core engine, command documentation, ready-to-use templates, and comprehensive tests.
+
+## Documentation
+- [Main README](README.md): Primary project documentation, usage, and DSL overview
+- [Agent Guide](AGENTS.md): In-depth guide for agents and AI on creating `.gen` files and using the DSL
+- [Hybrid Approach](doc/hybrid-approach.md): Design and rationale for hybrid shell/cross-spawn execution
+- [Cross-Spawn Analysis](doc/cross-spawn.md): Technical analysis of cross-spawn integration
+- [Command Reference](doc/commands/): Directory with detailed documentation for each DSL command
+
+## Specifications
+- [TypeScript Config](tsconfig.json): TypeScript compiler configuration for the project
+- [Package Manifest](package.json): Project metadata, dependencies, and scripts
+
+## Templates & Examples
+- [Templates Directory](templates/): Ready-to-use `.gen` project templates for various stacks (Node, React, Fastify, Angular, etc.)
+- [Test Scripts](test/): Example `.gen` files and test cases demonstrating DSL features and edge cases
+
+## Configuration
+- [Global Variables Storage](src/dsl/global.ts): Implementation of persistent global variables
+- [Template Manager](src/dsl/templateManager.ts): Template loading and management logic
+
+## Optional
+- [Spinner Utility](src/utils/spinner.ts): CLI spinner for progress indication
+- [Context Management](src/dsl/context.ts): Execution context and variable management
+- [Documentor](src/dsl/documentor.ts): Markdown documentation generator for `.gen` files

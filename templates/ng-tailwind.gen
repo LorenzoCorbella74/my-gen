@@ -1,0 +1,79 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Angular project with Tailwind 4 + Lucide Icons
+tags: [angular, tailwind, typescript]
+requires:requires:[angular20, git, npm, ng]
+links: [ https://angular.dev/cli/new, https://tailwindcss.com/docs/installation/framework-guides/angular ]
+---
+
+@log Template Angular project with Tailwind 4 + Lucide Icons
+@set nomeProgetto= @input Nome del progetto?
+@set author = LorenzoCorbella74
+> md {nomeProgetto}
+> ng new {nomeProgetto} --routing=true --style=css --zoneless=false --ssr=false --ai-config=copilot
+> cd {nomeProgetto}
+> echo "# {nomeProgetto}" > README.md
+> npm install tailwindcss @tailwindcss/postcss postcss --force
+
+@fill .postcssrc.json
+"
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
+"
+@fill src/styles.css
+"
+@import "tailwindcss";
+"
+
+@log Installing Lucide icons
+> npm i lucide-angular
+
+@fill src/app/app.html
+"
+<div class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+        <h1 class="text-3xl font-bold underline">
+                Angular project with Tailwind 4 + Lucide Icons
+        </h1>
+        <p>
+         <lucide-angular [img]="FileIcon" class="my-icon"></lucide-angular>
+            <lucide-icon [img]="FileIcon" class="my-icon"></lucide-icon>
+            <i-lucide [img]="FileIcon" class="my-icon"></i-lucide>
+            <span-lucide [img]="FileIcon" class="my-icon"></span-lucide>
+        </p>
+    </div>
+</div>
+"
+@fill src/app/app.ts
+"
+import { Component } from '@angular/core';
+import { LucideAngularModule, FileIcon } from 'lucide-angular';
+
+@Component({
+  standalone: true,
+  selector: 'app-root',
+  templateUrl: './app.html',
+  styleUrl: './app.css',
+  imports: [LucideAngularModule]
+})
+export class App {
+  readonly FileIcon = FileIcon;
+}
+"
+
+@log Updating package.json
+> npm pkg set name="{nomeProgetto}" 
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+
+@log First commit
+> git add --all
+> git commit -m "First commit"
+
+@log Start Dev server with ng serve!
+@log Start coding...
+> code .
