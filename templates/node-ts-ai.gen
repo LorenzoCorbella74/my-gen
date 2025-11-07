@@ -4,11 +4,7 @@ version: 1.0.0
 description: Node.js TypeScript project with AI SDK v5 integration
 tags: [nodejs, typescript, ai, google-gemini, ollama]
 requires: [node>18, git, npm]
-links: [
-    https://sdk.vercel.ai/,
-    https://ai.google.dev/,
-    https://ollama.ai/
-]
+links: [ https://sdk.vercel.ai/, https://ai.google.dev/, https://ollama.ai]
 ---
 
 # Inizializzazione di progetti con AI SDK V5 con WIN
@@ -16,7 +12,7 @@ links: [
 # Usage:
 # gen --file=C:/GEN/node-ts-ai.gen
 @log Progett0 con AI SDK
-@set nomeProgetto=input: Nome del progetto?
+@set nomeProgetto = @input Nome del progetto?
 @set author = LorenzoCorbella74
 > md {nomeProgetto}
 > cd {nomeProgetto}
