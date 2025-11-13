@@ -1,6 +1,5 @@
 import chalk from "chalk";
-import { AstNode } from "../parser.js";
-import { CommandContext, CommandResult } from "./types.js";
+import { AstNode, CommandContext, CommandResult } from "./types.js";
 
 export async function handleForeach(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
