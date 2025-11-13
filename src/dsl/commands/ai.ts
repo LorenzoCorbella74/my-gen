@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import { Ollama } from "ollama";
-import { AstNode } from "../parser.js";
-import { CommandContext, CommandResult } from "./types.js";
+import { AstNode, CommandContext, CommandResult } from "./types.js";
 
 export async function handleAi(node: AstNode, ctx: CommandContext): Promise<string> {
   const prompt = ctx.context.interpolate(node.payload.trim());

@@ -1,5 +1,4 @@
-import { AstNode } from "../parser.js";
-import { CommandContext, CommandResult } from "./types.js";
+import { AstNode, CommandContext, CommandResult } from "./types.js";
 
 export async function handleTask(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
