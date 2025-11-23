@@ -34,7 +34,7 @@ ENV=development
 > npm i dotenv hono jsonwebtoken uuid better-sqlite3 bcrypt @hono/node-server
 
 @log Creating files....
->md src
+>mkdir src
 
 @fill tsconfig.json
 "

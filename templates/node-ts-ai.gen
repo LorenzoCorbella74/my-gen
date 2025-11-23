@@ -14,7 +14,7 @@ links: [ https://sdk.vercel.ai/, https://ai.google.dev/, https://ollama.ai]
 @log Progett0 con AI SDK
 @set nomeProgetto = @input Nome del progetto?
 @set author = LorenzoCorbella74
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > cd {nomeProgetto}
 > npm init -y
 > echo "# {nomeProgetto}" > README.md
@@ -33,7 +33,7 @@ dist
 > npm i -D typescript tsx @types/node
 
 @log Creating files....
->md src
+>mkdir src
 @fill src/index.ts
 "
 import { google } from '@ai-sdk/google';

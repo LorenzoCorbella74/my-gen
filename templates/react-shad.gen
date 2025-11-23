@@ -12,7 +12,7 @@ links: [
 @log Creating React + ShadCN UI project...
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 # Al momento vite chiede Use rolldown-vite (Experimental)?: per saltare usare echo...
 > echo "Yes" | npm create vite@latest {nomeProgetto} -- --template react-ts
 > cd {nomeProgetto}

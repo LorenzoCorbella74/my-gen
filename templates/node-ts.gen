@@ -14,7 +14,7 @@ links: [
 @set nomeProgetto= @input Nome cartella di progetto?
 @set author = LorenzoCorbella74
 
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > cd {nomeProgetto}
 > npm init -y
 > echo "# {nomeProgetto}" > README.md
@@ -32,7 +32,7 @@ dist
 > npm i -D typescript tsx @types/node
 
 @log Creating files....
->md src
+>mkdir src
 @fill src/index.ts
 "
 // {nomeProgetto}

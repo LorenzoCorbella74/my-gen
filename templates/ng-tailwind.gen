@@ -10,7 +10,7 @@ links: [ https://angular.dev/cli/new, https://tailwindcss.com/docs/installation/
 @log Template Angular project with Tailwind 4 + Lucide Icons
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > ng new {nomeProgetto} --routing=true --style=css --zoneless=false --ssr=false --ai-config=copilot
 > cd {nomeProgetto}
 > echo "# {nomeProgetto}" > README.md
