@@ -11,7 +11,7 @@ links: [ https://sdk.vercel.ai/, https://ai.google.dev/, https://ollama.ai]
 
 # Usage:
 # gen --file=C:/GEN/node-ts-ai.gen
-@log Progett0 con AI SDK
+@log Progetto con AI SDK
 @set nomeProgetto = @input Nome del progetto?
 @set author = LorenzoCorbella74
 > mkdir {nomeProgetto}
@@ -19,7 +19,7 @@ links: [ https://sdk.vercel.ai/, https://ai.google.dev/, https://ollama.ai]
 > npm init -y
 > echo "# {nomeProgetto}" > README.md
 
-@log init Git
+@log Init Git
 > git init
 @fill .gitignore
 "

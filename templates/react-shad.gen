@@ -275,7 +275,14 @@ export default App
 > npm pkg set version=0.0.1 
 > npm pkg set author={author} 
 
-@log First commit
+@log Init Git
+> git init
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
 > git add --all
 > git commit -m "First commit"
 
