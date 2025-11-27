@@ -12,7 +12,7 @@ links: [
 @log Creating React + ShadCN UI project...
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 # Al momento vite chiede Use rolldown-vite (Experimental)?: per saltare usare echo...
 > echo "Yes" | npm create vite@latest {nomeProgetto} -- --template react-ts
 > cd {nomeProgetto}
@@ -275,7 +275,14 @@ export default App
 > npm pkg set version=0.0.1 
 > npm pkg set author={author} 
 
-@log First commit
+@log Init Git
+> git init
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
 > git add --all
 > git commit -m "First commit"
 

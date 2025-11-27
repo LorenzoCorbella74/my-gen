@@ -15,7 +15,7 @@ links: [
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
 
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > cd {nomeProgetto}
 @fill package.json
 "
@@ -49,9 +49,9 @@ dist
 key=value
 "
 
-> md packages
+> mkdir packages
 > cd packages
-> md shared
+> mkdir shared
 > cd shared
 @fill package.json
 "
@@ -106,7 +106,7 @@ export type UserResponse = ApiResponse<User>;
 "
 @log Backend with Hono
 > cd ..
-> md backend
+> mkdir backend
 > cd backend
 @fill package.json
 "

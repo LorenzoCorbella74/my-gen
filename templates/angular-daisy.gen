@@ -15,7 +15,7 @@ links: [
 @log Template Angular + DaisyUI
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > ng new {nomeProgetto} --routing=true --style=css --zoneless=false --ssr=false --ai-config=copilot
 > cd {nomeProgetto}
 > echo "# {nomeProgetto}" > README.md

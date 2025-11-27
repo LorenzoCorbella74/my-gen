@@ -26,7 +26,7 @@ echo "#PNPM monorepo" > README.md
 > echo   - "packages/*" >> pnpm-workspace.yaml
 
 @log Creating directories for your packages and applications
-> md packages apps
+> mkdir packages apps
 
 @log create the frontend in react
 > pnpm create vite apps/frontend --template react-ts

@@ -15,7 +15,7 @@ usage: gen --file=C:/GEN/ink-ts.gen
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
 
-> md {nomeProgetto}
+> mkdir {nomeProgetto}
 > cd {nomeProgetto} 
 > npm init -y
 > echo "# {nomeProgetto}" > README.md
@@ -41,7 +41,7 @@ key=value
 > npm install --save-dev typescript @types/react tsx @types/node
 
 @log Creating files....
->md src
+>mkdir src
 @fill src/cli.tsx
 "
 import React, { useEffect, useState } from "react";
