@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import * as fs from "fs/promises";
-import { input, select, checkbox } from '@inquirer/prompts';
+import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { AiNode, AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
 import { SimpleSpinner } from "../../utils/spinner.js";
@@ -54,6 +54,22 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
       } else {
           throw new Error('Invalid @multiselect syntax. Use: @multiselect Question text? [ option1 option2 option3 ]');
       }
+    } else if (value.startsWith('@confirm ')) {
+      const question = value.substring('@confirm '.length).trim();
+      const interpolatedQuestion = ctx.context.interpolate(question);
+      
+      if (!interpolatedQuestion) {
+        return {
+          error: 'Confirm question cannot be empty'
+        };
+      }
+
+      const answer = await confirm({
+        message: interpolatedQuestion,
+        default: false // Default to N (false)
+      });
+
+      ctx.context.set(varName, answer ? 'Y' : 'N');
     } else if (value.startsWith('@load ')) {
         const spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
 

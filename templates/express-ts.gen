@@ -1,0 +1,226 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Express TypeScript API server with modern development tooling
+tags: [express, typescript, api, server, nodejs]
+requires: [node>=18.0.0, git, npm]
+links: [ https://expressjs.com/, https://www.typescriptlang.org/]
+---
+
+# Express + TypeScript API Server
+@log Creating Express TypeScript API template...
+@set projectName = @input Enter project name?
+@set author = @input Enter author name?
+
+> mkdir {projectName}
+> cd {projectName}
+> npm init -y
+
+@log Setting up Git...
+> git init
+@fill .gitignore
+"
+node_modules
+dist
+.env
+"
+
+@log Installing dependencies...
+> npm install express cors helmet dotenv
+> npm install -D typescript tsx @types/node @types/express @types/cors @types/helmet
+
+@log Creating project structure...
+> mkdir src
+> mkdir src/routes
+> mkdir src/middleware
+> mkdir src/utils
+
+@fill src/app.ts
+"
+import express, { Express, Request, Response } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import { healthRoutes } from './routes/health';
+
+dotenv.config();
+
+export function createApp(): Express {
+  const app = express();
+
+  // Security middleware
+  app.use(helmet());
+  app.use(cors());
+  
+  // Parse JSON bodies
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Routes
+  app.use('/health', healthRoutes);
+  
+  // Root endpoint
+  app.get('/', (req: Request, res: Response) => {
+    res.json({ 
+      message: 'Welcome to {projectName} API',
+      version: '1.0.0',
+      status: 'running'
+    });
+  });
+
+  // 404 handler
+  app.use('*', (req: Request, res: Response) => {
+    res.status(404).json({ error: 'Route not found' });
+  });
+
+  // Error handler
+  app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+  });
+
+  return app;
+}
+"
+
+@fill src/server.ts
+"
+import { createApp } from './app';
+
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+const app = createApp();
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📚 API documentation available at http://localhost:${PORT}/health`);
+});
+"
+
+@fill src/routes/health.ts
+"
+import { Router, Request, Response } from 'express';
+
+export const healthRoutes = Router();
+
+healthRoutes.get('/', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+healthRoutes.get('/ping', (req: Request, res: Response) => {
+  res.json({ message: 'pong' });
+});
+"
+
+@fill src/middleware/auth.ts
+"
+import { Request, Response, NextFunction } from 'express';
+
+export interface AuthenticatedRequest extends Request {
+  user?: any;
+}
+
+export function authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  // Add your authentication logic here
+  // For now, just pass through
+  next();
+}
+
+export function authorize(roles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    // Add your authorization logic here
+    // For now, just pass through
+    next();
+  };
+}
+"
+
+@fill src/utils/logger.ts
+"
+export class Logger {
+  static info(message: string, ...args: any[]) {
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
+  }
+
+  static warn(message: string, ...args: any[]) {
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
+  }
+
+  static error(message: string, ...args: any[]) {
+    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args);
+  }
+
+  static debug(message: string, ...args: any[]) {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args);
+    }
+  }
+}
+"
+
+@fill tsconfig.json
+"
+{
+  \"compilerOptions\": {
+    \"target\": \"ES2022\",
+    \"module\": \"NodeNext\",
+    \"moduleResolution\": \"NodeNext\",
+    \"outDir\": \"./dist\",
+    \"rootDir\": \"./src\",
+    \"strict\": true,
+    \"esModuleInterop\": true,
+    \"skipLibCheck\": true,
+    \"forceConsistentCasingInFileNames\": true,
+    \"declaration\": true,
+    \"declarationMap\": true,
+    \"sourceMap\": true,
+    \"resolveJsonModule\": true,
+    \"allowSyntheticDefaultImports\": true
+  },
+  \"include\": [
+    \"src/**/*\"
+  ],
+  \"exclude\": [
+    \"node_modules\",
+    \"dist\"
+  ]
+}
+"
+
+@fill .env
+"
+NODE_ENV=development
+PORT=3000
+HOST=0.0.0.0
+"
+
+@fill README.md
+"
+# {projectName}
+"
+
+@log Updating package.json...
+> npm pkg set name="{projectName}"
+> npm pkg set author="{author}"
+> npm pkg set description="Express TypeScript API server"
+> npm pkg set version="1.0.0"
+> npm pkg set type="module"
+> npm pkg set scripts.dev="tsx --watch src/server.ts"
+> npm pkg set scripts.build="tsc"
+> npm pkg set scripts.start="node dist/server.js"
+
+@log ✅ Express TypeScript API server created successfully!
+@log 
+@log Next steps:
+@log   1. cd {projectName}
+@log   2. npm run dev
+@log   3. Open http://localhost:3000 in your browser
+@log 
+@log Happy coding! 🚀

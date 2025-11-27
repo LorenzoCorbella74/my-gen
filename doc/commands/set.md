@@ -11,6 +11,7 @@ The `@set` command creates and assigns values to variables for use throughout th
 @set <variableName> = @input <prompt>
 @set <variableName> = @select <question>? [ option1 option2 option3 ]
 @set <variableName> = @multiselect <question>? [ option1 option2 option3 ]
+@set <variableName> = @confirm <question>
 @set <variableName> = @load <filePath>
 @set <variableName> = @http <url>
 @set <variableName> = files in <directory>
@@ -50,6 +51,15 @@ Allows the user to select multiple options from a list:
 @set features = @multiselect Which features do you want? [ auth database api testing ]
 @set platforms = @multiselect Target platforms? [ windows mac linux ]
 ```
+
+### Confirmation
+Prompts the user for a yes/no confirmation (returns "Y" or "N"):
+```plaintext
+@set shouldContinue = @confirm Do you want to continue?
+@set overwrite = @confirm File exists. Overwrite?
+```
+
+**Note:** The confirmation prompt defaults to "N" (No) if the user simply presses Enter.
 
 ### File Content
 Loads the entire content of a file into the variable:
@@ -99,9 +109,13 @@ Once set, variables can be used with interpolation syntax `{variableName}`:
 @set environment = @select Which environment? [ development staging production ]
 @set database = @select Choose database? [ mysql postgresql mongodb sqlite ]
 @set services = @multiselect Enable services? [ redis cache queue logging monitoring ]
+@set enableSSL = @confirm Enable SSL/HTTPS?
 
 @if environment is "production"
     @log Production setup with {database} and services: {services}
+    @if enableSSL is "Y"
+        @log SSL is enabled for production
+    @end
 @end
 ```
 

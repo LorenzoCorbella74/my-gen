@@ -1,0 +1,99 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Angular project with DaisyUI or Bootstrap UI framework
+tags: [angular, daisyui, bootstrap, tailwind, typescript]
+requires:requires:[angular20, git, npm, ng]
+links: [
+    https://angular.dev/cli/new,
+    https://daisyui.com/docs/install/angular/,
+    https://lucide.dev/guide/packages/lucide-angular,
+    https://ng-bootstrap.github.io/
+]
+---
+
+@log Template Angular + DaisyUI
+@set nomeProgetto= @input Nome del progetto?
+@set author = LorenzoCorbella74
+> md {nomeProgetto}
+> ng new {nomeProgetto} --routing=true --style=css --zoneless=false --ssr=false --ai-config=copilot
+> cd {nomeProgetto}
+> echo "# {nomeProgetto}" > README.md
+
+@set framework = @select Framework grafico? [ daisy bootstrap]
+
+@if framework is "daisy"
+  > npm install daisyui@latest tailwindcss@latest @tailwindcss/postcss@latest postcss@latest --force
+  @fill .postcssrc.json
+  "
+  {
+    "plugins": {
+      "@tailwindcss/postcss": {}
+    }
+  }
+  "
+  @fill src/styles.css
+  "
+  @import "tailwindcss";
+  @plugin "daisyui";
+  "
+@elseif framework is "bootstrap"
+  > ng add @ng-bootstrap/ng-bootstrap
+@end
+
+@log Installing Lucide icons
+> npm i lucide-angular
+
+@fill src/app/app.html
+"
+<div class="hero bg-base-200 min-h-screen">
+  <div class="hero-content text-center">
+    <div class="max-w-md">
+      <p class="py-6">
+        Angular project with DaisyUI
+        <lucide-angular [img]="FileIcon" class="my-icon"></lucide-angular>
+        <lucide-icon [img]="FileIcon" class="my-icon"></lucide-icon>
+        <i-lucide [img]="FileIcon" class="my-icon"></i-lucide>
+        <span-lucide [img]="FileIcon" class="my-icon"></span-lucide>
+      </p>
+      <button class="btn btn-primary">Get Started</button>
+    </div>
+  </div>
+</div>
+"
+@fill src/app/app.ts
+"
+import { Component } from '@angular/core';
+import { LucideAngularModule, FileIcon } from 'lucide-angular';
+
+@Component({
+  standalone: true,
+  selector: 'app-root',
+  templateUrl: './app.html',
+  styleUrl: './app.css',
+  imports: [LucideAngularModule]
+})
+export class App {
+  readonly FileIcon = FileIcon;
+}
+"
+
+@log Updating package.json
+> npm pkg set name="{nomeProgetto}" 
+> npm pkg set version="0.0.1" 
+> npm pkg set author="{author}" 
+
+@log First commit
+> git add --all
+> git commit -m "First commit"
+
+@log Start Dev server with ng serve!
+@log Start coding...
+> code .
+
+@log Template Express + TypeScript API Server
+@set hasBe = @confirm Aggiungo il server Express + TypeScript API al progetto?
+
+@if hasBe is "Y"
+  > gen --template=express-ts.gen --output=./
+@end

@@ -101,7 +101,7 @@ When executing a .gen file with metadata, the information is automatically displ
 | Command    | Syntax Example                                 | Description                                                                                 |
 |------------|------------------------------------------------|---------------------------------------------------------------------------------------------|
 | [`@log`](doc/commands/log.md)       | `@log Hello, world!`                           | Print a message to the console (supports variable interpolation)                            |
-| [`@set`](doc/commands/set.md)       | `@set name = value`<br>`@set x = @input Prompt`<br>`@set y = @select Choose? [ a b c ]`   | Set variables, prompt for input/selection, load files, fetch HTTP, list files/folders |
+| [`@set`](doc/commands/set.md)       | `@set name = value`<br>`@set x = @input Prompt`<br>`@set y = @select Choose? [ a b c ]`<br>`@set z = @confirm Continue?`   | Set variables, prompt for input/selection/confirmation, load files, fetch HTTP, list files/folders |
 | [`@global`](doc/commands/global.md) | `@global name = value`<br>`@global x = @input Prompt`   | Same as @set but saves variables permanently |
 | [`@ai`](doc/commands/ai.md)         | `@set reply = @ai What is Node.js?`            | Send a prompt to Ollama AI and get a response (configurable via global variables)          |
 | [`>`](doc/commands/shell.md)   | `> echo Hello`                                 | Run a shell command                                                                         |
