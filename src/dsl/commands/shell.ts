@@ -6,6 +6,41 @@ import os from "os";
 import path from "path";
 import fs from "fs";
 
+// Long enough for `ng new` / `npm install`
+const SHELL_TIMEOUT_MS = 10 * 60 * 1000;
+
+// Many tools (git, ng, npm) print progress and benign warnings to stderr.
+// These lines are not failures even when the command exits non-zero.
+function isBenignStderrLine(line: string): boolean {
+  const l = line.trim();
+  if (!l) return true;
+  return (
+    /^warning:/i.test(l) ||
+    /LF will be replaced by CRLF/i.test(l) ||
+    /CRLF will be replaced by LF/i.test(l) ||
+    /^(npm )?warn\b/i.test(l) ||
+    /Installing packages/i.test(l) ||
+    /Packages installed successfully/i.test(l) ||
+    /^✔/.test(l)
+  );
+}
+
+// Reports captured stderr, labelling benign warnings separately from real errors.
+function reportStderr(stderr: string, code: number | null): void {
+  const trimmed = stderr.trim();
+  if (!trimmed) return;
+
+  const lines = trimmed.split(/\r?\n/);
+  const onlyWarnings = lines.every(isBenignStderrLine);
+
+  if (code === 0 || onlyWarnings) {
+    console.log(chalk.yellow(`[CMD-WARN] ${trimmed}`));
+    return;
+  }
+
+  console.log(chalk.red(`[CMD-ERROR] (exit code ${code}) ${trimmed}`));
+}
+
 // Import cross-spawn for better cross-platform support
 let crossSpawn: any;
 
@@ -129,9 +164,7 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
         console.log(chalk.cyan(`[CROSS-SPAWN] Command completed with exit code: ${code}`));
       }
 
-      if (stderr.trim() && code !== 0) {
-        console.log(chalk.red(`[CMD-ERROR] ${stderr.trim()}`));
-      }
+      reportStderr(stderr, code);
 
       // Always resolve to continue execution even on error
       resolve();
@@ -147,11 +180,11 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
     // Set timeout for long-running commands
     const timeout = setTimeout(() => {
       if (isVerbose) {
-        console.log(chalk.red(`[CROSS-SPAWN-TIMEOUT] Command timed out after 60 seconds: ${command}`));
+        console.log(chalk.red(`[CROSS-SPAWN-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`));
       }
       childProcess.kill('SIGTERM');
       resolve(); // Resolve even on timeout
-    }, 60000); // 60 seconds timeout
+    }, SHELL_TIMEOUT_MS);
 
     childProcess.on('close', () => {
       clearTimeout(timeout);
@@ -290,9 +323,7 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
         console.log(chalk.gray(`[SHELL-DEBUG] Command completed with exit code: ${code}`));
       }
 
-      if (stderr.trim() && code !== 0) {
-        console.log(chalk.red(`[CMD-ERROR] ${stderr.trim()}`));
-      }
+      reportStderr(stderr, code);
 
       // Always resolve to continue execution even on error
       resolve();
@@ -308,11 +339,11 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
     // Set timeout for long-running commands
     const timeout = setTimeout(() => {
       if (isVerbose) {
-        console.log(chalk.red(`[SHELL-TIMEOUT] Command timed out after 60 seconds: ${command}`));
+        console.log(chalk.red(`[SHELL-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`));
       }
       childProcess.kill('SIGTERM');
       resolve(); // Resolve even on timeout
-    }, 60000); // 60 seconds timeout
+    }, SHELL_TIMEOUT_MS);
 
     childProcess.on('close', () => {
       clearTimeout(timeout);
@@ -326,7 +357,7 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<C
     console.log(chalk.gray(`[CMD] > ${command}`));
 
     const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
-    
+
     if (isVerbose) {
       console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
       console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
@@ -347,14 +378,17 @@ export async function handleShell(node: AstNode, ctx: CommandContext): Promise<C
 
     // For other commands, use hybrid deterministic execution
     await executeCommandDeterministic(command, ctx, isVerbose);
-    
+
     return {
       success: `Command executed successfully`
     };
-    
+
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : String(error)
     };
   }
 }
+
+// npm i -g npm@latest
+// npm cache clean --force

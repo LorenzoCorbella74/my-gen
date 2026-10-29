@@ -1,0 +1,297 @@
+---
+author: Lorenzo Corbella
+version: 1.0.0
+description: Modern Python project with uv, ruff, pytest, Pydantic, mypy and pre-commit
+tags: [python, uv, ruff, pytest, pydantic, mypy, pre-commit]
+requires: [python>=3.11, uv>=0.6.0, git]
+links: [
+    https://docs.astral.sh/uv/,
+    https://docs.astral.sh/ruff/,
+    https://docs.pytest.org/,
+    https://docs.pydantic.dev/latest/,
+    https://mypy.readthedocs.io/,
+    https://pre-commit.com/
+]
+usage: gen --file=C:/GEN/python-uv.gen
+---
+
+@log Creating modern Python template (uv + ruff + pytest + Pydantic + mypy + pre-commit)....
+@set nomeProgetto = @input Nome cartella di progetto?
+
+@log Initializing project with uv (bare pyproject.toml)....
+> uv init {nomeProgetto} --bare
+> cd {nomeProgetto}
+
+@log Adding dependencies with uv....
+> uv add pydantic
+> uv add --dev ruff pytest mypy pre-commit
+
+@log Writing ruff.toml....
+@fill ruff.toml
+"
+line-length = 88
+target-version = "py311"
+
+[lint]
+# E/F: pycodestyle+pyflakes, I: isort, B: bugbear, UP: pyupgrade, N: naming, SIM: simplify
+select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+
+[format]
+quote-style = "double"
+"
+
+@log Writing mypy.ini....
+@fill mypy.ini
+"
+[mypy]
+python_version = 3.11
+strict = true
+warn_unused_configs = true
+plugins = pydantic.mypy
+"
+
+@log Writing pytest.ini....
+@fill pytest.ini
+"
+[pytest]
+pythonpath = .
+testpaths = tests
+addopts = -ra
+"
+
+@log Writing example.py....
+@fill example.py
+"
+'''Example module: Pydantic v2 models, type hints and testable functions.
+
+Run the quality tools with:
+    uv run ruff check .
+    uv run ruff format .
+    uv run mypy .
+    uv run pytest
+'''
+
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import Self
+
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+
+
+class Role(StrEnum):
+    admin = 'admin'
+    user = 'user'
+
+
+class User(BaseModel):
+    '''A validated user model.'''
+
+    name: str = Field(min_length=1, max_length=50)
+    age: int = Field(ge=0, le=120)
+    role: Role = Role.user
+    tags: list[str] = Field(default_factory=list)
+
+    @field_validator('name')
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return value.strip().title()
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_adult(self) -> bool:
+        return self.age >= 18
+
+
+class Order(BaseModel):
+    '''An order with a cross-field validated total.'''
+
+    quantity: int = Field(gt=0)
+    unit_price: float = Field(gt=0)
+    discount: float = Field(default=0.0, ge=0, le=1)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def total(self) -> float:
+        return self.quantity * self.unit_price * (1 - self.discount)
+
+    @model_validator(mode='after')
+    def check_total(self) -> Self:
+        if self.total < 0:
+            raise ValueError('total cannot be negative')
+        return self
+
+
+def fibonacci(n: int) -> list[int]:
+    '''Return the first ``n`` Fibonacci numbers.'''
+    if n < 0:
+        raise ValueError('n must be non-negative')
+    sequence: list[int] = []
+    a, b = 0, 1
+    for _ in range(n):
+        sequence.append(a)
+        a, b = b, a + b
+    return sequence
+
+
+def main() -> None:
+    person = User(name='  ada lovelace ', age=36, role=Role.admin, tags=['pioneer'])
+    order = Order(quantity=3, unit_price=9.99, discount=0.1)
+    print('user:', person.model_dump())
+    print('order total:', round(order.total, 2))
+    print('fibonacci:', fibonacci(10))
+
+
+if __name__ == '__main__':
+    main()
+"
+
+@log Writing tests/test_example.py....
+@fill tests/test_example.py
+"
+from __future__ import annotations
+
+import pytest
+
+from example import Order, Role, User, fibonacci
+
+
+def test_user_name_is_normalized() -> None:
+    person = User(name='  ada lovelace ', age=36)
+    assert person.name == 'Ada Lovelace'
+    assert person.role is Role.user
+    assert person.is_adult is True
+
+
+def test_order_total_applies_discount() -> None:
+    order = Order(quantity=2, unit_price=10.0, discount=0.25)
+    assert order.total == pytest.approx(15.0)
+
+
+def test_order_rejects_invalid_discount() -> None:
+    with pytest.raises(ValueError):
+        Order(quantity=1, unit_price=10.0, discount=2)
+
+
+def test_fibonacci_sequence() -> None:
+    assert fibonacci(5) == [0, 1, 1, 2, 3]
+
+
+def test_fibonacci_rejects_negative() -> None:
+    with pytest.raises(ValueError):
+        fibonacci(-1)
+"
+
+@log Writing .pre-commit-config.yaml....
+@fill .pre-commit-config.yaml
+"
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pydantic]
+"
+
+@log Writing .gitignore....
+@fill .gitignore
+"
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+.env
+"
+
+@log Writing README.md....
+@fill README.md
+"
+# {nomeProgetto}
+
+Modern Python project scaffolded with **uv**, **ruff**, **pytest**, **Pydantic**, **mypy** and **pre-commit**.
+
+## Requirements
+
+- Python >= 3.11
+- [uv](https://docs.astral.sh/uv/) (`pip install uv` or see the install guide)
+
+## Setup
+
+Dependencies are already installed by the generator via `uv add`.
+To recreate the environment elsewhere, run:
+
+```bash
+uv sync
+```
+
+Install the git hooks:
+
+```bash
+uv run pre-commit install
+```
+
+## Common tasks
+
+| Task        | Command                   |
+| ----------- | ------------------------- |
+| Run the app | `uv run python example.py`|
+| Lint        | `uv run ruff check .`     |
+| Format      | `uv run ruff format .`    |
+| Type check  | `uv run mypy .`           |
+| Test        | `uv run pytest`           |
+| All hooks   | `uv run pre-commit run --all-files` |
+
+## Project layout
+
+```text
+.
+├── example.py              # Pydantic models + sample functions
+├── pyproject.toml          # project metadata + dependencies (managed by uv)
+├── ruff.toml               # ruff lint + format config
+├── mypy.ini                # mypy strict config
+├── pytest.ini              # pytest config
+├── .pre-commit-config.yaml # ruff + mypy git hooks
+└── tests/
+    └── test_example.py     # pytest suite
+```
+
+## Tooling
+
+- **uv** — fast package & project manager; runtime deps and the `dev` group (PEP 735) live in `pyproject.toml`.
+- **ruff** — linter + formatter, configured in `ruff.toml`.
+- **pytest** — test runner, configured in `pytest.ini`.
+- **Pydantic v2** — data validation via `field_validator`, `model_validator` and `computed_field`.
+- **mypy** — strict static type checking (`mypy.ini`) with the Pydantic plugin.
+- **pre-commit** — runs ruff and mypy automatically before each commit.
+"
+
+@log Initializing git repository and hooks....
+> git init
+# Avoid git "dubious ownership" when the folder is created by an elevated process on Windows.
+> git config --global --add safe.directory {OUTPUT_DIR}/{nomeProgetto}
+> uv run pre-commit install
+
+@log Running the quality checks....
+> uv run ruff format .
+> uv run ruff check .
+> uv run mypy .
+> uv run pytest
+
+@log First commit
+> git add --all
+# Quality checks already ran above; skip hooks so the first commit is not blocked by pre-commit env setup.
+> git commit --no-verify -m "First commit"
+
+@log Start coding...
+> code .

@@ -17,6 +17,7 @@ usage: gen --file=C:/GEN/angular-base.gen
 @set nomeProgetto= @input Nome del progetto?
 @set author = LorenzoCorbella74
 > ng new {nomeProgetto} --routing=true --style=scss --zoneless=false --ssr=false --ai-config=copilot
+> cd {nomeProgetto}
 > echo "# {nomeProgetto}" > README.md
 
 # @log UI Framework

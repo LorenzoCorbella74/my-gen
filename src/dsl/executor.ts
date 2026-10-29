@@ -39,6 +39,8 @@ export class Executor {
     this.outputDir = outputDir;
     this.globalContext = new GlobalContext();
     this.globalShell = { cwd: outputDir };
+    // Expose the output dir to templates (forward slashes for cross-platform paths).
+    this.context.set('OUTPUT_DIR', outputDir.replace(/\\/g, '/'));
     this.registerCommands();
     // Note: initializeGlobalVariables will be called explicitly before execute
   }
@@ -92,40 +94,40 @@ export class Executor {
    */
   private logMetadata(metadata: Metadata): void {
     if (Object.keys(metadata).length === 0) return;
-    
+
     console.log(chalk.cyan('\n📋 Script Metadata:'));
-    
+
     if (metadata.description) {
       console.log(chalk.white(`   Description: ${metadata.description}`));
     }
-    
+
     if (metadata.author) {
       console.log(chalk.gray(`   Author: ${metadata.author}`));
     }
-    
+
     if (metadata.version) {
       console.log(chalk.gray(`   Version: ${metadata.version}`));
     }
-    
+
     if (metadata.tags && Array.isArray(metadata.tags) && metadata.tags.length > 0) {
       console.log(chalk.gray(`   Tags: ${metadata.tags.join(', ')}`));
     }
-    
+
     if (metadata.requires && Array.isArray(metadata.requires) && metadata.requires.length > 0) {
       console.log(chalk.yellow(`   Requires: ${metadata.requires.join(', ')}`));
     }
-    
+
     if (metadata.links && Array.isArray(metadata.links) && metadata.links.length > 0) {
       console.log(chalk.blue(`   Links: ${metadata.links.join(', ')}`));
     }
-    
+
     console.log(''); // Empty line for spacing
   }
 
   public async execute(parseResult: ParseResult | AstNode[]): Promise<void> {
     let nodes: AstNode[];
     let metadata: Metadata = {};
-    
+
     // Handle both old and new formats for backward compatibility
     if (Array.isArray(parseResult)) {
       nodes = parseResult;
@@ -137,7 +139,7 @@ export class Executor {
 
     // Check if there are any tasks in the nodes
     const tasks = this.findTasks(nodes);
-    
+
     if (tasks.length > 0) {
       // If tasks are present, show selection menu
       await this.executeWithTaskSelection(tasks);
@@ -166,17 +168,17 @@ export class Executor {
    */
   private async executeWithTaskSelection(tasks: { name: string; node: AstNode }[]): Promise<void> {
     console.log(chalk.yellow(`Found ${tasks.length} task(s) in the file.`));
-    
+
     const choices = tasks.map(task => ({
       name: task.name,
       value: task.node
     }));
-    
+
     const selectedTask = await select({
       message: 'Which task would you like to execute?',
       choices
     });
-    
+
     console.log(chalk.blue(`Executing task: ${(selectedTask as AstNode).payload}`));
     await this.executeNodes([selectedTask as AstNode]);
   }
@@ -186,29 +188,29 @@ export class Executor {
    */
   public async executeNodes(nodes: AstNode[]): Promise<void> {
     const ctx = this.createCommandContext();
-    
+
     for (const node of nodes) {
       const commandFn = this.commands.get(node.type.toUpperCase());
-      
+
       if (commandFn) {
         // Determine if this command should show spinner
         const isSilentCommand = ['@SET', '@LOG', '@GLOBAL', '@IF', '@LOOP', '@TASK'].includes(node.type.toUpperCase());
-        
+
         let spinner: SimpleSpinner | undefined;
         if (!isSilentCommand) {
           spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
         }
-        
+
         try {
           const result: CommandResult = await commandFn(node, ctx);
-          
+
           // Handle error result
           if (result.error) {
             spinner?.fail(`${node.type} failed`);
             console.error(chalk.red(`Error executing ${node.type} at line ${node.line}: ${result.error}`));
             process.exit(1);
           }
-          
+
           // Handle success result
           /* if (result.success !== undefined && !result.silent) {
             spinner?.succeed(`${node.type} completed`);
@@ -223,10 +225,10 @@ export class Executor {
           spinner?.stop();
         } catch (error) {
           spinner?.fail(`${node.type} failed`);
-          
+
           // Handle unexpected errors (fallback)
           let errorMessage = `Error executing ${node.type} command at line ${node.line}`;
-          
+
           if (error && typeof error === "object" && "message" in error) {
             const originalMessage = (error as { message: string }).message;
             const cleanMessage = originalMessage
@@ -237,7 +239,7 @@ export class Executor {
           } else {
             errorMessage += `: ${String(error)}`;
           }
-          
+
           console.error(chalk.red(errorMessage));
           process.exit(1);
         }

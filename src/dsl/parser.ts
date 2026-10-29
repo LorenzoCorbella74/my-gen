@@ -1,13 +1,13 @@
-import { 
-  ParseResult, 
-  AstNode, 
-  IfNode, 
-  ElseIfBlock, 
-  ForeachNode, 
-  TaskNode, 
-  ShellNode, 
-  FillNode, 
-  Metadata 
+import {
+  ParseResult,
+  AstNode,
+  IfNode,
+  ElseIfBlock,
+  ForeachNode,
+  TaskNode,
+  ShellNode,
+  FillNode,
+  Metadata
 } from "./commands/types.js";
 
 
@@ -25,7 +25,9 @@ export function parseContent(content: string): ParseResult {
   // Parse front matter metadata first
   const { metadata, content: cleanContent } = parseFrontMatter(content);
 
-  const lines = cleanContent.split('\n');
+  // Normalize CRLF/CR to LF so captured content (e.g. @fill) never keeps a stray
+  // carriage return, which breaks strict parsers like TOML on the final line.
+  const lines = cleanContent.replace(/\r\n?/g, '\n').split('\n');
   const mainAst: AstNode[] = [];
   const stack: AstNode[][] = [mainAst]; // Stack to manage nested blocks
   let currentAst = mainAst;
@@ -54,28 +56,28 @@ export function parseContent(content: string): ParseResult {
       if (stack.length < 2) {
         throw new Error(`@ELSEIF at line ${lineNumber} without corresponding @IF`);
       }
-      
+
       // Pop current children and get the IF node
       stack.pop();
       const parentAst = stack[stack.length - 1];
       const ifNode = parentAst[parentAst.length - 1] as IfNode;
-      
+
       if (ifNode.type !== '@IF') {
         throw new Error(`@ELSEIF at line ${lineNumber} not inside @IF block`);
       }
-      
+
       // Create elseif block
       const elseifBlock: ElseIfBlock = {
         condition: payload,
         children: [],
         line: lineNumber
       };
-      
+
       if (!ifNode.elseifBlocks) {
         ifNode.elseifBlocks = [];
       }
       ifNode.elseifBlocks.push(elseifBlock);
-      
+
       // Set current context to elseif children
       stack.push(elseifBlock.children);
       currentAst = elseifBlock.children;
@@ -87,29 +89,29 @@ export function parseContent(content: string): ParseResult {
     } else if (upperCommand === '@TASK') {
       const taskNode: TaskNode = { type: '@TASK', payload: payload, line: lineNumber, children: [] };
       currentAst.push(taskNode);
-      
+
       // Collect commands until empty line or end of file
       let j = i + 1;
       while (j < lines.length) {
         const taskLine = lines[j].trim();
-        
+
         // Stop at empty line
         if (!taskLine) {
           break;
         }
-        
+
         // Skip comments
         if (taskLine.startsWith('#')) {
           j++;
           continue;
         }
-        
+
         // Parse the command line
         const [taskCommand, ...taskRest] = taskLine.split(/\s+/);
         const taskPayload = taskRest.join(' ');
         const taskLineNumber = j + 1;
         const taskUpperCommand = taskCommand.toUpperCase();
-        
+
         // Handle shell commands
         if (taskLine.startsWith('>')) {
           const shellNode: ShellNode = {
@@ -127,10 +129,10 @@ export function parseContent(content: string): ParseResult {
             console.warn(`Unknown command "${taskUpperCommand}" at line ${taskLineNumber} in task "${payload}"`);
           }
         }
-        
+
         j++;
       }
-      
+
       // Skip processed lines
       i = j - 1;
     } else if (upperCommand === '@FILL') {
@@ -236,23 +238,23 @@ function createNodeByType(command: string, payload: string, line: number): AstNo
 function parseFrontMatter(content: string): { metadata: Metadata; content: string } {
   const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
   const match = content.match(frontMatterRegex);
-  
+
   if (!match) {
     return { metadata: {}, content };
   }
-  
+
   const [, frontMatterText, remainingContent] = match;
   const metadata: Metadata = {};
-  
+
   try {
     const lines = frontMatterText.split('\n');
     let currentKey = '';
     let inArray = false;
-    
+
     for (const line of lines) {
       const trimmedLine = line.trim();
       if (!trimmedLine) continue;
-      
+
       if (trimmedLine.endsWith(':')) {
         // Start of array
         currentKey = trimmedLine.slice(0, -1).trim();
@@ -299,6 +301,6 @@ function parseFrontMatter(content: string): { metadata: Metadata; content: strin
   } catch (error) {
     console.warn('Warning: Failed to parse front matter metadata');
   }
-  
+
   return { metadata, content: remainingContent };
 }
