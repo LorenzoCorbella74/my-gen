@@ -2,13 +2,11 @@
 // This file will contain the logic to execute the AST nodes.
 
 import process from "node:process";
-import chalk from "chalk";
 import * as path from "path";
-import { select } from '@inquirer/prompts';
 import { AstNode, isTaskNode, Metadata, ParseResult } from "../dsl/commands/types.js";
 import { Context } from "./context.js";
 import { GlobalContext } from "./global.js";
-import { SimpleSpinner } from "../utils/spinner.js";
+import { promptSelect } from "../utils/prompts.js";
 import {
   handleLog,
   handleSet,
@@ -95,30 +93,30 @@ export class Executor {
   private logMetadata(metadata: Metadata): void {
     if (Object.keys(metadata).length === 0) return;
 
-    console.log(chalk.cyan('\n📋 Script Metadata:'));
+    console.log('\n📋 Script Metadata:');
 
     if (metadata.description) {
-      console.log(chalk.white(`   Description: ${metadata.description}`));
+      console.log(`   Description: ${metadata.description}`);
     }
 
     if (metadata.author) {
-      console.log(chalk.gray(`   Author: ${metadata.author}`));
+      console.log(`   Author: ${metadata.author}`);
     }
 
     if (metadata.version) {
-      console.log(chalk.gray(`   Version: ${metadata.version}`));
+      console.log(`   Version: ${metadata.version}`);
     }
 
     if (metadata.tags && Array.isArray(metadata.tags) && metadata.tags.length > 0) {
-      console.log(chalk.gray(`   Tags: ${metadata.tags.join(', ')}`));
+      console.log(`   Tags: ${metadata.tags.join(', ')}`);
     }
 
     if (metadata.requires && Array.isArray(metadata.requires) && metadata.requires.length > 0) {
-      console.log(chalk.yellow(`   Requires: ${metadata.requires.join(', ')}`));
+      console.log(`   Requires: ${metadata.requires.join(', ')}`);
     }
 
     if (metadata.links && Array.isArray(metadata.links) && metadata.links.length > 0) {
-      console.log(chalk.blue(`   Links: ${metadata.links.join(', ')}`));
+      console.log(`   Links: ${metadata.links.join(', ')}`);
     }
 
     console.log(''); // Empty line for spacing
@@ -167,20 +165,13 @@ export class Executor {
    * Show task selection menu and execute chosen task
    */
   private async executeWithTaskSelection(tasks: { name: string; node: AstNode }[]): Promise<void> {
-    console.log(chalk.yellow(`Found ${tasks.length} task(s) in the file.`));
-
-    const choices = tasks.map(task => ({
-      name: task.name,
-      value: task.node
-    }));
-
-    const selectedTask = await select({
-      message: 'Which task would you like to execute?',
-      choices
-    });
-
-    console.log(chalk.blue(`Executing task: ${(selectedTask as AstNode).payload}`));
-    await this.executeNodes([selectedTask as AstNode]);
+    console.log(`Found ${tasks.length} task(s) in the file.`);
+    const selectedTask = await promptSelect(
+      "Which task would you like to execute?",
+      tasks.map((task) => ({ name: task.name, value: task.node })),
+    );
+    console.log(`Executing task: ${selectedTask.payload}`);
+    await this.executeNodes([selectedTask]);
   }
 
   /**
@@ -193,39 +184,16 @@ export class Executor {
       const commandFn = this.commands.get(node.type.toUpperCase());
 
       if (commandFn) {
-        // Determine if this command should show spinner
-        const isSilentCommand = ['@SET', '@LOG', '@GLOBAL', '@IF', '@LOOP', '@TASK'].includes(node.type.toUpperCase());
-
-        let spinner: SimpleSpinner | undefined;
-        if (!isSilentCommand) {
-          spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
-        }
-
         try {
           const result: CommandResult = await commandFn(node, ctx);
 
           // Handle error result
           if (result.error) {
-            spinner?.fail(`${node.type} failed`);
-            console.error(chalk.red(`Error executing ${node.type} at line ${node.line}: ${result.error}`));
+            console.error(`Error executing ${node.type} at line ${node.line}: ${result.error}`);
             process.exit(1);
           }
 
-          // Handle success result
-          /* if (result.success !== undefined && !result.silent) {
-            spinner?.succeed(`${node.type} completed`);
-            if (typeof result.success === 'string' && result.success.trim()) {
-              console.log(chalk.green(result.success));
-            }
-          } else if (spinner && !result.silent) {
-            spinner.succeed(`${node.type} completed`);
-          } else if (spinner) {
-            spinner.stop();
-          } */
-          spinner?.stop();
         } catch (error) {
-          spinner?.fail(`${node.type} failed`);
-
           // Handle unexpected errors (fallback)
           let errorMessage = `Error executing ${node.type} command at line ${node.line}`;
 
@@ -240,11 +208,11 @@ export class Executor {
             errorMessage += `: ${String(error)}`;
           }
 
-          console.error(chalk.red(errorMessage));
+          console.error(errorMessage);
           process.exit(1);
         }
       } else {
-        console.error(chalk.red(`Unknown command "${node.type}" at line ${node.line}`));
+        console.error(`Unknown command "${node.type}" at line ${node.line}`);
         process.exit(1);
       }
     }

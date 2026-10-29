@@ -1,7 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import chalk from 'chalk';
 import degit from 'degit';
 import { parseContent } from './parser.js';
 
@@ -71,7 +70,7 @@ async function ensureCacheDir(): Promise<void> {
 async function updateCache(): Promise<void> {
   await ensureCacheDir();
 
-  console.log(chalk.blue('🔄 Updating template cache...'));
+  console.log('🔄 Updating template cache...');
 
   try {
     // Use degit to download templates folder
@@ -86,7 +85,7 @@ async function updateCache(): Promise<void> {
       } catch (tarballError) {
         // The default tar download hits codeload.github.com, which is often blocked or
         // unresolvable on corporate networks; retry via git clone (stays on github.com).
-        console.log(chalk.yellow('⚠️  Tarball download failed, retrying via git clone...'));
+        console.log('⚠️  Tarball download failed, retrying via git clone...');
         await degit(repoPath, { force: true, mode: 'git' }).clone(tempDir);
       }
 
@@ -122,14 +121,14 @@ async function updateCache(): Promise<void> {
 
       await fs.writeFile(CACHE_INFO_FILE, JSON.stringify(cacheInfo, null, 2));
 
-      console.log(chalk.green(`✅ Cache updated with ${templateFiles.length} templates`));
+      console.log(`✅ Cache updated with ${templateFiles.length} templates`);
 
     } finally {
       // Cleanup temp directory
       try {
         await fs.rm(tempDir, { recursive: true, force: true });
       } catch (error) {
-        console.warn(chalk.yellow(`Warning: Could not clean up temp directory: ${tempDir}`));
+        console.warn(`Warning: Could not clean up temp directory: ${tempDir}`);
       }
     }
 
@@ -180,14 +179,14 @@ export async function listTemplates(forceRefresh: boolean = false): Promise<Temp
     if (forceRefresh || !(await isCacheValid())) {
       await updateCache();
     } else {
-      console.log(chalk.blue('📋 Reading templates from cache...'));
+      console.log('📋 Reading templates from cache...');
     }
 
     // Read templates from cache
     const templates = await readTemplatesFromCache();
 
     if (templates.length === 0) {
-      console.log(chalk.yellow('No templates found in cache. Trying to refresh...'));
+      console.log('No templates found in cache. Trying to refresh...');
       await updateCache();
       return await readTemplatesFromCache();
     }
@@ -276,11 +275,11 @@ export async function downloadAndExecuteTemplate(
     try {
       // Check if template exists in cache
       await fs.access(cachedTemplatePath);
-      console.log(chalk.blue(`📦 Using cached template: ${templateName}...`));
+      console.log(`📦 Using cached template: ${templateName}...`);
       templateContent = await fs.readFile(cachedTemplatePath, 'utf-8');
     } catch (error) {
       // Template not in cache, download it
-      console.log(chalk.blue(`📦 Downloading template: ${templateName}...`));
+      console.log(`📦 Downloading template: ${templateName}...`);
 
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gen-template-'));
 
@@ -301,19 +300,19 @@ export async function downloadAndExecuteTemplate(
         }
 
         templateContent = await fs.readFile(templatePath, 'utf-8');
-        console.log(chalk.green(`✅ Template downloaded successfully`));
+        console.log(`✅ Template downloaded successfully`);
 
       } finally {
         // Cleanup: remove temporary directory
         try {
           await fs.rm(tempDir, { recursive: true, force: true });
         } catch (cleanupError) {
-          console.warn(chalk.yellow(`Warning: Could not clean up temporary directory: ${tempDir}`));
+          console.warn(`Warning: Could not clean up temporary directory: ${tempDir}`);
         }
       }
     }
 
-    console.log(chalk.blue(`🚀 Executing template: ${filename}...`));
+    console.log(`🚀 Executing template: ${filename}...`);
 
     // Parse and execute the template
     const parseResult = parseContent(templateContent);
@@ -321,7 +320,7 @@ export async function downloadAndExecuteTemplate(
     // Execute the template with new ParseResult structure
     await executor.execute(parseResult);
 
-    console.log(chalk.green(`✅ Template executed successfully`));
+    console.log(`✅ Template executed successfully`);
 
   } catch (error) {
     if (error instanceof Error) {
@@ -337,12 +336,12 @@ export async function downloadAndExecuteTemplate(
  */
 export function displayTemplates(templates: TemplateInfo[]): void {
   if (templates.length === 0) {
-    console.log(chalk.yellow('No templates found in the repository.'));
+    console.log('No templates found in the repository.');
     return;
   }
 
-  console.log(chalk.green(`📋 Available templates (${templates.length}):\n`));
-  console.log(chalk.gray(`----------------------------------------------------------------------------------------------------`));
+  console.log(`📋 Available templates (${templates.length}):\n`);
+  console.log(`----------------------------------------------------------------------------------------------------`);
 
   // Find the longest name for formatting
   const maxNameLength = Math.max(...templates.map(t => t.name.length));
@@ -350,8 +349,8 @@ export function displayTemplates(templates: TemplateInfo[]): void {
   for (const template of templates) {
     const nameFormatted = template.name.padEnd(maxNameLength);
     const description = template.description || 'No description available';
-    console.log(`  ${chalk.cyan(nameFormatted)} - ${chalk.gray(description)}`);
+    console.log(`  ${nameFormatted} - ${description}`);
   }
-  console.log(chalk.gray(`----------------------------------------------------------------------------------------------------\n`));
-  console.log(chalk.blue(`Usage: gen --template=<template-name> --output=<output-directory>`));
+  console.log(`----------------------------------------------------------------------------------------------------\n`);
+  console.log(`Usage: gen --template=<template-name> --output=<output-directory>`);
 }

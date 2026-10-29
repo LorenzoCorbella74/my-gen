@@ -23,8 +23,8 @@ The `@task` command allows you to organize your `.gen` scripts into named tasks,
   - The next `@task` declaration
   - An empty line
   - End of file
-- **Execution Mode**: When a `.gen` file contains one or more `@task` declarations, the normal sequential execution is replaced with an interactive task selection menu
-- **Task Selection**: Users see a list of all available tasks and can choose which one to execute
+- **Execution Mode**: When a `.gen` file contains one or more `@task` declarations, the normal sequential execution is replaced with an OpenTUI task menu
+- **Task Selection**: Use the arrow keys and Enter to choose a task; this requires an interactive terminal
 
 ## Examples
 
@@ -54,14 +54,7 @@ When you run this file:
 gen --file project-setup.gen
 ```
 
-You'll see:
-```
-Found 3 task(s) in the file.
-? Which task would you like to execute? (Use arrow keys)
-❯ init
-  install
-  start
-```
+You'll see an OpenTUI selection screen listing `init`, `install`, and `start`. Use the arrow keys to navigate and Enter to run the selected task.
 
 ## Notes
 

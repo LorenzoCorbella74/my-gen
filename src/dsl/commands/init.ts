@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -12,8 +11,8 @@ export async function initCommand(): Promise<void> {
   
   // Check if template.gen already exists
   if (fs.existsSync(outputFile)) {
-    console.log(chalk.yellow('⚠️  template.gen already exists in current directory'));
-    console.log(chalk.gray('Use a different name or remove the existing file first'));
+    console.log('⚠️  template.gen already exists in current directory');
+    console.log('Use a different name or remove the existing file first');
     return;
   }
   
@@ -22,7 +21,7 @@ export async function initCommand(): Promise<void> {
     const templatePath = path.resolve(__dirname, '../../../templates/base.gen');
     
     if (!fs.existsSync(templatePath)) {
-      console.log(chalk.red('❌ Base template not found at:'), templatePath);
+      console.log('❌ Base template not found at:', templatePath);
       return;
     }
     
@@ -30,11 +29,11 @@ export async function initCommand(): Promise<void> {
     const templateContent = fs.readFileSync(templatePath, 'utf-8');
     fs.writeFileSync(outputFile, templateContent);
     
-    console.log(chalk.green('✅ Created template.gen in current directory'));
-    console.log(chalk.gray('📝 Edit template.gen to customize your project setup'));
-    console.log(chalk.gray('🚀 Run with: gen --file <name>.gen --output ./my-project'));
+    console.log('✅ Created template.gen in current directory');
+    console.log('📝 Edit template.gen to customize your project setup');
+    console.log('🚀 Run with: gen --file <name>.gen --output ./my-project');
     
   } catch (error) {
-    console.log(chalk.red('❌ Error creating template.gen:'), error);
+    console.log('❌ Error creating template.gen:', error);
   }
 }

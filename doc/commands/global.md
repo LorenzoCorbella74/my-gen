@@ -18,6 +18,7 @@ The `@global` command creates persistent variables that are saved to disk and av
 - **Persistence**: Variables are saved to `.global.json` and persist between runs
 - **Global scope**: Available to all scripts executed from the same location
 - **Same assignment types as @set**: Supports input, file loading, and HTTP requests
+- **Interactive input**: `@input` uses the OpenTUI text field and requires a TTY
 
 ## Storage Location
 

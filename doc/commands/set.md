@@ -27,7 +27,7 @@ The `@set` command creates and assigns values to variables for use throughout th
 ```
 
 ### User Input
-Prompts the user for input during execution:
+Shows an OpenTUI text field during execution; enter a value and press Enter:
 ```plaintext
 @set userName = @input Enter your name
 @set email = @input What is your email address?
@@ -39,14 +39,14 @@ Prompts the user for input during execution:
 ```
 
 ### Single Selection
-Presents a list of options for the user to choose one:
+Presents an OpenTUI list; use the arrow keys and press Enter to choose:
 ```plaintext
 @set framework = @select Which framework do you prefer? [ react vue angular svelte ]
 @set environment = @select Choose environment? [ development staging production ]
 ```
 
 ### Multiple Selection
-Allows the user to select multiple options from a list:
+Shows an OpenTUI list; press Enter to toggle the highlighted option, then choose **Done**:
 ```plaintext
 @set features = @multiselect Which features do you want? [ auth database api testing ]
 @set platforms = @multiselect Target platforms? [ windows mac linux ]
@@ -59,7 +59,7 @@ Prompts the user for a yes/no confirmation (returns "Y" or "N"):
 @set overwrite = @confirm File exists. Overwrite?
 ```
 
-**Note:** The confirmation prompt defaults to "N" (No) if the user simply presses Enter.
+**Note:** The confirmation prompt defaults to "N" (No). Interactive prompts require a TTY; Escape cancels a prompt.
 
 ### File Content
 Loads the entire content of a file into the variable:

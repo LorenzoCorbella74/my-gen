@@ -2,26 +2,31 @@
 
 ![logo](./doc/logo.png)
 
-**gen** is a simple, command runner for Node.js. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
+**gen** is a simple, command runner for Bun. It interprets a custom DSL to automate file operations, variable management, shell commands, and conditional logic for project scaffolding and scripting tasks. Why not use Bash, Python, Make, or Just...? Because it is fun to create a new language and a new tool! 😄
 
 ## Scope
 - Parse and execute a custom DSL for project generation and scripting
 - Support for variables, user input, file and folder operations, HTTP requests, and shell commands
 - Extensible with new commands
-- Designed for automation, scaffolding, and scripting in Node environments
+- Designed for automation, scaffolding, and scripting in Bun environments
+
+## Requirements
+
+- Bun `>=1.3.14`
+- Bun `>=1.4.0` on native Windows ARM64
 
 ## Usage
 
 Install globally:
 ```bash
-npm install -g my-gen
+bun add -g my-gen
 ```
 Create a `.gen` file with a list of commands and use like this:
 ```bash
 gen --file <path/to/your.gen> --output <path/to/output/dir>
 ```
 
-- `--file`: Path to the `.gen` script to execute (Default: current directory).
+- `--file`: Path to the `.gen` script to execute. If omitted in a terminal, choose a `.gen` file from the current directory.
 - `--output`: Optional path to the directory where commands will be executed. (Default: current directory)
 - `--config`: Optional path to a JSON file to pre-populate the context.
 - `--verbose`: Optional path to enable verbose logging.
@@ -30,6 +35,8 @@ gen --file <path/to/your.gen> --output <path/to/output/dir>
 - `--template=<name>`: Download and execute a template from the repository.
 - `--force`: Force refresh of template cache (use with `--list`).
 - `--init`: Create a basic `.gen` file to start your automation.
+
+When running in CI or another non-interactive environment, pass `--file <path>` explicitly.
 
 ## Getting Started
 
@@ -42,6 +49,10 @@ gen --init
 ```
 
 This command creates a `template.gen` file with example commands and comments to help you understand the DSL syntax. You can then customize this file for your specific automation needs.
+
+## Terminal interface
+
+Interactive prompts and progress indicators use OpenTUI. Use arrow keys and Enter for single-choice prompts; multi-select prompts toggle the highlighted item with Enter and finish by selecting **Done**. Press Escape to cancel. Prompts require an interactive terminal; non-interactive commands such as `--help` continue to work in CI and pipes.
 
 ## .gen file SYNTAX & DSL Example
 **.gen** file contains commands line by line based on a simple custom Domain Specific Language. 

@@ -3,7 +3,6 @@
 
 import * as fs from "fs/promises";
 import * as path from "path";
-import chalk from "chalk";
 import { Context } from "./context.js";
 import { fileURLToPath } from 'url';
 
@@ -97,13 +96,13 @@ export class GlobalContext {
       this.mergeGlobalVariablesIntoContext(globalVars, context);
       
       if (Object.keys(globalVars).length > 0) {
-        console.log(chalk.cyan(`[GLOBAL] Loaded ${Object.keys(globalVars).length} global variables:`));
+        console.log(`[GLOBAL] Loaded ${Object.keys(globalVars).length} global variables:`);
         for (const [key, value] of Object.entries(globalVars)) {
           // Truncate long values for display
           const displayValue = String(value).length > 50 
             ? String(value).substring(0, 47) + "..." 
             : String(value);
-          console.log(chalk.cyan(`  ${key} = ${displayValue}`));
+          console.log(`  ${key} = ${displayValue}`);
         }
       }
     } catch (error) {

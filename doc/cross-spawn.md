@@ -173,7 +173,7 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
     
     childProcess.on('close', (code) => {
       if (isVerbose) {
-        console.log(chalk.gray(`[CROSS-SPAWN] Command completed with exit code: ${code}`));
+        console.log(`[CROSS-SPAWN] Command completed with exit code: ${code}`);
       }
       resolve();
     });

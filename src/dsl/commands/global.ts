@@ -1,5 +1,5 @@
-import { input, } from '@inquirer/prompts';
 import { AstNode, CommandContext, CommandResult } from "./types.js";
+import { promptInput } from "../../utils/prompts.js";
 
 export async function handleGlobal(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
     try {
@@ -16,7 +16,7 @@ export async function handleGlobal(node: AstNode, ctx: CommandContext): Promise<
 
         if (value.startsWith('@input ')) {
             const prompt = value.substring(7);
-            const userInput = await input({ message: prompt });
+            const userInput = await promptInput(prompt);
             ctx.context.set(varName, userInput);
             await ctx.globalContext.set(varName, userInput);
         } else {

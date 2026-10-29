@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { spawn } from "child_process";
 import { AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
@@ -34,11 +33,11 @@ function reportStderr(stderr: string, code: number | null): void {
   const onlyWarnings = lines.every(isBenignStderrLine);
 
   if (code === 0 || onlyWarnings) {
-    console.log(chalk.yellow(`[CMD-WARN] ${trimmed}`));
+    console.log(`[CMD-WARN] ${trimmed}`);
     return;
   }
 
-  console.log(chalk.red(`[CMD-ERROR] (exit code ${code}) ${trimmed}`));
+  console.log(`[CMD-ERROR] (exit code ${code}) ${trimmed}`);
 }
 
 // Import cross-spawn for better cross-platform support
@@ -54,7 +53,7 @@ async function loadCrossSpawn(): Promise<any> {
     crossSpawn = crossSpawnModule.default || crossSpawnModule;
     return crossSpawn;
   } catch (error) {
-    console.log(chalk.yellow('[SHELL] cross-spawn not available, falling back to standard spawn'));
+    console.log('[SHELL] cross-spawn not available, falling back to standard spawn');
     crossSpawn = null;
     return null;
   }
@@ -128,8 +127,8 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
   }
 
   if (isVerbose) {
-    console.log(chalk.cyan(`[CROSS-SPAWN] Executing: ${parsed.cmd} ${parsed.args.join(' ')}`));
-    console.log(chalk.gray(`[CROSS-SPAWN] Working directory: ${ctx.globalShell.cwd}`));
+    console.log(`[CROSS-SPAWN] Executing: ${parsed.cmd} ${parsed.args.join(' ')}`);
+    console.log(`[CROSS-SPAWN] Working directory: ${ctx.globalShell.cwd}`);
   }
 
   return new Promise((resolve, reject) => {
@@ -147,7 +146,7 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
       const output = data.toString();
       stdout += output;
       if (isVerbose && output.trim()) {
-        console.log(chalk.gray(`[CROSS-SPAWN-OUTPUT] ${output.trim()}`));
+        console.log(`[CROSS-SPAWN-OUTPUT] ${output.trim()}`);
       }
     });
 
@@ -155,13 +154,13 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
       const error = data.toString();
       stderr += error;
       if (isVerbose && error.trim()) {
-        console.log(chalk.red(`[CROSS-SPAWN-ERROR] ${error.trim()}`));
+        console.log(`[CROSS-SPAWN-ERROR] ${error.trim()}`);
       }
     });
 
     childProcess.on('close', (code: number) => {
       if (isVerbose) {
-        console.log(chalk.cyan(`[CROSS-SPAWN] Command completed with exit code: ${code}`));
+        console.log(`[CROSS-SPAWN] Command completed with exit code: ${code}`);
       }
 
       reportStderr(stderr, code);
@@ -172,7 +171,7 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
 
     childProcess.on('error', (error: Error) => {
       if (isVerbose) {
-        console.log(chalk.red(`[CROSS-SPAWN] Process error: ${error.message}`));
+        console.log(`[CROSS-SPAWN] Process error: ${error.message}`);
       }
       reject(error);
     });
@@ -180,7 +179,7 @@ async function executeWithCrossSpawn(command: string, ctx: CommandContext, isVer
     // Set timeout for long-running commands
     const timeout = setTimeout(() => {
       if (isVerbose) {
-        console.log(chalk.red(`[CROSS-SPAWN-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`));
+        console.log(`[CROSS-SPAWN-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`);
       }
       childProcess.kill('SIGTERM');
       resolve(); // Resolve even on timeout
@@ -206,7 +205,7 @@ function updateCWD(ctx: CommandContext, isVerbose: boolean): void {
     ctx.globalShell.cwd = ctx.outputDir;
   }
   if (isVerbose) {
-    console.log(chalk.gray(`[SHELL] Using deterministic shell execution in: ${ctx.globalShell.cwd}`));
+    console.log(`[SHELL] Using deterministic shell execution in: ${ctx.globalShell.cwd}`);
   }
 }
 
@@ -257,8 +256,8 @@ async function handleCdCommand(command: string, ctx: CommandContext, isVerbose: 
   ctx.globalShell.cwd = newCwd;
 
   if (isVerbose) {
-    console.log(chalk.gray(`[SHELL-DEBUG] Changed directory from: ${ctx.globalShell.cwd}`));
-    console.log(chalk.gray(`[SHELL-DEBUG] Changed directory to: ${newCwd}`));
+    console.log(`[SHELL-DEBUG] Changed directory from: ${ctx.globalShell.cwd}`);
+    console.log(`[SHELL-DEBUG] Changed directory to: ${newCwd}`);
   }
 }
 
@@ -266,14 +265,14 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
   // Check if we should use cross-spawn for this command
   if (await shouldUseCrossSpawn(command)) {
     if (isVerbose) {
-      console.log(chalk.cyan(`[HYBRID] Using cross-spawn for: ${command}`));
+      console.log(`[HYBRID] Using cross-spawn for: ${command}`);
     }
     return executeWithCrossSpawn(command, ctx, isVerbose);
   }
 
   // Fall back to current shell-based approach
   if (isVerbose) {
-    console.log(chalk.gray(`[HYBRID] Using shell approach for: ${command}`));
+    console.log(`[HYBRID] Using shell approach for: ${command}`);
   }
 
   return new Promise((resolve, reject) => {
@@ -288,8 +287,8 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
     }
 
     if (isVerbose) {
-      console.log(chalk.gray(`[SHELL-DEBUG] Executing: ${shell} ${cmdArgs.join(' ')}`));
-      console.log(chalk.gray(`[SHELL-DEBUG] Working directory: ${ctx.globalShell.cwd}`));
+      console.log(`[SHELL-DEBUG] Executing: ${shell} ${cmdArgs.join(' ')}`);
+      console.log(`[SHELL-DEBUG] Working directory: ${ctx.globalShell.cwd}`);
     }
 
     const childProcess = spawn(shell, cmdArgs, {
@@ -306,7 +305,7 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
       const output = data.toString();
       stdout += output;
       if (isVerbose && output.trim()) {
-        console.log(chalk.gray(`[SHELL-OUTPUT] ${output.trim()}`));
+        console.log(`[SHELL-OUTPUT] ${output.trim()}`);
       }
     });
 
@@ -314,13 +313,13 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
       const error = data.toString();
       stderr += error;
       if (isVerbose && error.trim()) {
-        console.log(chalk.red(`[SHELL-ERROR] ${error.trim()}`));
+        console.log(`[SHELL-ERROR] ${error.trim()}`);
       }
     });
 
     childProcess.on('close', (code) => {
       if (isVerbose) {
-        console.log(chalk.gray(`[SHELL-DEBUG] Command completed with exit code: ${code}`));
+        console.log(`[SHELL-DEBUG] Command completed with exit code: ${code}`);
       }
 
       reportStderr(stderr, code);
@@ -331,7 +330,7 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
 
     childProcess.on('error', (error) => {
       if (isVerbose) {
-        console.log(chalk.red(`[SHELL-DEBUG] Process error: ${error.message}`));
+        console.log(`[SHELL-DEBUG] Process error: ${error.message}`);
       }
       reject(error);
     });
@@ -339,7 +338,7 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
     // Set timeout for long-running commands
     const timeout = setTimeout(() => {
       if (isVerbose) {
-        console.log(chalk.red(`[SHELL-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`));
+        console.log(`[SHELL-TIMEOUT] Command timed out after ${SHELL_TIMEOUT_MS / 1000} seconds: ${command}`);
       }
       childProcess.kill('SIGTERM');
       resolve(); // Resolve even on timeout
@@ -354,15 +353,15 @@ async function executeCommandDeterministic(command: string, ctx: CommandContext,
 export async function handleShell(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
     const command = ctx.context.interpolate(node.payload);
-    console.log(chalk.gray(`[CMD] > ${command}`));
+    console.log(`[CMD] > ${command}`);
 
     const isVerbose = ctx.context.get('VERBOSE') === true || ctx.context.get('VERBOSE') === 'true';
 
     if (isVerbose) {
-      console.log(chalk.gray(`[SHELL-DEBUG] Raw payload: "${node.payload}"`));
-      console.log(chalk.gray(`[SHELL-DEBUG] Interpolated command: "${command}"`));
-      console.log(chalk.gray(`[SHELL-DEBUG] Line number: ${node.line}`));
-      console.log(chalk.gray(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`));
+      console.log(`[SHELL-DEBUG] Raw payload: "${node.payload}"`);
+      console.log(`[SHELL-DEBUG] Interpolated command: "${command}"`);
+      console.log(`[SHELL-DEBUG] Line number: ${node.line}`);
+      console.log(`[SHELL-DEBUG] Current working directory: ${ctx.globalShell.cwd}`);
     }
 
     // Initialize shell context if needed

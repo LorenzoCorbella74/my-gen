@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { Ollama } from "ollama";
 import { AstNode, CommandContext, CommandResult } from "./types.js";
 
@@ -15,7 +14,7 @@ export async function handleAi(node: AstNode, ctx: CommandContext): Promise<stri
   const temperature = await ctx.globalContext.get('AI_TEMPERATURE') || 0.7;
   const host = await ctx.globalContext.get('AI_OLLAMA_HOST') || 'http://127.0.0.1:11434';
 
-  console.log(chalk.cyan(`[AI] Using model: ${model} on ${host}`));
+  console.log(`[AI] Using model: ${model} on ${host}`);
 
   try {
     // Create Ollama client with custom host if specified

@@ -1,9 +1,13 @@
-import chalk from "chalk";
 import * as fs from "fs/promises";
-import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { AiNode, AstNode } from "./types.js";
 import { CommandContext, CommandResult } from "./types.js";
-import { SimpleSpinner } from "../../utils/spinner.js";
+import {
+  promptCheckbox,
+  promptConfirm,
+  promptInput,
+  promptSelect,
+  withProgress,
+} from "../../utils/prompts.js";
 
 export async function handleSet(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
   try {
@@ -20,7 +24,7 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
 
     if (value.startsWith('@input ')) {
       const prompt = value.substring(7);
-      const userInput = await input({ message: prompt });
+      const userInput = await promptInput(prompt);
       ctx.context.set(varName, userInput);
     } else if (value.startsWith('@select ')) {
       const match = value.match(/^@select\s+(.*?)\s*\?\s*\[(.*?)\]\s*$/);
@@ -30,10 +34,10 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
           if (options.length === 0) {
               throw new Error('Invalid @select syntax. Use: @select Question text? [ option1 option2 option3 ]');
           }
-          const userChoice = await select({
-              message: promptText,
-              choices: options
-          });
+          const userChoice = await promptSelect(
+            promptText,
+            options.map((option) => ({ name: option, value: option })),
+          );
           ctx.context.set(varName, userChoice);
       } else {
           throw new Error('Invalid @select syntax. Use: @select Question text? [ option1 option2 option3 ]');
@@ -46,10 +50,7 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
           if (options.length === 0) {
               throw new Error('Invalid @multiselect syntax. Use: @multiselect Question text? [ option1 option2 option3 ]');
           }
-          const userChoices = await checkbox({
-              message: promptText,
-              choices: options
-          });
+          const userChoices = await promptCheckbox(promptText, options);
           ctx.context.set(varName, userChoices);
       } else {
           throw new Error('Invalid @multiselect syntax. Use: @multiselect Question text? [ option1 option2 option3 ]');
@@ -64,42 +65,27 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
         };
       }
 
-      const answer = await confirm({
-        message: interpolatedQuestion,
-        default: false // Default to N (false)
-      });
+      const answer = await promptConfirm(interpolatedQuestion);
 
       ctx.context.set(varName, answer ? 'Y' : 'N');
     } else if (value.startsWith('@load ')) {
-        const spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
-
-        try {
-            const filePath = ctx.resolvePath(ctx.context.interpolate(value.substring(6).trim()));
-            const content = await fs.readFile(filePath, "utf-8");
-            ctx.context.set(varName, content.trim());
-            spinner.succeed(`${node.type} completed`);
-        } catch (error) {
-            spinner.fail(`${node.type} failed`);
-            throw error;
-        }
+        const filePath = ctx.resolvePath(ctx.context.interpolate(value.substring(6).trim()));
+        const content = await withProgress(
+          `Loading ${filePath}`,
+          () => fs.readFile(filePath, "utf-8"),
+        );
+        ctx.context.set(varName, content.trim());
     } else if (value.startsWith('@http ')) {
-        const spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
-        try {
-            const url = value.substring(6).trim();
-            const response = await fetch(ctx.context.interpolate(url));
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const content = await response.text();
-            ctx.context.set(varName, content);
-            spinner.succeed(`${node.type} completed`);
-        } catch (error) {
-            spinner.fail(`${node.type} failed`);
-            throw error;
-        }
-
+        const url = value.substring(6).trim();
+        const content = await withProgress(`Fetching ${url}`, async () => {
+          const response = await fetch(ctx.context.interpolate(url));
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text();
+        });
+        ctx.context.set(varName, content);
     } else if (value.startsWith('@ai ')) {
-        const spinner = new SimpleSpinner(`Executing ${node.type} at line ${node.line}`).start();
         // Import the AI handler function
         const { handleAi } = await import('./ai.js');
         // Create a temporary node for the AI handler
@@ -108,14 +94,11 @@ export async function handleSet(node: AstNode, ctx: CommandContext): Promise<Com
             payload: value.substring(4).trim(),
             line: node.line
         };
-        try {
-            const response = await handleAi(aiNode, ctx);
-            ctx.context.set(varName, response);
-            spinner.succeed(`${node.type} completed`);
-        } catch (error) {
-            spinner.fail(`${node.type} failed`);
-            throw error;
-        }
+        const response = await withProgress(
+          `Generating ${node.type}`,
+          () => handleAi(aiNode, ctx),
+        );
+        ctx.context.set(varName, response);
     } else if (value.includes(' in ')) {
         try {
             const [itemType, dirPath] = value.split(' in ').map(s => s.trim());

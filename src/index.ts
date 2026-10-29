@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { readFileSync } from 'fs';
 import yargs from 'yargs';
@@ -6,7 +6,6 @@ import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import chalk from "chalk";
 
 import { Context } from "./dsl/context.js";
 import { parseContent } from "./dsl/parser.js";
@@ -15,20 +14,20 @@ import { loadFolderAsObject } from './dsl/parseFolder.js';
 import { generateDocumentation } from './dsl/documentor.js';
 import { listTemplates as fetchTemplates, downloadAndExecuteTemplate, displayTemplates } from './dsl/templateManager.js';
 import { initCommand } from './dsl/commands/init.js';
+import { promptSelect } from './utils/prompts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
-console.log(chalk.blueBright(`--------------------------------------------------`));
-console.log(chalk.blueBright(`- 🚀 Gen v${pkg.version} - Your command runner! -`));
-console.log(chalk.blueBright(`--------------------------------------------------`));
+console.log(`--------------------------------------------------`);
+console.log(`- 🚀 Gen v${pkg.version} - Your command runner! -`);
+console.log(`--------------------------------------------------`);
 
 const argv = yargs(hideBin(process.argv))
   .option('file', {
     type: 'string',
     description: 'Path to the .gen file',
-    default: '.',
   })
   .option('config', {
     type: 'string',
@@ -77,7 +76,7 @@ const argv = yargs(hideBin(process.argv))
   .parseSync();
 
 const {
-  file: genFile,
+  file: requestedGenFile,
   config: configFile,
   parse: parsedFolder,
   verbose,
@@ -91,13 +90,35 @@ const {
 // overwise, run the generator
 const outputDir = argv.output ? path.resolve(argv.output) : process.cwd();
 
-console.log(`Using .gen file: ${genFile}`);
 if (configFile) {
   console.log(`Using config file: ${configFile}`);
 }
 console.log(`Output directory: ${outputDir}`);
 
 async function main() {
+  async function resolveGenFile(): Promise<string> {
+    if (requestedGenFile) {
+      return requestedGenFile;
+    }
+
+    const entries = await fs.readdir(process.cwd(), { withFileTypes: true });
+    const files = entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.gen'))
+      .map((entry) => entry.name);
+
+    if (files.length === 0) {
+      throw new Error('No .gen files found in the current directory. Pass --file <path> or run --init.');
+    }
+
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+      throw new Error('No .gen file specified. Pass --file <path> to run a script.');
+    }
+
+    return promptSelect(
+      'Choose a .gen file to run',
+      files.map((file) => ({ name: file, value: file })),
+    );
+  }
 
   // create basic .gen
   if(init){
@@ -108,7 +129,7 @@ async function main() {
   try {
     await fs.mkdir(outputDir, { recursive: true });
   } catch (error) {
-    console.error(chalk.red(`Error: Could not create output directory "${outputDir}".`));
+    console.error(`Error: Could not create output directory "${outputDir}".`);
     process.exit(1);
   }
 
@@ -119,9 +140,9 @@ async function main() {
       initialContext = JSON.parse(configContent);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(chalk.red(`Error reading or parsing config file: ${error.message}`));
+        console.error(`Error reading or parsing config file: ${error.message}`);
       } else {
-        console.error(chalk.red(`Error reading or parsing config file: ${String(error)}`));
+        console.error(`Error reading or parsing config file: ${String(error)}`);
       }
       process.exit(1);
     }
@@ -145,14 +166,14 @@ async function main() {
   // If --doc is provided, generate markdown documentation
   if (generateDoc) {
     try {
-      const outputFile = await generateDocumentation(genFile);
-      console.log(chalk.green(`\nDocumentation generated successfully: ${outputFile}`));
+      const outputFile = await generateDocumentation(await resolveGenFile());
+      console.log(`\nDocumentation generated successfully: ${outputFile}`);
       process.exit(0);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(chalk.red(`Error generating documentation: ${error.message}`));
+        console.error(`Error generating documentation: ${error.message}`);
       } else {
-        console.error(chalk.red(`Error generating documentation: ${String(error)}`));
+        console.error(`Error generating documentation: ${String(error)}`);
       }
       process.exit(1);
     }
@@ -166,9 +187,9 @@ async function main() {
       process.exit(0);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(chalk.red(`Error fetching templates: ${error.message}`));
+        console.error(`Error fetching templates: ${error.message}`);
       } else {
-        console.error(chalk.red(`Error fetching templates: ${String(error)}`));
+        console.error(`Error fetching templates: ${String(error)}`);
       }
       process.exit(1);
     }
@@ -185,9 +206,9 @@ async function main() {
           initialContext = JSON.parse(configContent);
         } catch (error) {
           if (error instanceof Error) {
-            console.error(chalk.red(`Error reading or parsing config file: ${error.message}`));
+            console.error(`Error reading or parsing config file: ${error.message}`);
           } else {
-            console.error(chalk.red(`Error reading or parsing config file: ${String(error)}`));
+            console.error(`Error reading or parsing config file: ${String(error)}`);
           }
           process.exit(1);
         }
@@ -208,9 +229,9 @@ async function main() {
       process.exit(0);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(chalk.red(`Error executing template: ${error.message}`));
+        console.error(`Error executing template: ${error.message}`);
       } else {
-        console.error(chalk.red(`Error executing template: ${String(error)}`));
+        console.error(`Error executing template: ${String(error)}`);
       }
       process.exit(1);
     }
@@ -218,12 +239,14 @@ async function main() {
 
   let genContent = "";
   try {
+    const genFile = await resolveGenFile();
+    console.log(`Using .gen file: ${genFile}`);
     genContent = await fs.readFile(genFile, 'utf-8');
   } catch (error) {
     if (error instanceof Error) {
-      console.error(chalk.red(`Error reading .gen file: ${error.message}`));
+      console.error(`Error reading .gen file: ${error.message}`);
     } else {
-      console.error(chalk.red(`Error reading .gen file: ${String(error)}`));
+      console.error(`Error reading .gen file: ${String(error)}`);
     }
     process.exit(1);
   }
@@ -238,7 +261,7 @@ async function main() {
 
   await executor.execute(parseResult);
 
-  console.log(chalk.blueBright("\nExecution completed."));
+  console.log("\nExecution completed.");
 }
 
 main();

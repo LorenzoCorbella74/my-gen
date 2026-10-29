@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { AstNode, CommandContext, CommandResult } from "./types.js";
 
 export async function handleForeach(node: AstNode, ctx: CommandContext): Promise<CommandResult> {
